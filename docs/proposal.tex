@@ -1,0 +1,96 @@
+\documentclass[11pt]{article}
+\usepackage{eco}
+
+\usepackage[letterpaper, bottom=1.5in, top=1.25in]{geometry}
+\usepackage{enumerate}
+\usepackage{url}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{CS 489---Network Forensics} \chead{October 13, 2009} \rhead{Proposal}
+\cfoot{\thepage}
+
+\author{Charlie Moore \and Aaron Lovato \and Thomas Coppi} 
+\title{Proposal to Analyze and Retrieve Files from a Capture of BitTorrent
+  Protocol Traffic} 
+\date{October 20, 2009}
+
+%===-------------------------------------------------------------------------===%
+\begin{document}
+\maketitle
+
+\section{Introduction}
+We propose to develop an application to identify BitTorrent file transfers in
+network traffic and extract the original file.  We assume that a full and
+complete packet capture has been performed.  We will not deal with encrypted
+variants of BitTorrent. The application will read a packet capture file and
+identify any BitTorrent file transfers contained in the file. We plan to design
+this with the unix philosophy in mind, so it can also be used as a filter for
+live traffic, \emph{\`a la} \verb=tcpdump=. If all packets for each file
+transfer are found in the capture file, the application will rebuild the
+original file according to the BitTorrent protocol specification.
+
+The application will be originally developed for command-line usage; if time
+permits, a GUI will be developed. Research has not yielded any applications
+currently available that perform this task, so this would likely be the first
+publicly available tool of its kind. One technique has been found that matches
+BitTorrent transfers against known bad file
+hashes\footnote{\url{http://www.technologyreview.com/computing/22107/?a=f}} but
+it does not appear to actually retrieve the file.
+
+\section{Threats (Use Cases)}
+The main motivation for this project is to give an analyst investigating an
+incident involving BitTorrent a tool to identify the role BitTorrent played.  An
+example of such a situation would be an investigation searching for child
+pornography transferred across a network. Without a tool of this sort, analysts
+would have to manually reconstruct the files and do so in such a way as to not
+compromise their admissibility in court. Furthermore, the analyst would have to
+ensure that all parts were received by the computer in question. We will attempt
+to verify the successful download of all parts of the file in order to verify
+the integrity of the data our tool produces. 
+
+Another situation in which this tool will be useful occurs when malware is
+downloaded to a compromised computer using BitTorrent. If the attackers clean up
+the the compromised computer before a disk image is taken, network traffic
+provides the only source of a sample of the malware used. Retrieving this file
+or files from the network would be useful for further mitigation of the
+attack. Also, identifying the peers involved in the download would allow action
+to be taken to prevent them from being used in further attacks. To this end, our
+tool will also list all IP addresses involved in the transfer of each file.
+
+One last obvious use case is to mitigate exfiltration of data.  If the user is
+using the BitTorrent protocol to send data out of the network, we would like to
+know.  This can be accomplished by inspecting the files that we extract, and
+possibly ensuring that the headers don't contain sensitive information, either.
+This will require using a live capture stream.
+
+\section{Plan of Attack}
+Our approach will start with using C++ along with \verb=libpcap= to read and
+parse a packet capture file. Once all packets have been parsed into usable and
+searchable data structures, our application will identify tracker
+requests. Parsing tracker responses will be useful for identifying the peers
+involved in the download, which can then be searched for in the captured
+packets. The application will then attempt to decode these packets according to
+the BitTorrent protocol specification. All ``piece'' messages will be stored in
+a by-transfer fashion for later reconstruction of the transferred file. This
+process will be repeated for every identified BitTorrent tracker request in the
+capture file. Once all packets have been processed, the application will proceed
+to rebuild the transferred files and output them to disk. Any file that is not
+entirely contained in the capture file will be noted.  We will use a best-effort
+reconstruction algorithm for partial captures.  The verification of the files
+will depend on having the original torrent file.
+
+\section{Risks}
+The risk is that we might fail to extract the files from a capture file.  In
+this event, we'll write up an analysis of why we can't do it, and what steps
+need to be taken in order to complete the job.  We can fall back to simply
+identifying traffic, but this has already been done.
+
+\section{Deliverable}
+Our application will analyze captured packets and extract the original file(s).
+We will use the hashes provided in the protocol to verify the integrity of each
+file.  We'll use the TCP session data to verify that the files were recieved.
+We'll provide a list of all peers involved in the download.  We'll identify
+which piece were uploaded by the target.
+
+\end{document}

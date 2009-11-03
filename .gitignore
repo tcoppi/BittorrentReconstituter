@@ -1,0 +1,21 @@
+# Latex stuff
+*.aux
+*.dvi
+*.log
+*.pdf
+*.toc
+
+# Object files
+*.o
+a.out
+
+# Temporary files from editors
+*~
+\#*\#
+.\#*
+.*.sw?
+.sw?
+
+# misc
+tags
+TAGS
