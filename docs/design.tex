@@ -1,0 +1,63 @@
+\documentclass[11pt,titlepage]{article}
+
+% Give us palatino and optima
+\usepackage[osf,sc]{mathpazo}
+\usepackage{palatino}
+\usepackage[T1]{fontenc}
+\renewcommand{\sfdefault}{uop}
+
+\usepackage{listings}
+\usepackage{url}
+\usepackage[letterpaper, bottom=1.5in, top=1.5in]{geometry}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+
+\pagestyle{fancy}
+\lhead{CS 489} \chead{\today} \rhead{Design Document}
+\cfoot{\thepage}
+
+\author{Charlie Moore \and Aaron Lovato \and Thomas Coppi}
+\title{CS 489 --- BitTorrent Reconstituter Design Document}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+This document is still fairly high level for now.  We're fleshing it out as we
+go.  Our project will consist of three modules.
+% XXX Insert further discussion here.
+
+\section{Pcap Parsing Module}
+This first module will parse the \verb=pcap= file and give us BitTorrent
+sessions.  It handles the protocol BitTorrent is running on, all other modules
+are protocol agnostic with respect to the underlying protocol.
+
+\subsection{Data Structure}
+% XXX Need some discussion of this data structure here
+Data structure is a vector of structs containing the session info.
+\begin{lstlisting}[language=C++]
+struct Session:
+  vector<Peer> peers // peers which participated in this session
+  vector<PieceSHA1> checksums // must get from .torrent for later verification
+  vector<string> bt_msgs // list of protocol messages all parsed and ready
+\end{lstlisting}
+
+\section{File Finding Module}
+The next module will go through the sessions and build up a map for each file with
+the pieces and other metadata that we need.
+
+\subsection{Data Structure}
+% XXX Need some discussion of this data structure here
+\begin{lstlisting}[language=C++]
+class File:
+  vector<Map<PieceSHA1, PieceData> > pieces;
+  // other crap
+\end{lstlisting}
+
+\section{File Reconstituting Module}
+The last module will actually reconstitute the files (and verify, etc)
+
+\subsection{Data Structure}
+Data structure is the finished file
+
+\end{document}
