@@ -1,0 +1,44 @@
+\documentclass[11pt]{article}
+\usepackage{palatino}
+\usepackage[osf,sc]{mathpazo}
+
+\usepackage{microtype}
+\usepackage{url}
+\usepackage[letterpaper, bottom=1.5in, top=1.5in]{geometry}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{CS 489} \chead{\today} \rhead{Coding Standards}
+\cfoot{\thepage}
+
+\author{Charlie Moore \and Aaron Lovato \and Thomas Coppi}
+\title{CS 489 Bittorrent Project --- Coding Standards}
+
+%===------------------------------------------------------------------------===%
+
+\begin{document}
+
+\section*{Coding Guidelines/Standards}
+Our coding guidelines consist of the following rules:
+\begin{itemize}
+\item Indentations will be \textbf{4 spaces} each.  Tabs will be converted to
+  spaces.
+\item The first curly brace will go on the same line as the statement it's
+  linked to.
+\item Code must fit into the surrounding code nicely.
+\item Local variables and functions will be named with lower case letters and
+  underscores delimiting words. (e.g. \texttt{num\_elements})
+\item Class members will be prefaced with an ``\texttt{m\_}''.
+\item Class names will be upper case with no delimiters between words.
+  (e.g. \texttt{Compile\-Controller})
+\item Algorithms and design decisions should be commented if they're not
+  absolutely clear
+\item The fundamental structure or layout of other people's code should not be
+  modified without a group meeting where everyone agrees that the modification
+  is an advantage. If a group member wishes to restructure existing code, this
+  work MUST be done on a separate branch.
+\item Branch-to-trunk merges will happen with group members that touched code on
+  the branch \textit{physicall present} so they can help resolve merge conflicts.
+\end{itemize}
+
+\end{document}
