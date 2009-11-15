@@ -18,33 +18,41 @@
 
 \begin{document}
 
-\section*{Coding Guidelines/Standards}
-Our coding guidelines consist of the following rules:
+
+\section*{Files and Classes}
 \begin{itemize}
-\item Files and Classes
-\begin{itemize}
-\item Each class should have a descriptive yet simple name formed of one or more words in mixed case, with the first letter of each word capitalized (e.g., \texttt{InputParser}).
-\item Each class should be defined in a source file with the same name and a .cpp extension ((e.g., \texttt{InputParser.cpp}).
-\item Likewise, each class should be declared in a header file with the same name and a .hpp extension (e.g., \texttt{InputParser.hpp}).
+\item Each class should have a descriptive yet simple name in UpperCamelCase
+  capitalization (e.g.  \texttt{InputParser}).
+\item Likewise, each class should be declared in a header file with the same
+  name and a .hpp extension (e.g., \texttt{InputParser.hpp}).
 \end{itemize}
-\item Method Naming and Scope
+
+
+\section*{Method Naming and Scope}
 \begin{itemize}
-\item Like classes, methods should also have a descriptive yet simple name formed of one or more words in mixed case. However, the first letter of the first word in a method name should not be capitalized while the first letter of each subsequent word should be capitalized (e.g., \texttt{readFile}).
-\item Methods that are strictly of use within the class should be declared \texttt{private} while all other methods should be declared \texttt{public}.
+\item We should use the C++ recommended naming convention which is
+  lower\_\-case\_\-with\_\-underscores.
 \end{itemize}
-\item Variable Naming and Scope
+
+
+\section*{Variable Naming and Scope}
 \begin{itemize}
-\item Both class variables and local variables should follow the same naming convention as methods.
-\item Unless absolutly necessary, class variables should be declared \texttt{private}.
+\item Both class variables and local variables should follow the same naming
+  convention as methods.
+\item Unless absolutly necessary, class variables should be declared
+  \texttt{private}.
 \end{itemize}
-\item Code Formatting
+
+
+\section*{Code Formatting}
 \begin{itemize}
 \item Indentations will be \textbf{4 spaces} each.  Tabs will be converted to
   spaces.
 \item The first curly brace will go on the same line as the statement it's
   linked to.
-\item Each line (either code or comment)  should be kept at or under 80 characters in length, with newlines inserted as necessary to break down longer lines.
-
+\item Each line (either code or comment) should be kept at or under 80
+  characters in length, with newlines inserted as necessary to break down longer
+  lines.
 \item Algorithms and design decisions should be commented if they're not
   absolutely clear
 \item The fundamental structure or layout of other people's code should not be
@@ -54,5 +62,5 @@ Our coding guidelines consist of the following rules:
 \item Branch-to-trunk merges will happen with group members that touched code on
   the branch \textit{physically present} so they can help resolve merge conflicts.
 \end{itemize}
-\end{itemize}
+
 \end{document}
