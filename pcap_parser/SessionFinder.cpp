@@ -8,9 +8,6 @@
 #include "headers.hpp"
 #include <iostream> 
 
-using std::cout;
-using std::cerr;
-using std::endl;
 
 /**
  * The constructor takes the name of the file and a flag representing the input
@@ -34,13 +31,13 @@ void SessionFinder::Init() {
         input_handle = pcap_open_offline(input_name.c_str(), errbuf);
         if(input_handle == NULL) {
             //Might want to throw an exception here?
-            cerr << "Unable to open file " << input_name << ": " << errbuf
-                    << endl;
+            std::cerr << "Unable to open file " << input_name << ": " << errbuf
+                    << std::endl;
             return;
         }
         //Make sure the data link layer is ethernet
         if (pcap_datalink(input_handle) != DLT_EN10MB) {
-            cerr << "Not ethernet!" << endl;
+            std::cerr << "Not ethernet!" << std::endl;
             return;
         }
         //Process the input
@@ -120,6 +117,7 @@ void SessionFinder::handlePacket(const u_char *packet, const struct pcap_pkthdr 
        (payload.find("left") != std::string::npos)) {
         //Found a tracker request
         //TODO do something with this request
+        
     }
     
 }
