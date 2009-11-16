@@ -13,17 +13,16 @@
 #include <vector>
 
 class SessionFinder {
+public:
+    void Init(); // Use this instead of the constructor
     
-    public:
-        SessionFinder(std::string, bool);
-        void Init();
-        
-    private:
-        void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
-        std::string input_name;
-        pcap_t* input_handle;
-        char errbuf[PCAP_ERRBUF_SIZE];
-        bool live;
+private:
+    SessionFinder(std::string, bool);
+    void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
+    std::string input_name;
+    pcap_t* input_handle;
+    char errbuf[PCAP_ERRBUF_SIZE];
+    bool live;
 };
 
 #endif
