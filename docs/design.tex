@@ -24,17 +24,31 @@
 
 \section{Introduction}
 This document is still fairly high level for now.  We're fleshing it out as we
-go.  Our project will consist of three modules.
+go.  Our project will consist of two modules.
 % XXX Insert further discussion here.
 
 \section{Pcap Parsing Module}
 This first module will parse the \verb=pcap= file and give us BitTorrent
 sessions.  It handles the protocol BitTorrent is running on, all other modules
-are protocol agnostic with respect to the underlying protocol.
+are protocol agnostic with respect to the underlying protocol. This module will
+require two concurrent processes in order to be able to handle live input. Once 
+process will read packets in from libpcap, decode the TCP/IP headers, discard 
+non-TCP packets, and build a Packet data structure to contain the relevant 
+parts of the packet. These relevant parts of the packet are the 
+source/destination ports and IP addresses and the TCP payload. This process 
+will then serialize the data and send it over a pipe to process 2.
+
+Process 2 will read data from a pipe and re-create the corresponding Packet data structures. It will then attempt to decode a tracker request. If this packet does contain a request, it will be recorded. If not, the process will then attempt to decode a tracker response. If a response is found, the process will make sure a corresponding request was already found. If not, the response will be discarded. Otherwise, relevant data will be pulled out of the response (peers, ports, etc.) and stored. 
+
+If the packet is determined to contain neither a request or response, the 
+process will attempt to decode the payload as a BitTorrent protocol packet. 
+Depending on the type of packet, the data may be stored or discarded. We still 
+need to determine how exactly the data from BitTorrent packets will be stored.
+Non-BitTorrent traffic will be discarded.
 
 \subsection{Data Structure}
 % XXX Need some discussion of this data structure here
-Data structure is a vector of structs containing the session info.
+The Packet data structure has been completed. See Packet.hpp for details. One uncompleted data structure is a vector of structs containing the session info.
 \begin{lstlisting}[language=C++]
 struct Session:
   vector<Peer> peers // peers which participated in this session
@@ -42,7 +56,12 @@ struct Session:
   vector<string> bt_msgs // list of protocol messages all parsed and ready
 \end{lstlisting}
 
-\section{File Finding Module}
+\section{File Reconstruction Module}
+This module will perform the work of rebuilding and verifying files based on a 
+\texttt{.torrent} file and the data extracted from the network by the pcap 
+parsing module. The following information is from our original design document, 
+it may be useful for implementing the reconstruction module.
+
 The next module will go through the sessions and build up a map for each file with
 the pieces and other metadata that we need.
 
@@ -53,11 +72,5 @@ class File:
   vector<Map<PieceSHA1, PieceData> > pieces;
   // other crap
 \end{lstlisting}
-
-\section{File Reconstituting Module}
-The last module will actually reconstitute the files (and verify, etc)
-
-\subsection{Data Structure}
-Data structure is the finished file
 
 \end{document}
