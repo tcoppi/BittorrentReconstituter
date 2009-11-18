@@ -1,17 +1,16 @@
 \documentclass[11pt,titlepage]{article}
-
 % Give us palatino and optima
-\usepackage[osf,sc]{mathpazo}
-\usepackage{palatino}
-\usepackage[T1]{fontenc}
-\renewcommand{\sfdefault}{uop}
-
-\usepackage{listings}
+%\usepackage[osf,sc]{mathpazo}
+%\usepackage{palatino}
+%\usepackage[T1]{fontenc}
+%\renewcommand{\sfdefault}{uop}
+\usepackage{eco}
 \usepackage{url}
-\usepackage[letterpaper, bottom=1.5in, top=1.5in]{geometry}
-\usepackage{fancyhdr}
+\usepackage{listings}
 \usepackage{microtype}
+\usepackage[letterpaper, bottom=1.5in, top=1.5in]{geometry}
 
+\usepackage{fancyhdr}
 \pagestyle{fancy}
 \lhead{CS 489} \chead{\today} \rhead{Design Document}
 \cfoot{\thepage}
@@ -24,36 +23,45 @@
 
 \section{Introduction}
 This document is still fairly high level for now.  We're fleshing it out as we
-go.  Our project will consist of two modules.
-% XXX Insert further discussion here.
+go.  Our project will consist of two modules: the Pcap Parsing Module and the
+File Reconstitution Module.  The former module must be run first and will parse
+out the BitTorrent streams and pieces and do most of the grunt work.  The latter
+module will do the actual work of verifying that pieces were received and
+reconstructing the files that were found in the capture file.
 
 \section{Pcap Parsing Module}
-This first module will parse the \verb=pcap= file and give us BitTorrent
-sessions.  It handles the protocol BitTorrent is running on, all other modules
-are protocol agnostic with respect to the underlying protocol. This module will
-require two concurrent processes in order to be able to handle live input. Once 
-process will read packets in from libpcap, decode the TCP/IP headers, discard 
-non-TCP packets, and build a Packet data structure to contain the relevant 
-parts of the packet. These relevant parts of the packet are the 
-source/destination ports and IP addresses and the TCP payload. This process 
-will then serialize the data and send it over a pipe to process 2.
+This module will parse the \texttt{pcap} file and give us BitTorrent
+sessions.  It handles the protocol BitTorrent is running on, so all other
+modules are protocol agnostic with respect to the underlying protocol. This
+module will require two concurrent processes to be able to handle live input.
+Process 1 will read in packets from \texttt{libpcap}, decode the TCP/IP headers,
+discard non-TCP packets, and build a \texttt{Packet} data structure to hold the
+relevant parts of the packet. These parts of the packet are the source and
+destination ports, the IP addresses, and the TCP payload. This process will then
+serialize the data and send it over a pipe to process 2.
 
-Process 2 will read data from a pipe and re-create the corresponding Packet data structures. It will then attempt to decode a tracker request. If this packet does contain a request, it will be recorded. If not, the process will then attempt to decode a tracker response. If a response is found, the process will make sure a corresponding request was already found. If not, the response will be discarded. Otherwise, relevant data will be pulled out of the response (peers, ports, etc.) and stored. 
+Process 2 will read data from the pipe and re-create the corresponding
+\texttt{Packet} data structures. It will then attempt to decode a tracker
+request. If this packet does contain a request, it will be recorded. If not, the
+process will then attempt to decode a tracker response. If a response is found,
+the process will make sure a corresponding request was already found. If not,
+the response will be discarded. Otherwise, relevant data will be pulled out of
+the response (peers, ports, etc.) and stored.
 
-If the packet is determined to contain neither a request or response, the 
+If the packet is determined to contain neither a request nor a response, the
 process will attempt to decode the payload as a BitTorrent protocol packet. 
 Depending on the type of packet, the data may be stored or discarded. We still 
 need to determine how exactly the data from BitTorrent packets will be stored.
 Non-BitTorrent traffic will be discarded.
 
 \subsection{Data Structure}
-% XXX Need some discussion of this data structure here
-The Packet data structure has been completed. See Packet.hpp for details. One uncompleted data structure is a vector of structs containing the session info.
+The Packet data structure has been completed. See Packet.hpp for details. One
+uncompleted data structure is a vector of structs containing the session info.
 \begin{lstlisting}[language=C++]
 struct Session:
   vector<Peer> peers // peers which participated in this session
-  vector<PieceSHA1> checksums // must get from .torrent for later verification
-  vector<string> bt_msgs // list of protocol messages all parsed and ready
+  vector<PieceSHA1> checksums // get from .torrent for verification
+  vector<string> bt_msgs // list of protocol messages parsed and ready
 \end{lstlisting}
 
 \section{File Reconstruction Module}
@@ -70,7 +78,7 @@ the pieces and other metadata that we need.
 \begin{lstlisting}[language=C++]
 class File:
   vector<Map<PieceSHA1, PieceData> > pieces;
-  // other crap
+  // etc.
 \end{lstlisting}
 
 \end{document}
