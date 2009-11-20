@@ -2,28 +2,85 @@
 
 \usepackage{url}
 
+\numberofauthors{3}
 \author{
-\alignauthor
-Charlie Moore\\
-\email{cmoore@nmt.edu}
+  \alignauthor
+  Charlie Moore\\
+  \email{cmoore@nmt.edu}
+  \alignauthor
+  Thomas Coppi\\
+  \email{tcoppi@nmt.edu}
+  \alignauthor
+  Aaron Lovato\\
+  \email{alovato@nmt.edu}
 }
-\title{XXX NEED TITLE}
+\title{BitTorrent Reconstitutor Project Brief}
 
 \begin{document}
 \maketitle
 \begin{abstract}
-XXX Abstract goes here
+This is an overview of the research and forensic impacts of our project.
 \end{abstract}
-\keywords{XXX keywords}
+%\keywords{}
 
 % Paper stuff starts here
 
 \section{Introduction}
+\subsection{Functionality}
+The application will identify and reconstruct any files transferred using the
+BitTorrent protocol from network traffic. It can be run against both live input
+and stored packet capture (pcap) files. It will take as input either a network
+interface (for live input) or a pcap file and a list of \texttt{.torrent}
+files. The \texttt{.torrent} files are necessary for verification of files found
+in the network traffic; however, all files will be reconstructed, not just those
+that can be verified. The application will produce the files as output along
+with data pertaining to the transfer of the files as well as whether each file
+was verified.
 
+Specifically, this application will perform the following tasks: identify files,
+reconstruct them, log information about the file transfer, and verify the
+integrity of the file based on a \texttt{.torrent} file (if provided). It will not
+perform any processing or analysis of the files other than that which is
+necessary for identification and reconstruction of the files. Other applications
+and/or manual analysis will be needed to process the files separately from this
+application.
 
+\section{Threat Model}
+Threats this application can be used to mitigate include transfer of contraband
+using BitTorrent, analysis of network traffic from an incident in which
+BitTorrent was used to transfer files to a compromised host, and detection of
+data exfiltration where BitTorrent is used to break the file(s) into smaller
+pieces that may evade detection from file scanning utilities. Note that the
+last case is one in which the application would be run against live traffic
+while the first two would require offline processing of packet capture files.
+
+\section{Forensics Impact}
+This application will give analysts the ability to extract files transferred
+using BitTorrent from network traffic. While tools (such as virus scanners) and
+techniques (such as reverse engineering) are currently available and used to
+analyze files, no publicly available application exists to reconstruct files
+transferred over the BitTorrent protocol. This application is designed simply to
+fill the gap in retrieving capabilities rather than extending any analysis
+capability.
+
+As noted in the threat model, most uses for this application will result in
+processing of offline data. Accordingly, the main context for usage of this
+application will be post-incident analysis, after packets captures have been
+collected. However, some uses in which the application is processing live input
+can be used to initially identify an incident rather than respond to a known
+incident.
+
+\subsection{Future}
+As a possible future extension, DHT (distributed hash table) is close
+to becoming standardized and is currently in use by many big BitTorrent names.
+DHT makes it so that we don't have to use trackers and distributors to get the
+peer and metadata information.  Torrent files can be distributed through the
+DHT, which has a big impact on our program.  As of now, we're assuming that the
+torrent file has to somehow magically be captured separately from the BitTorrent
+traffic.  If we can incorporate DHT technology into our program, we can
+eliminate this constraint.
 
 \section{Conclusion}
-
 
 
 % Add References
