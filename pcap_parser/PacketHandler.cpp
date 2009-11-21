@@ -8,46 +8,24 @@
 
 #include "PacketHandler.hpp"
 #include "headers.hpp"
+#include "Packet.hpp"
 #include <iostream>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 /**
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-PacketHandler::PacketHandler(std::string source, bool live)
-    : input_name(source), live(live) {}
+PacketHandler::PacketHandler(pcap_t* handler, int pipe)
+    : input_handle(handler), output_pipe(pipe) {}
 
 /**
  * Runsthe input handler.
  */
 void PacketHandler::run() {
-    if (live) {
-        //Set up a live input
-        input_handle = pcap_open_live(input_name.c_str(), 65535, 1, 1000, errbuf);
-        if (input_handle == NULL) {
-            //Might want to throw an exception here?
-            std::cerr << "Unable to open device " << input_name << ": " << errbuf
-                    << std::endl;
-            return;
-        }
-    }
-    else {
-        //Set up an offline input
-        input_handle = pcap_open_offline(input_name.c_str(), errbuf);
-        if (input_handle == NULL) {
-            //Might want to throw an exception here?
-            std::cerr << "Unable to open file " << input_name << ": " << errbuf
-                    << std::endl;
-            return;
-        }
-    }
     
-    //Make sure the data link layer is ethernet
-    if (pcap_datalink(input_handle) != DLT_EN10MB) {
-        std::cerr << "Not ethernet!" << std::endl;
-        return;
-    }
-
     //Process the input
     struct pcap_pkthdr header;
     const u_char * packet = pcap_next(input_handle, &header);
@@ -109,4 +87,13 @@ void PacketHandler::handlePacket(const u_char *packet,
         return;
     }
 
+    //Create Packet object
+    Packet pkt;
+    pkt.src_ip = std::string(inet_ntoa(ip_header->ip_src));
+    pkt.dst_ip = std::string(inet_ntoa(ip_header->ip_dst));
+    pkt.src_port = ntohs(tcp_header->th_sport);
+    pkt.dst_port = ntohs(tcp_header->th_dport);
+    pkt.payload = std::string(payload);
+
+    //TODO Serialize packet and write to pipe
 }
