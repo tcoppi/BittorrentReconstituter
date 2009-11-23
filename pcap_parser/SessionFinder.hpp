@@ -40,7 +40,7 @@ private:
     void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
 
     /* These both return a index into the peers array */
-    unsigned int findPeerIP(unsigned int ip, u_short port);
+    unsigned int findPeerIP(unsigned int ip);
     u_short findPeerPort(u_short port);
 
     /* This uniquely identifies the torrent(file) that is being downloaded.
