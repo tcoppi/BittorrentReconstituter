@@ -72,6 +72,7 @@ void SessionFinder::handlePacket(const u_char *packet,
     //Temp vars
     size_t offset, endoff;
     unsigned int peers_to_add;
+    char *inet_tmp;
 
     //Cast to ethernet header
     ethernet_header = (struct sniff_ethernet*)(packet);
@@ -151,6 +152,15 @@ void SessionFinder::handlePacket(const u_char *packet,
 	offset += strlen("left=");
         endoff = payload.find("&", offset);
 	this->peer[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+
+	//set the peer's ip
+	inet_tmp = malloc(256);
+	if(!inet_tmp) {
+		return; //XXX throw exception
+	}
+	inet_ntop(AF_INET, ip_header->ip_src, inet_tmp, 255);
+	this->peer[peer_index].ip = std::string(inet_tmp);
+	free(inet_tmp);
 
 	this->isreq = true;
 	peer_index++;
