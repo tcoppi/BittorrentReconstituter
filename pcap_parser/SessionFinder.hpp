@@ -19,6 +19,15 @@ static int START = 0;
 static int HAVE_TRACKER_REQUEST = 1;
 static int HAVE_TRACKER_RESPONSE = 2;
 
+/* IDs of the bittorrent messages we care about */
+static int CHOKE = 0;
+static int UNCHOKE = 1;
+static int INTERESTED = 2;
+static int NINTERESTED = 3;
+static int HAVE = 4;
+static int REQUEST = 6;
+static int PIECE = 7;
+
 static int MAX_PEERS = 1024; //XXX should do this dynamically
 
 typedef struct {
