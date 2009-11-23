@@ -22,7 +22,8 @@ static int HAVE_TRACKER_RESPONSE = 2;
 static int MAX_PEERS = 1024; //XXX should do this dynamically
 
 typedef struct {
-	std::string ip; // required
+	std::string ip; // requiredi
+	unsigned int ipi; // might be easier to just store it as an int, since thats the format we get it in most of the time
 	u_short port; // required
 
 	std::string peer_id; //optional, urlencoded
@@ -37,6 +38,10 @@ public:
 private:
     SessionFinder(std::string, bool);
     void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
+
+    /* These both return a index into the peers array */
+    unsigned int findPeerIP(unsigned int ip, u_short port);
+    u_short findPeerPort(u_short port);
 
     /* This uniquely identifies the torrent(file) that is being downloaded.
        If we see other requests with different info hashes, they are

@@ -11,6 +11,28 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+unsigned int SessionFinder::findPeerIP(unsigned int ip) {
+    int i;
+
+    for(i=0;i<peer_index;i++) {
+        if(this->peers[peer_index].ipi == ip)
+	    return i;
+    }
+
+    return 0;
+}
+
+u_short SessionFinder::findPeerPort(u_short port) {
+    int i;
+
+    for(i=0;i<peer_index;i++) {
+        if(this->peers[peer_index].port == port)
+		return i;
+    }
+
+    return 0;
+}
+
 /**
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
@@ -162,6 +184,8 @@ void SessionFinder::handlePacket(const u_char *packet,
 	this->peer[peer_index].ip = std::string(inet_tmp);
 	free(inet_tmp);
 
+	this->peer[peer_index].ipi = ip_header->ip_src.s_addr;
+
 	this->isreq = true;
 	peer_index++;
 
@@ -194,6 +218,7 @@ void SessionFinder::handlePacket(const u_char *packet,
 	for(int i=0;i<peers_to_add;i++) {
 	    //decode ip
 	    this->peers[this->peer_index].ip = std::string(raw_payload+offset, 4);
+	    this->peers[this->peer_index].ipi = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+4);
 	    //decode port
 	    this->peers[this->peer_index].port = (u_short)strtol(raw_payload+offset+4, raw_payload+offset+6, 10);
 	    this->peer_index++;
@@ -202,8 +227,11 @@ void SessionFinder::handlePacket(const u_char *packet,
 	this->state = HAVE_TRACKER_RESPONSE;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
-    //tracker request for this to happen.
-    else if(this->state >= HAVE_TRACKER_REQUEST) {
+    //tracker response for this to happen.
+    else if(this->state >= HAVE_TRACKER_RESPONSE) {
+	//General plan of attack - check if the ip belongs to a peer we know
+	//about and if it is on the right port. Then decode the packet as
+	//bittorrent.
 
     }
 
