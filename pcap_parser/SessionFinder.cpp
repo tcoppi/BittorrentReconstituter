@@ -164,9 +164,6 @@ void SessionFinder::handlePacket(const u_char *packet,
 
         offset = payload.find("port=");
         offset += strlen("port=");
-        //find the & denoting the next parameter so we know where the end of
-        //the int to convert is.
-        endoff = payload.find("&", offset);
         // It doesn't look like we're actually using the second param here and
         // it gives us compile errors. This should be payload if we do need the
         // behavior of a mutable reference there. I'm leaving it in for now,
@@ -178,7 +175,6 @@ void SessionFinder::handlePacket(const u_char *packet,
 
         offset = payload.find("left=");
         offset += strlen("left=");
-        endoff = payload.find("&", offset);
         this->peers[peer_index].left = (unsigned int)strtol(raw_payload+offset, NULL, 10);
 
         //set the peer's ip
@@ -204,7 +200,6 @@ void SessionFinder::handlePacket(const u_char *packet,
         //do a limited form of bencode parsing, just enough to make this work
         offset = payload.find("d8:complete");
         offset += strlen("d8:complete") + 1; //add one for the 'i' indicating integer
-        endoff = payload.find("e", offset); //the next 'e' after the i is where the integer ends
         this->num_seeders = (unsigned int)strtol(raw_payload+offset, NULL, 10);
 
         //next thing we care about is the peer response. we will assume a
