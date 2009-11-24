@@ -12,6 +12,7 @@
 #include <vector>
 #include <stdbool.h>
 #include <arpa/inet.h>
+#include "Piece.hpp"
 
 /* States of the session finder */
 #define START 0
@@ -50,14 +51,6 @@ typedef struct {
     // tracker response
     bool isreq;
 } Peer;
-
-//this doesn't belong here
-typedef struct {
-    unsigned int piece_index; //major piece index
-    unsigned int offset; //offset within major piece
-    unsigned int len; //number of bytes of data
-    char *data;
-} Piece;
 
 class SessionFinder {
 public:

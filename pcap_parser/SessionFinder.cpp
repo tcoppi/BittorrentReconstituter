@@ -165,14 +165,7 @@ void SessionFinder::handlePacket(const u_char *packet,
 
         offset = payload.find("port=");
         offset += strlen("port=");
-        // It doesn't look like we're actually using the second param here and
-        // it gives us compile errors. This should be payload if we do need the
-        // behavior of a mutable reference there. I'm leaving it in for now,
-        // anyway.
         this->peers[peer_index].port = (u_short)strtol(raw_payload+offset, NULL, 10);
-
-        //XXX I don't believe uploaded and downloaded are necessary for our
-        //purposes, not sure if left is either
 
         offset = payload.find("left=");
         offset += strlen("left=");
