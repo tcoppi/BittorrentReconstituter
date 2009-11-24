@@ -19,7 +19,7 @@ static int START = 0;
 static int HAVE_TRACKER_REQUEST = 1;
 static int HAVE_TRACKER_RESPONSE = 2;
 
-/* IDs of the bittorrent messages we care about */
+/* IDs of the bittorrent messages we might care about */
 static int CHOKE = 0;
 static int UNCHOKE = 1;
 static int INTERESTED = 2;
