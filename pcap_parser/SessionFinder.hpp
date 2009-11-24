@@ -4,40 +4,45 @@
  *
  * Original Author: Aaron A. Lovato
  */
-
 #ifndef PCAP_PARSER_SESSION_FINDER_H
 #define PCAP_PARSER_SESSION_FINDER_H
 
 #include <pcap.h>
 #include <string>
 #include <vector>
-#include <stdbool>
+#include <stdbool.h>
 #include <arpa/inet.h>
 
 /* States of the session finder */
-static int START = 0;
-static int HAVE_TRACKER_REQUEST = 1;
-static int HAVE_TRACKER_RESPONSE = 2;
+#define START 0
+#define HAVE_TRACKER_REQUEST 1
+#define HAVE_TRACKER_RESPONSE 2
 
 /* IDs of the bittorrent messages we care about */
-static int CHOKE = 0;
-static int UNCHOKE = 1;
-static int INTERESTED = 2;
-static int NINTERESTED = 3;
-static int HAVE = 4;
-static int REQUEST = 6;
-static int PIECE = 7;
+#define CHOKE 0
+#define UNCHOKE 1
+#define INTERESTED 2
+#define NINTERESTED 3
+#define HAVE 4
+#define REQUEST 6
+#define PIECE 7
 
-static int MAX_PEERS = 1024; //XXX should do this dynamically
+#define MAX_PEERS 1024 // XXX should do this dynamically
 
 typedef struct {
-	std::string ip; // requiredi
-	unsigned int ipi; // might be easier to just store it as an int, since thats the format we get it in most of the time
-	u_short port; // required
+    std::string ip; // requiredi
 
-	std::string peer_id; //optional, urlencoded
-	unsigned int left; //optional, number of bytes left for client to download
-	bool isreq; //true if we got this peer info from a tracker request, false if from a tracker response
+    // It might be easier to just store this as an int, since thats the format we get
+    // it in most of the time
+    unsigned int ipi;
+
+    u_short port; // required
+    std::string peer_id; // optional, urlencoded
+    unsigned int left; // optional, number of bytes left for client to download
+
+    // true if we got this peer info from a tracker request, false if from a
+    // tracker response
+    bool isreq;
 } Peer;
 
 class SessionFinder {
@@ -55,7 +60,7 @@ private:
     /* This uniquely identifies the torrent(file) that is being downloaded.
        If we see other requests with different info hashes, they are
        different transfers.
-     */
+    */
     std::string info_hash; /*url and bencoded, shouldn't matter since we don't
                             *need* the raw value, just the fact that it is unique. */
     Peer peers[MAX_PEERS];

@@ -12,24 +12,21 @@ using std::cerr;
 using std::endl;
 
 unsigned int SessionFinder::findPeerIP(unsigned int ip) {
-    int i;
-
-    for(i=0;i<peer_index;i++) {
-        if(this->peers[peer_index].ipi == ip)
-	    return i;
+    // Where does peer_index come from?  TAGS can't find a def.
+    for (int i=0; i < peer_index; i++) {
+        if (this->peers[peer_index].ipi == ip)
+            return i;
     }
-
     return 0;
 }
 
 u_short SessionFinder::findPeerPort(u_short port) {
-    int i;
-
-    for(i=0;i<peer_index;i++) {
-        if(this->peers[peer_index].port == port)
-		return i;
+    // Same prob. as above.  It also looks like this code and the code above can
+    // be abstracted out into a predecate function
+    for(int i=0; i < peer_index; i++) {
+        if (this->peers[peer_index].port == port)
+            return i;
     }
-
     return 0;
 }
 
@@ -52,7 +49,7 @@ void SessionFinder::Init() {
         if (input_handle == NULL) {
             //Might want to throw an exception here?
             cerr << "Unable to open file " << input_name << ": " << errbuf
-                    << endl;
+                 << endl;
             return;
         }
         //Make sure the data link layer is ethernet
@@ -105,8 +102,7 @@ void SessionFinder::handlePacket(const u_char *packet,
     //Sanity check on size of IP header
     size_ip = IP_HL(ip_header)*4;
     if (size_ip < 20) {
-        //Failed sanity check, discard packet
-        return;
+        return; // Failed sanity check, discard packet
     }
 
     //BitTorrent is only TCP (that we care about) so only decode TCP packets
@@ -117,8 +113,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         //Sanity check on size of TCP header
         size_tcp = TH_OFF(tcp_header)*4;
         if (size_tcp < 20) {
-            //Failed sanity check, discard packet
-            return;
+            return; // Failed sanity check, discard packet
         }
 
         //Get the packet's payload
@@ -126,8 +121,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         payload = std::string(raw_payload);
     }
     else {
-        //Not TCP, ignore this packet
-        return;
+        return; // Not TCP, ignore this packet
     }
 
 
@@ -150,89 +144,88 @@ void SessionFinder::handlePacket(const u_char *packet,
        (payload.find("left") != std::string::npos)) {
         //Found a tracker request
 
-	//Extract out the content of each field
-	//info_hash is unique for every transfer so it goes in the class
-	offset = payload.find("info_hash=");
-	offset += strlen("info_hash=");
-	this->info_hash = std::string(raw_payload+offset, 20); //20 byte info hash
+        //Extract out the content of each field
+        //info_hash is unique for every transfer so it goes in the class
+        offset = payload.find("info_hash=");
+        offset += strlen("info_hash=");
+        this->info_hash = std::string(raw_payload+offset, 20); //20 byte info hash
 
-	offset = payload.find("peer_id=");
-	offset += strlen("peer_id=");
-	this->peer[peer_index].peer_id = std::string(raw_payload+offset, 20); //20 byte peer id
+        offset = payload.find("peer_id=");
+        offset += strlen("peer_id=");
+        // XXX We don't actually have a peer yet.
+        this->peer[peer_index].peer_id = std::string(raw_payload+offset, 20); //20 byte peer id
 
-	offset = payload.find("port=");
-	offset += strlen("port=");
-	//find the & denoting the next parameter so we know where the end of
-	//the int to convert is.
-	endoff = payload.find("&", offset);
-	this->peer[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
-
-	//XXX I don't believe uploaded and downloaded are necessary for our
-	//purposes, not sure if left is either
-
-	offset = payload.find("left=");
-	offset += strlen("left=");
+        offset = payload.find("port=");
+        offset += strlen("port=");
+        //find the & denoting the next parameter so we know where the end of
+        //the int to convert is.
         endoff = payload.find("&", offset);
-	this->peer[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+        this->peer[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
-	//set the peer's ip
-	inet_tmp = malloc(256);
-	if(!inet_tmp) {
-		return; //XXX throw exception
-	}
-	inet_ntop(AF_INET, ip_header->ip_src, inet_tmp, 255);
-	this->peer[peer_index].ip = std::string(inet_tmp);
-	free(inet_tmp);
+        //XXX I don't believe uploaded and downloaded are necessary for our
+        //purposes, not sure if left is either
 
-	this->peer[peer_index].ipi = ip_header->ip_src.s_addr;
+        offset = payload.find("left=");
+        offset += strlen("left=");
+        endoff = payload.find("&", offset);
+        this->peer[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
-	this->isreq = true;
-	peer_index++;
+        //set the peer's ip
+        inet_tmp = malloc(256);
+        if (not inet_tmp) {
+            throw "Couldn't allocate memory, your system is borked.";
+        }
+        inet_ntop(AF_INET, ip_header->ip_src, inet_tmp, 255);
+        this->peer[peer_index].ip = std::string(inet_tmp);
+        free(inet_tmp);
 
-	this->state = HAVE_TRACKER_REQUEST;
+        this->peer[peer_index].ipi = ip_header->ip_src.s_addr;
+
+        this->isreq = true;
+        peer_index++;
+
+        this->state = HAVE_TRACKER_REQUEST;
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((this->state >= HAVE_TRACKER_REQUEST) &&
-       (payload.find("HTTP") != std::string::npos) &&
-       (payload.find("d8:complete"))) {
-	//do a limited form of bencode parsing, just enough to make this work
+            (payload.find("HTTP") != std::string::npos) &&
+            (payload.find("d8:complete"))) {
+        //do a limited form of bencode parsing, just enough to make this work
         offset = payload.find("d8:complete");
-	offset += strlen("d8:complete") + 1; //add one for the 'i' indicating integer
-	endoff = payload.find("e", offset); //the next 'e' after the i is where the integer ends
-	this->num_seeders = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10);
+        offset += strlen("d8:complete") + 1; //add one for the 'i' indicating integer
+        endoff = payload.find("e", offset); //the next 'e' after the i is where the integer ends
+        this->num_seeders = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10);
 
-	//next thing we care about is the peer response. we will assume a
-	//compact(non-dictionary) response since 99.9% of trackers use this now
-	//this is in big-endian so we have to byteswap it
-	offset = payload.find("5:peers");
-	offset += strlen("5:peers");
-	endoff = payload.find(":", offset); //get the next ':'
-	//divide by 6 because each peer is 4 bytes for ip + 2 for port
-	peers_to_add = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10) /  6;
+        //next thing we care about is the peer response. we will assume a
+        //compact(non-dictionary) response since 99.9% of trackers use this now
+        //this is in big-endian so we have to byteswap it
+        offset = payload.find("5:peers");
+        offset += strlen("5:peers");
+        endoff = payload.find(":", offset); //get the next ':'
+        //divide by 6 because each peer is 4 bytes for ip + 2 for port
+        peers_to_add = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10) /  6;
 
-	offset = endoff+2; //skip over the ':'
+        offset = endoff+2; //skip over the ':'
 
-	//peer looks like [4 byte ip][2 byte port] in network byte order
-	//FIXME figure out a good way to translate to host order without all
-	//kinds of conversions between string->int->string
-	for(int i=0;i<peers_to_add;i++) {
-	    //decode ip
-	    this->peers[this->peer_index].ip = std::string(raw_payload+offset, 4);
-	    this->peers[this->peer_index].ipi = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+4);
-	    //decode port
-	    this->peers[this->peer_index].port = (u_short)strtol(raw_payload+offset+4, raw_payload+offset+6, 10);
-	    this->peer_index++;
-	}
+        //peer looks like [4 byte ip][2 byte port] in network byte order
+        //FIXME figure out a good way to translate to host order without all
+        //kinds of conversions between string->int->string
+        for(int i=0;i<peers_to_add;i++) {
+            //decode ip
+            this->peers[this->peer_index].ip = std::string(raw_payload+offset, 4);
+            this->peers[this->peer_index].ipi = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+4);
+            //decode port
+            this->peers[this->peer_index].port = (u_short)strtol(raw_payload+offset+4, raw_payload+offset+6, 10);
+            this->peer_index++;
+        }
 
-	this->state = HAVE_TRACKER_RESPONSE;
+        this->state = HAVE_TRACKER_RESPONSE;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
     else if(this->state >= HAVE_TRACKER_RESPONSE) {
-	//General plan of attack - check if the ip belongs to a peer we know
-	//about and if it is on the right port. Then decode the packet as
-	//bittorrent.
-
+        //General plan of attack - check if the ip belongs to a peer we know
+        //about and if it is on the right port. Then decode the packet as
+        //bittorrent.
     }
-
 }
