@@ -94,6 +94,7 @@ void SessionFinder::handlePacket(const u_char *packet,
     //Temp vars
     size_t offset, endoff;
     unsigned int peers_to_add;
+    unsigned int src_idx, dst_idx;
     char *inet_tmp;
 
     //Cast to ethernet header
@@ -233,6 +234,18 @@ void SessionFinder::handlePacket(const u_char *packet,
 	//about and if it is on the right port. Then decode the packet as
 	//bittorrent.
 
+	//check if the src ip and port match a peer we know
+	src_idx = findPeerIP(ip_header->ip_src.s_addr);
+
+	if((src_idx == findPeerPort(tcp_header->th_sport)) && src_idx != 0) {
+            //now check the dst ip and port
+	    dst_idx = findPeerIP(ip_header->ip_dst.s_addr);
+	    if((dst_idx == findPeerPort(tcp_header->th_dport)) && dst_idx != 0) {
+		//this is a bittorrent packet
+		//packet format looks like(network byte order)
+		//[4-byte length][1 byte message ID][message-specific payload]
+	    }
+	}
     }
 
 }
