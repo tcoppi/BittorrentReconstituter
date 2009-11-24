@@ -9,17 +9,22 @@
 #include "PacketHandler.hpp"
 #include "headers.hpp"
 #include "Packet.hpp"
+#include "Piece.hpp"
 #include <iostream>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <boost/archive/text_oarchive.hpp>
 
 /**
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-PacketHandler::PacketHandler(pcap_t* handler, int pipe)
-    : input_handle(handler), output_pipe(pipe) {}
+PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
+    : input_handle(handler) {
+    //Open output file stream
+    output_pipe.open(pipe);
+    }
 
 /**
  * Runs the input handler.
@@ -92,6 +97,7 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.dst_port = ntohs(tcp_header->th_dport);
     pkt.payload = std::string(payload);
 
-    //TODO Serialize packet and write to pipe
-
+    //Serialize packet to output pipe
+    boost::archive::text_oarchive output_archive(output_pipe);
+    output_archive << pkt;
 }

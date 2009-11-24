@@ -7,8 +7,12 @@
  *
  * Original Author: Aaron A. Lovato
  */
+#ifndef PCAP_PARSER_PACKET_H
+#define PCAP_PARSER_PACKET_H
 
 #include <string>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/string.hpp>
 
 typedef struct {
     std::string src_ip;
@@ -17,3 +21,22 @@ typedef struct {
     u_short dst_port;
     std::string payload;
 } Packet;
+
+// Non-instrusive Boost serialization
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+                void serialize(Archive & ar, Packet & p, const unsigned int version)
+        {
+            ar & p.src_ip;
+            ar & p.dst_ip;
+            ar & p.src_port;
+            ar & p.dst_port;
+            ar & p.payload;
+        }
+
+    }
+}
+
+#endif
