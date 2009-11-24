@@ -27,10 +27,15 @@
 #define REQUEST 6
 #define PIECE 7
 
-#define MAX_PEERS 1024 // XXX should do this dynamically
+// XXX We should maybe do this dynamically, in which case this needs to be a
+// const static int, and we'll have to do some const_casting to fix c++'s const
+// correctness.  Or we'll have to create the Peer object differently to stop the
+// compiler complaining, since we initialize an array with this number.
+// Whichever is fine with me.
+#define MAX_PEERS 1024
 
 typedef struct {
-    std::string ip; // requiredi
+    std::string ip; // required
 
     // It might be easier to just store this as an int, since thats the format we get
     // it in most of the time
@@ -59,13 +64,12 @@ private:
 
     /* This uniquely identifies the torrent(file) that is being downloaded.
        If we see other requests with different info hashes, they are
-       different transfers.
-    */
+       different transfers. */
     std::string info_hash; /*url and bencoded, shouldn't matter since we don't
                             *need* the raw value, just the fact that it is unique. */
     Peer peers[MAX_PEERS];
     std::string input_name;
-    pcap_t* input_handle;
+    pcap_t *input_handle;
     char errbuf[PCAP_ERRBUF_SIZE];
     bool live;
     unsigned int state;

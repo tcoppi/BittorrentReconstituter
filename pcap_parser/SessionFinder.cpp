@@ -6,25 +6,25 @@
 #include "SessionFinder.hpp"
 #include "headers.hpp"
 #include <iostream>
+#include <sstream>
 
 using std::cout;
 using std::cerr;
 using std::endl;
 
 unsigned int SessionFinder::findPeerIP(unsigned int ip) {
-    // Where does peer_index come from?  TAGS can't find a def.
-    for (int i=0; i < peer_index; i++) {
-        if (this->peers[peer_index].ipi == ip)
+    for (int i=0; i < this->peer_index; i++) {
+        if (this->peers[this->peer_index].ipi == ip)
             return i;
     }
     return 0;
 }
 
 u_short SessionFinder::findPeerPort(u_short port) {
-    // Same prob. as above.  It also looks like this code and the code above can
-    // be abstracted out into a predecate function
-    for(int i=0; i < peer_index; i++) {
-        if (this->peers[peer_index].port == port)
+    // It looks like this code and the code above can be abstracted into a
+    // predecate function
+    for(int i=0; i < this->peer_index; i++) {
+        if (this->peers[this->peer_index].port == port)
             return i;
     }
     return 0;
@@ -41,21 +41,22 @@ SessionFinder::SessionFinder(std::string source, bool live)
  * Sets up the input handler.
  */
 void SessionFinder::Init() {
-    state = START;
-    peer_index = 0;
-    if (not live) {
+    std::stringstream err;
+    this->state = START;
+    this->peer_index = 0;
+
+    if (not this->live) {
         //Set up an offline input
-        input_handle = pcap_open_offline(input_name.c_str(), errbuf);
-        if (input_handle == NULL) {
-            //Might want to throw an exception here?
-            cerr << "Unable to open file " << input_name << ": " << errbuf
-                 << endl;
-            return;
+        this->input_handle = pcap_open_offline(input_name.c_str(), errbuf);
+        if (this->input_handle == NULL) {
+            err << "Unable to open file " << input_name << ": " << errbuf
+                << endl;
+            throw err.str();
         }
         //Make sure the data link layer is ethernet
         if (pcap_datalink(input_handle) != DLT_EN10MB) {
-            cerr << "Not ethernet!" << endl;
-            return;
+            err << "Not ethernet!" << endl;
+            throw err.str();
         }
         //Process the input
         struct pcap_pkthdr header;
@@ -152,15 +153,14 @@ void SessionFinder::handlePacket(const u_char *packet,
 
         offset = payload.find("peer_id=");
         offset += strlen("peer_id=");
-        // XXX We don't actually have a peer yet.
-        this->peer[peer_index].peer_id = std::string(raw_payload+offset, 20); //20 byte peer id
+        this->peers[peer_index].peer_id = std::string(raw_payload+offset, 20); //20 byte peer id
 
         offset = payload.find("port=");
         offset += strlen("port=");
         //find the & denoting the next parameter so we know where the end of
         //the int to convert is.
         endoff = payload.find("&", offset);
-        this->peer[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+        this->peers[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
         //XXX I don't believe uploaded and downloaded are necessary for our
         //purposes, not sure if left is either
@@ -168,7 +168,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         offset = payload.find("left=");
         offset += strlen("left=");
         endoff = payload.find("&", offset);
-        this->peer[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+        this->peers[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
         //set the peer's ip
         inet_tmp = malloc(256);
@@ -176,12 +176,12 @@ void SessionFinder::handlePacket(const u_char *packet,
             throw "Couldn't allocate memory, your system is borked.";
         }
         inet_ntop(AF_INET, ip_header->ip_src, inet_tmp, 255);
-        this->peer[peer_index].ip = std::string(inet_tmp);
+        this->peers[peer_index].ip = std::string(inet_tmp);
         free(inet_tmp);
 
-        this->peer[peer_index].ipi = ip_header->ip_src.s_addr;
+        this->peers[peer_index].ipi = ip_header->ip_src.s_addr;
 
-        this->isreq = true;
+        this->peers[peer_index].isreq = true;
         peer_index++;
 
         this->state = HAVE_TRACKER_REQUEST;
