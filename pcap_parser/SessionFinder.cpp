@@ -12,6 +12,7 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
+// Returns the the index of the peer with this IP
 unsigned int SessionFinder::findPeerIP(unsigned int ip) {
     for (int i=0; i < this->peer_index; i++) {
         if (this->peers[this->peer_index].ipi == ip)
@@ -20,9 +21,10 @@ unsigned int SessionFinder::findPeerIP(unsigned int ip) {
     return 0;
 }
 
+// Returns the index of the first peer with this port number 
+// XXX This return value, while technically correct, should be unsigned int as well,
+// unless there's a good reason it's not.
 u_short SessionFinder::findPeerPort(u_short port) {
-    // It looks like this code and the code above can be abstracted into a
-    // predecate function
     for(int i=0; i < this->peer_index; i++) {
         if (this->peers[this->peer_index].port == port)
             return i;
@@ -136,6 +138,9 @@ void SessionFinder::handlePacket(const u_char *packet,
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
     //Tracker requests can be decoded anytime, regardless of the current state
+
+    // XXX We can make this short circuit by changing it to a not and flipping
+    // the !=s to ==s and the &&s to ||s, which will be faster.
     if((payload.find("GET") != std::string::npos) &&
        (payload.find("info_hash") != std::string::npos)  &&
        (payload.find("peer_id") != std::string::npos) &&
@@ -160,6 +165,10 @@ void SessionFinder::handlePacket(const u_char *packet,
         //find the & denoting the next parameter so we know where the end of
         //the int to convert is.
         endoff = payload.find("&", offset);
+        // It doesn't look like we're actually using the second param here and
+        // it gives us compile errors. This should be payload if we do need the
+        // behavior of a mutable reference there. I'm leaving it in for now,
+        // anyway.
         this->peers[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
         //XXX I don't believe uploaded and downloaded are necessary for our
@@ -171,7 +180,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         this->peers[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
 
         //set the peer's ip
-        inet_tmp = malloc(256);
+        inet_tmp = (char*)malloc(256);
         if (not inet_tmp) {
             throw "Couldn't allocate memory, your system is borked.";
         }
