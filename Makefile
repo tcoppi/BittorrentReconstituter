@@ -1,9 +1,10 @@
 CPP=g++
 CFLAGS=-Wall -g
 OBJFLAGS=-c
+LIBS=-lpcap
 
 PCAPOBJECTS = ./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o
-FILERECONSTOBJECTS = 
+FILERECONSTOBJECTS =
 
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) clean
@@ -11,7 +12,7 @@ SUBDIRS = pcap_parser file_reconstituter
 all: btfinder
 
 btfinder: driver.o
-	$(CPP) $(CFLAGS) -o btfinder $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
+	$(CPP) $(CFLAGS) -o btfinder $(PCAPOBJECTS) $(FILERECONSTOBJECTS) $(LIBS)
 
 driver.o: driver.cpp
 	$(CPP) $(CFLAGS) $(OBJFLAGS) driver.cpp
