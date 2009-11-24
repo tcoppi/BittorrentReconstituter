@@ -12,16 +12,13 @@
 #include <vector>
 
 class PacketHandler {
-public:
-    PacketHandler(std::string, bool);
-    void run();
-
-private:
-    void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
-    std::string input_name;
-    pcap_t* input_handle;
-    char errbuf[PCAP_ERRBUF_SIZE];
-    bool live;
+    public:
+        PacketHandler(pcap_t*, int);
+        void run();
+    
+    private:
+        void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
+        pcap_t* input_handle;
+        int output_pipe;
 };
-
 #endif
