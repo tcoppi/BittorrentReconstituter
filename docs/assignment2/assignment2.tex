@@ -26,6 +26,14 @@ This is an overview of the research and forensic impacts of our project.
 % Paper stuff starts here
 
 \section{Introduction}
+The BitTorrent Reconstitutor identifies BitTorrent file transfers in network
+traffic and extracts the original file.  We assume that a full and complete
+packet capture has been performed.  We will decode the traffic according to the
+official BitTorrent
+specification\footnote{\url{http://wiki.theory.org/BitTorrentSpecification}} and
+ignore extensions for now.
+
+
 \subsection{Functionality}
 The application will identify and reconstruct any files transferred using the
 BitTorrent protocol from network traffic. It can be run against both live input
@@ -45,7 +53,17 @@ necessary for identification and reconstruction of the files. Other applications
 and/or manual analysis will be needed to process the files separately from this
 application.
 
+
+
+
+
 \section{Threat Model}
+One of the ways of breaking up threats is by inbound and outbound threats.
+Outbound threats consist mostly of data exfiltration problems.  Inbound attacks
+deal with malware and contraband.  Both can also fall under the umbrella of
+policy enforcement.
+
+\subsection{Threats}
 Threats this application can be used to mitigate include transfer of contraband
 using BitTorrent, analysis of network traffic from an incident in which
 BitTorrent was used to transfer files to a compromised host, and detection of
@@ -53,6 +71,39 @@ data exfiltration where BitTorrent is used to break the file(s) into smaller
 pieces that may evade detection from file scanning utilities. Note that the
 last case is one in which the application would be run against live traffic
 while the first two would require offline processing of packet capture files.
+
+
+\subsection{Use Cases}
+The main motivation for this project is to give an analyst investigating an
+incident involving BitTorrent a tool to identify the role BitTorrent played.  An
+example of such a situation would be an investigation searching for child
+pornography transferred across a network. Without a tool of this sort, analysts
+would have to manually reconstruct the files and do so in such a way as to not
+compromise their admissibility in court. Furthermore, the analyst would have to
+ensure that all parts were received by the computer in question. We will attempt
+to verify the successful download of all parts of the file in order to verify
+the integrity of the data our tool produces.
+
+Another situation in which this tool will be useful occurs when malware is
+downloaded to a compromised computer using BitTorrent. If the attackers clean up
+the the compromised computer before a disk image is taken, network traffic
+provides the only source of a sample of the malware used. Retrieving this file
+or files from the network would be useful for further mitigation of the
+attack. Also, identifying the peers involved in the download would allow action
+to be taken to prevent them from being used in further attacks. To this end, our
+tool will also list all IP addresses involved in the transfer of each file.
+
+One last obvious use case is to mitigate exfiltration of data.  If the user is
+using the BitTorrent protocol to send data out of the network, we would like to
+know.  This can be accomplished by inspecting the files that we extract, and
+possibly ensuring that the headers don't contain sensitive information, either.
+This will require using a live capture stream.
+
+
+
+
+
+
 
 \section{Forensics Impact}
 This application will give analysts the ability to extract files transferred
@@ -70,6 +121,8 @@ collected. However, some uses in which the application is processing live input
 can be used to initially identify an incident rather than respond to a known
 incident.
 
+\pagebreak
+
 \subsection{Future}
 As a possible future extension, DHT (distributed hash table) is close
 to becoming standardized and is currently in use by many big BitTorrent names.
@@ -81,10 +134,15 @@ traffic.  If we can incorporate DHT technology into our program, we can
 eliminate this constraint.
 
 \section{Conclusion}
-
+In conclusion, this application solves the problem of being unable to extract
+files encapsulated in the BitTorrent protocol from network traffic.  A company
+or analyst would need this program for the use cases described above.  No
+publicly available tool currently provides this functionality, so it fills a
+hole in the network forensics analyst's toolkit.
+%\balancecolumns
 
 % Add References
-\bibliographystyle{plain}
+%\bibliographystyle{plain}
 %\bibliography{refs}
-\balancecolumns
+
 \end{document}

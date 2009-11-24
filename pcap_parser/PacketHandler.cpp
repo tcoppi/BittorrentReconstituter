@@ -18,7 +18,7 @@ PacketHandler::PacketHandler(std::string source, bool live)
     : input_name(source), live(live) {}
 
 /**
- * Runsthe input handler.
+ * Runs the input handler.
  */
 void PacketHandler::run() {
     if (live) {
@@ -41,7 +41,7 @@ void PacketHandler::run() {
             return;
         }
     }
-    
+
     //Make sure the data link layer is ethernet
     if (pcap_datalink(input_handle) != DLT_EN10MB) {
         std::cerr << "Not ethernet!" << std::endl;
@@ -84,8 +84,7 @@ void PacketHandler::handlePacket(const u_char *packet,
     //Sanity check on size of IP header
     size_ip = IP_HL(ip_header)*4;
     if (size_ip < 20) {
-        //Failed sanity check, discard packet
-        return;
+        return; // Failed sanity check, discard packet
     }
 
     //BitTorrent is only TCP (that we care about) so only decode TCP packets
@@ -96,8 +95,7 @@ void PacketHandler::handlePacket(const u_char *packet,
         //Sanity check on size of TCP header
         size_tcp = TH_OFF(tcp_header)*4;
         if (size_tcp < 20) {
-            //Failed sanity check, discard packet
-            return;
+            return; // Failed sanity check, discard packet
         }
 
         //Get the packet's payload
@@ -105,8 +103,6 @@ void PacketHandler::handlePacket(const u_char *packet,
         payload = std::string(raw_payload);
     }
     else {
-        //Not TCP, ignore this packet
-        return;
+        return; // Not TCP, ignore this packet
     }
-
 }
