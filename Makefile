@@ -22,6 +22,9 @@ subdirs: $(SUBDIRS)
 $(SUBDIRS):
 	$(MAKE) -C $@
 
+tags:
+	ctags `find . -iname '*.[c,h]pp'`
+
 clean:
 	find . -iname '*.o' -print0 | xargs -0 rm -f
 	rm -f btfinder
