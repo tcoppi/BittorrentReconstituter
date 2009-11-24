@@ -22,10 +22,10 @@ PacketHandler::PacketHandler(pcap_t* handler, int pipe)
     : input_handle(handler), output_pipe(pipe) {}
 
 /**
- * Runsthe input handler.
+ * Runs the input handler.
  */
 void PacketHandler::run() {
-    
+
     //Process the input
     struct pcap_pkthdr header;
     const u_char * packet = pcap_next(input_handle, &header);
@@ -62,8 +62,7 @@ void PacketHandler::handlePacket(const u_char *packet,
     //Sanity check on size of IP header
     size_ip = IP_HL(ip_header)*4;
     if (size_ip < 20) {
-        //Failed sanity check, discard packet
-        return;
+        return; // Failed sanity check, discard packet
     }
 
     //BitTorrent is only TCP (that we care about) so only decode TCP packets
@@ -74,8 +73,7 @@ void PacketHandler::handlePacket(const u_char *packet,
         //Sanity check on size of TCP header
         size_tcp = TH_OFF(tcp_header)*4;
         if (size_tcp < 20) {
-            //Failed sanity check, discard packet
-            return;
+            return; // Failed sanity check, discard packet
         }
 
         //Get the packet's payload
@@ -83,8 +81,7 @@ void PacketHandler::handlePacket(const u_char *packet,
         payload = std::string(raw_payload);
     }
     else {
-        //Not TCP, ignore this packet
-        return;
+        return; // Not TCP, ignore this packet
     }
 
     //Create Packet object
@@ -96,4 +93,5 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.payload = std::string(payload);
 
     //TODO Serialize packet and write to pipe
+
 }

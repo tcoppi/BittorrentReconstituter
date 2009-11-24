@@ -1,10 +1,9 @@
 /**
  * This class represents a module that parses a pcap file and identifies
  * BitTorrent sessions.
- * 
+ *
  * Original Author: Aaron A. Lovato
  */
-
 #ifndef PCAP_PARSER_PACKET_HANDLER_H
 #define PCAP_PARSER_PACKET_HANDLER_H
 
@@ -22,5 +21,4 @@ class PacketHandler {
         pcap_t* input_handle;
         int output_pipe;
 };
-
 #endif
