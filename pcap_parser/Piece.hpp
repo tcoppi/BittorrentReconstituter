@@ -6,9 +6,10 @@
 #define PCAP_PARSER_PIECE_H
 
 typedef struct {
-    int index;
-    int offset;
-    const char* block;
+    unsigned int index; //Index of the peice
+    unsigned int offset; //offset within the piece where the block starts
+    unsigned int len; //length of the block
+    const char *block;
 } Piece;
 
 #endif
