@@ -244,6 +244,8 @@ void SessionFinder::handlePacket(const u_char *packet,
 		//this is a bittorrent packet
 		//packet format looks like(network byte order)
 		//[4-byte length][1 byte message ID][message-specific payload]
+		//for PIECE messages, the data may be spread over more than one
+		//tcp/ip packet, so we have to be sure to account for that.
 	    }
 	}
     }
