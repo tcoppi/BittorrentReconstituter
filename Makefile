@@ -9,7 +9,7 @@ FILERECONSTOBJECTS =
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) clean
 
-all: btfinder
+all: subdirs btfinder
 
 btfinder: driver.o
 	$(CPP) $(CFLAGS) -o btfinder $(PCAPOBJECTS) $(FILERECONSTOBJECTS) $(LIBS)
@@ -21,6 +21,9 @@ subdirs: $(SUBDIRS)
 
 $(SUBDIRS):
 	$(MAKE) -C $@
+
+tags:
+	ctags `find . -iname '*.[c,h]pp'`
 
 clean:
 	find . -iname '*.o' -print0 | xargs -0 rm -f
