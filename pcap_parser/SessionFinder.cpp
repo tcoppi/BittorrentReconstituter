@@ -7,6 +7,8 @@
 #include "headers.hpp"
 #include <iostream>
 #include <sstream>
+#include <string.h>
+#include <stdlib.h>
 
 using std::cout;
 using std::cerr;
@@ -21,7 +23,7 @@ unsigned int SessionFinder::findPeerIP(unsigned int ip) {
     return 0;
 }
 
-// Returns the index of the first peer with this port number 
+// Returns the index of the first peer with this port number
 // XXX This return value, while technically correct, should be unsigned int as well,
 // unless there's a good reason it's not.
 u_short SessionFinder::findPeerPort(u_short port) {
@@ -169,7 +171,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         // it gives us compile errors. This should be payload if we do need the
         // behavior of a mutable reference there. I'm leaving it in for now,
         // anyway.
-        this->peers[peer_index].port = (u_short)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+        this->peers[peer_index].port = (u_short)strtol(raw_payload+offset, NULL, 10);
 
         //XXX I don't believe uploaded and downloaded are necessary for our
         //purposes, not sure if left is either
@@ -177,14 +179,14 @@ void SessionFinder::handlePacket(const u_char *packet,
         offset = payload.find("left=");
         offset += strlen("left=");
         endoff = payload.find("&", offset);
-        this->peers[peer_index].left = (unsigned int)strtol(raw_payload+offset, raw_payload+endoff-1, 10);
+        this->peers[peer_index].left = (unsigned int)strtol(raw_payload+offset, NULL, 10);
 
         //set the peer's ip
         inet_tmp = (char*)malloc(256);
         if (not inet_tmp) {
             throw "Couldn't allocate memory, your system is borked.";
         }
-        inet_ntop(AF_INET, ip_header->ip_src, inet_tmp, 255);
+        inet_ntop(AF_INET, &(ip_header->ip_src), inet_tmp, 255);
         this->peers[peer_index].ip = std::string(inet_tmp);
         free(inet_tmp);
 
@@ -203,7 +205,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         offset = payload.find("d8:complete");
         offset += strlen("d8:complete") + 1; //add one for the 'i' indicating integer
         endoff = payload.find("e", offset); //the next 'e' after the i is where the integer ends
-        this->num_seeders = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10);
+        this->num_seeders = (unsigned int)strtol(raw_payload+offset, NULL, 10);
 
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
@@ -212,7 +214,7 @@ void SessionFinder::handlePacket(const u_char *packet,
         offset += strlen("5:peers");
         endoff = payload.find(":", offset); //get the next ':'
         //divide by 6 because each peer is 4 bytes for ip + 2 for port
-        peers_to_add = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+endoff-1, 10) /  6;
+        peers_to_add = (unsigned int)strtol(raw_payload+offset, NULL, 10) /  6;
 
         offset = endoff+2; //skip over the ':'
 
@@ -222,9 +224,9 @@ void SessionFinder::handlePacket(const u_char *packet,
         for(int i=0;i<peers_to_add;i++) {
             //decode ip
             this->peers[this->peer_index].ip = std::string(raw_payload+offset, 4);
-            this->peers[this->peer_index].ipi = (unsigned int)strtol(raw_payload+offset, raw_payload+offset+4);
+            this->peers[this->peer_index].ipi = (unsigned int)strtol(raw_payload+offset, NULL, 10);
             //decode port
-            this->peers[this->peer_index].port = (u_short)strtol(raw_payload+offset+4, raw_payload+offset+6, 10);
+            this->peers[this->peer_index].port = (u_short)strtol(raw_payload+offset+4, NULL, 10);
             this->peer_index++;
         }
 
