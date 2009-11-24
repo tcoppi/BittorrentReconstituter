@@ -1,0 +1,57 @@
+/**
+ * Implementation of the Session data type.
+ *
+ * Original Authors: Aaron A. Lovato and Thomas Coppi
+ */
+
+#include <vector>
+#include <string>
+#include <map>
+#include "Session.hpp"
+
+Session::Session(std::string host_ip, std::string tracker_ip, std::string info_hash) {
+    
+    //Set the host ip and info hash
+    host = std::string(host_ip);
+    this->info_hash = std::string(info_hash);
+    
+    //Add the tracker to the list of trackers
+    trackers.push_back(tracker_ip);
+}
+
+void Session::addTracker(std::string tracker_ip) {
+    //Check to make sure this tracker isn't already in the list
+    std::vector<std::string>::iterator it;
+
+    for ( it=trackers.begin(); it < trackers.end(); it++ ) {
+        if(*it == tracker_ip) {
+            //This tracker is already in the list
+            return;
+        }
+    }
+    
+    //Add tracker to list
+    trackers.push_back(tracker_ip);
+}
+
+void Session::addPeer(std::string peer_ip, u_short peer_port) {
+    //Make sure this peer isn't already in the list
+    std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
+    if(it != peers.end()) {
+        //Add the peer
+        Peer new_peer;
+        new_peer.ip = peer_ip;
+        new_peer.port = peer_port;
+        new_peer.active = false;
+    }
+}
+
+void Session::activatePeer(std::string peer_ip) {
+    //Find peer in list
+    std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
+    if(it != peers.end()) {
+        //Activate the peer
+        (*it).second.active = true;
+    }
+}
+
