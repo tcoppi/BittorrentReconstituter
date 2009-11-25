@@ -14,8 +14,11 @@
 
 class Session {
     public:
+        Session();
         Session(std::string, std::string, std::string);
         void addTracker(std::string);
+        bool hasTracker(std::string);
+        std::string getHost();
         void addPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece();

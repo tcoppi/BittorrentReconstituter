@@ -9,6 +9,8 @@
 #include <map>
 #include "Session.hpp"
 
+Session::Session() {}
+
 Session::Session(std::string host_ip, std::string tracker_ip, std::string info_hash) {
     
     //Set the host ip and info hash
@@ -18,22 +20,31 @@ Session::Session(std::string host_ip, std::string tracker_ip, std::string info_h
     //Add the tracker to the list of trackers
     trackers.push_back(tracker_ip);
 }
+ 
+std::string Session::getHost() {
+    return std::string(host);
+}
 
 void Session::addTracker(std::string tracker_ip) {
     //Check to make sure this tracker isn't already in the list
+    if(not hasTracker(tracker_ip)) {
+        //Add tracker to list
+        trackers.push_back(tracker_ip);
+    }
+}
+
+bool Session::hasTracker(std::string tracker_ip) {
+    //Find out if the given IP address is a known tracker
     std::vector<std::string>::iterator it;
 
     for ( it=trackers.begin(); it < trackers.end(); it++ ) {
         if(*it == tracker_ip) {
             //This tracker is already in the list
-            return;
+            return true;
         }
     }
-    
-    //Add tracker to list
-    trackers.push_back(tracker_ip);
+    return false;
 }
-
 void Session::addPeer(std::string peer_ip, u_short peer_port) {
     //Make sure this peer isn't already in the list
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
