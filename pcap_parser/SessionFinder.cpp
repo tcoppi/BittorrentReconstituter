@@ -111,7 +111,7 @@ void SessionFinder::handlePacket(Packet pkt) {
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
         offset = pkt.payload.find("BitTorrent protocol");
 	offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-	Session *session = findSession(std::string(pkt.payload.c_str()+offset,20)); //FIXME need a findSession that finds by the info_hash
+	Session *session = findSession(std::string(pkt.payload.c_str()+offset,20));
 	/* activate both because this handshake means both peers should be
 	 * "alive"
 	 */
@@ -141,8 +141,10 @@ void SessionFinder::handlePacket(Packet pkt) {
 	}
 }
 
-//Gets a session associated with the given host and tracker
-Session* SessionFinder::findSession(std::string host_ip,
+/**
+ * Gets a session associated with the given host and tracker.
+ */
+Session *SessionFinder::findSession(std::string host_ip,
                                    std::string tracker_ip) {
     std::map<std::string, Session>::iterator it;
 
@@ -155,7 +157,9 @@ Session* SessionFinder::findSession(std::string host_ip,
     return NULL;
 
 }
-
+/**
+ * Gets a session associated with an info hash.
+ */
 Session *SessionFinder::findSession(std::string hash) {
     std::map<std::string, Session>::iterator it;
 
