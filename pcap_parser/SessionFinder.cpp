@@ -111,8 +111,10 @@ void SessionFinder::handlePacket(Packet pkt) {
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
         offset = pkt.payload.find("BitTorrent protocol");
 	offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-	Session *session = findSession(std::string(pkt.payload.c_str()+offset,20));
-	/* activate both because this handshake means both peers should be
+    Session *session = sessions[std::string(pkt.payload.c_str()+offset)];
+
+    /*
+     * activate both because this handshake means both peers should be
 	 * "alive"
 	 */
 	session->activatePeer(pkt.dst_ip);
@@ -121,23 +123,25 @@ void SessionFinder::handlePacket(Packet pkt) {
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
     else{
-        //General plan of attack - check if the ip belongs to a peer we know
-        //about and if it is on the right port. Then decode the packet as
-        //bittorrent.
+        /*
+         * General plan of attack - check if the ip belongs to a peer we know
+         * about, is active, and if it is on the right port. Then decode the
+         * packet as bittorrent.
+         */
 
-	//check if the src ip and port match a peer we know
-	//src_idx = findPeerIP(ip_header->ip_src.s_addr);
+        //check if the src ip and port match a peer we know
+        //src_idx = findPeerIP(ip_header->ip_src.s_addr);
 
-	//if((src_idx == findPeerPort(tcp_header->th_sport)) && src_idx != 0) {
-            //now check the dst ip and port
-	    //dst_idx = findPeerIP(ip_header->ip_dst.s_addr);
-	    //if((dst_idx == findPeerPort(tcp_header->th_dport)) && dst_idx != 0) {
-		//this is a bittorrent packet
-		//packet format looks like(network byte order)
-		//[4-byte length][1 byte message ID][message-specific payload]
-		//for PIECE messages, the data may be spread over more than one
-		//tcp/ip packet, so we have to be sure to account for that.
-	    //}
+        //if((src_idx == findPeerPort(tcp_header->th_sport)) && src_idx != 0) {
+                //now check the dst ip and port
+            //dst_idx = findPeerIP(ip_header->ip_dst.s_addr);
+            //if((dst_idx == findPeerPort(tcp_header->th_dport)) && dst_idx != 0) {
+            //this is a bittorrent packet
+            //packet format looks like(network byte order)
+            //[4-byte length][1 byte message ID][message-specific payload]
+            //for PIECE messages, the data may be spread over more than one
+            //tcp/ip packet, so we have to be sure to account for that.
+            //}
 	}
 }
 
@@ -156,18 +160,5 @@ Session *SessionFinder::findSession(std::string host_ip,
     }
     return NULL;
 
-}
-/**
- * Gets a session associated with an info hash.
- */
-Session *SessionFinder::findSession(std::string hash) {
-    std::map<std::string, Session>::iterator it;
-
-    for(it = sessions.begin(); it != sessions.end(); it++) {
-        if(((*it).second.getHash() == hash)) {
-            return &((*it).second);
-        }
-    }
-    return NULL;
 }
 // vim: tabstop=4:expandtab
