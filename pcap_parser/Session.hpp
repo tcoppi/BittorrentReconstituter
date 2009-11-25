@@ -23,15 +23,15 @@ class Session {
         bool hasPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece();
-    
+
     private:
-        std::string info_hash; /* url and bencoded, shouldn't matter since 
-                                * we don't *need* the raw value, just the 
+        std::string info_hash; /* url and bencoded, shouldn't matter since
+                                * we don't *need* the raw value, just the
                                 * fact that it is unique. */
         std::string host; //The receiving host's IP address
 
         std::vector<std::string> trackers; //IP addresses of trackers
-        
+
          //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
         std::vector<Piece> pieces; //The pieces transferred

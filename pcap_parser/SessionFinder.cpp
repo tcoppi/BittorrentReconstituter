@@ -41,7 +41,7 @@ void SessionFinder::run() {
 void SessionFinder::handlePacket(Packet pkt) {
     //Temp vars
     unsigned int offset, endoff;
-    
+
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
     //Tracker requests can be decoded anytime, regardless of the current state
@@ -62,15 +62,16 @@ void SessionFinder::handlePacket(Packet pkt) {
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
+	// FIXME we need to deurlencode and debencode this
         std::string info_hash = std::string(pkt.payload.c_str()+offset, 20); //20 byte info hash
-        
+
         Session session = Session(pkt.dst_ip, pkt.src_ip, info_hash);
-        
+
         offset = pkt.payload.find("port=");
         offset += strlen("port=");
         //Add the peer
         session.addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));
-        
+
         //Add the session
         sessions[info_hash] = session;
     }
@@ -82,7 +83,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         if(session == NULL) {
             return;
         }
-        
+
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
@@ -100,11 +101,22 @@ void SessionFinder::handlePacket(Packet pkt) {
         //kinds of conversions between string->int->string
         for(int i=0;i<peers_to_add;i++) {
             //decode ip
-            session->addPeer(std::string(pkt.payload.c_str()+offset, 4), 
+            session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
-            
+
         }
 
+    }
+    //Decode a peer handshake
+    else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
+        offset = pkt.payload.find("BitTorrent protocol");
+	offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
+	Session *session = findSession(std::string(pkt.payload.c_str()+offset,20)); //FIXME need a findSession that finds by the info_hash
+	/* activate both because this handshake means both peers should be
+	 * "alive"
+	 */
+	session->activatePeer(pkt.dst_ip);
+	session->activatePeer(pkt.src_ip);
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
@@ -130,16 +142,16 @@ void SessionFinder::handlePacket(Packet pkt) {
 }
 
 //Gets a session associated with the given host and tracker
-Session* SessionFinder::findSession(std::string host_ip, 
+Session* SessionFinder::findSession(std::string host_ip,
                                    std::string tracker_ip) {
     std::map<std::string, Session>::iterator it;
-    
+
     for(it = sessions.begin(); it != sessions.end(); it++) {
-        if(((*it).second.getHost() == host_ip) and 
+        if(((*it).second.getHost() == host_ip) and
               ((*it).second.hasTracker(tracker_ip))) {
             return &((*it).second);
         }
     }
     return NULL;
-    
+
 }

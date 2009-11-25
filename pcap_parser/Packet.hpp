@@ -1,7 +1,7 @@
 /**
- * Structure to contain the relevant (for this project) parts of a 
+ * Structure to contain the relevant (for this project) parts of a
  * TCP/IP packet.
- * 
+ *
  * Note: u_short was chosen for the port numbers because that is the data
  * type that libpcap uses for port numbers.
  *

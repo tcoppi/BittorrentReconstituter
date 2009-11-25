@@ -12,15 +12,15 @@
 Session::Session() {}
 
 Session::Session(std::string host_ip, std::string tracker_ip, std::string info_hash) {
-    
+
     //Set the host ip and info hash
     host = std::string(host_ip);
     this->info_hash = std::string(info_hash);
-    
+
     //Add the tracker to the list of trackers
     trackers.push_back(tracker_ip);
 }
- 
+
 std::string Session::getHost() {
     return std::string(host);
 }
