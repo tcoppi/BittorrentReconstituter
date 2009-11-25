@@ -12,6 +12,12 @@
 #include "Piece.hpp"
 #include "Peer.hpp"
 
+/**
+ * Stores everything we know about a BitTorrent session.
+ *
+ * A session is uniquely identified by a info_hash obtained from the tracker
+ * and subsequently from the peer handshakes.
+ */
 class Session {
     public:
         Session();
@@ -19,7 +25,7 @@ class Session {
         void addTracker(std::string);
         bool hasTracker(std::string);
         std::string getHost();
-	std::string getHash();
+	    std::string getHash();
         void addPeer(std::string, u_short);
         bool hasPeer(std::string, u_short);
         void activatePeer(std::string);
@@ -29,16 +35,19 @@ class Session {
         std::string info_hash; /* url and bencoded, shouldn't matter since
                                 * we don't *need* the raw value, just the
                                 * fact that it is unique. */
-        std::string host; //The receiving host's IP address
-
-        std::vector<std::string> trackers; //IP addresses of trackers
+        //The receiving host's IP address
+        std::string host;
+        //IP addresses of trackers
+        std::vector<std::string> trackers;
 
          //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
-        std::vector<Piece> pieces; //The pieces transferred
+        //The pieces transferred
+        std::vector<Piece> pieces;
         bool completed;
 };
 
 //TODO Add serialization code
 
 #endif
+// vim: tabstop=4:expandtab

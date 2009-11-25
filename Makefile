@@ -25,6 +25,8 @@ $(SUBDIRS):
 tags:
 	ctags `find . -iname '*.[c,h]pp'`
 
+apidocs:
+	doxygen
 clean:
 	find . -iname '*.o' -print0 | xargs -0 rm -f
 	rm -f btfinder

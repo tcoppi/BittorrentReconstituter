@@ -1,15 +1,15 @@
 /**
  * This software is a modification of Tim Carstens' "sniffer.c"
  * demonstration source code, released as follows:
- * 
+ *
  * sniffer.c
  * Copyright (c) 2002 Tim Carstens
  * 2002-01-07
  * Demonstration of using libpcap
  * timcarst -at- yahoo -dot- com
- * 
+ *
  * "sniffer.c" is distributed under these terms:
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -103,3 +103,4 @@ struct sniff_tcp {
 
 
 #endif
+// vim: tabstop=4:expandtab

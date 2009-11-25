@@ -48,3 +48,4 @@ private:
 };
 
 #endif
+// vim: tabstop=4:expandtab

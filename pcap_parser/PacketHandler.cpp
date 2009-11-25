@@ -16,19 +16,12 @@
 #include <arpa/inet.h>
 #include <boost/archive/text_oarchive.hpp>
 
-/**
- * The constructor takes the name of the file and a flag representing the input
- * mode (live or offline).
- */
 PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
     : input_handle(handler) {
     //Open output file stream
     output_pipe.open(pipe);
     }
 
-/**
- * Runs the input handler.
- */
 void PacketHandler::run() {
 
     //Process the input
@@ -40,9 +33,6 @@ void PacketHandler::run() {
     }
 }
 
-/**
- * Function to process each packet from the input.
- */
 void PacketHandler::handlePacket(const u_char *packet,
                                  const struct pcap_pkthdr *header) {
     //Packet headers
@@ -101,3 +91,4 @@ void PacketHandler::handlePacket(const u_char *packet,
     boost::archive::text_oarchive output_archive(output_pipe);
     output_archive << pkt;
 }
+// vim: tabstop=4:expandtab

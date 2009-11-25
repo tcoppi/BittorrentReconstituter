@@ -14,6 +14,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/string.hpp>
 
+/**
+ *  Holds all the data in a packet that we need to pass to the SessionHandler.
+ */
 typedef struct {
     std::string src_ip;
     std::string dst_ip;
@@ -40,3 +43,4 @@ namespace boost {
 }
 
 #endif
+// vim: tabstop=4:expandtab

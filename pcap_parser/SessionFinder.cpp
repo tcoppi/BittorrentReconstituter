@@ -170,3 +170,4 @@ Session *SessionFinder::findSession(std::string hash) {
     }
     return NULL;
 }
+// vim: tabstop=4:expandtab

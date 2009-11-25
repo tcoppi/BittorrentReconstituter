@@ -5,11 +5,21 @@
 #ifndef PCAP_PARSER_PIECE_H
 #define PCAP_PARSER_PIECE_H
 
+/**
+ * Holds all the data from a piece message.
+ */
 typedef struct {
-    unsigned int index; //Index of the peice
-    unsigned int offset; //offset within the piece where the block starts
-    unsigned int len; //length of the block
+    //Index of the peice
+    unsigned int index;
+
+    //offset within the piece where the block starts
+    unsigned int offset;
+
+    //length of the block
+    unsigned int len;
+
     const char *block;
 } Piece;
 
 #endif
+// vim: tabstop=4:expandtab
