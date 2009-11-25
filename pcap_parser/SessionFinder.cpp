@@ -143,6 +143,27 @@ void SessionFinder::handlePacket(Packet pkt) {
                  * tcp/ip packet, so we have to be sure to account for that.
                  */
 
+                //All we have to do is append the data from the packet to the
+                //old piece and update the length
+                //XXX c strings might not be the right way to do this since
+                //there can be NULs in the payload...
+                if(piece_in_flight) {
+                    buff = malloc(this->currpiece->len + strlen(pkt.payload.c_str()));
+
+                    if(!buff)
+                            throw "Out of memory";
+
+                    //copy in the old + new contents
+                    buff = memcpy(buff, this->currpiece->block, this->currpiece->len);
+                    buff = memcpy(buff+this->currpiece->len, pkt.payload.c_str());
+
+                    free(this->currpiece->block);
+                    this->currpiece->block = buff;
+                }
+                //We have a new piece
+                else {
+                    buff = malloc(strlen(pkt.payload.c_str()));
+                }
             }
         }
 	}

@@ -42,6 +42,18 @@ private:
     //Find a session that has an activated peer on ip:port
     Session *findSession(std::string, u_short);
 
+    /**
+     * Since a piece can be too large for one packet, we need to keep some
+     * state about the current piece that is being reconstructed.
+     * XXX We may need to keep track of more than one piece in the case of
+     * multiple sessions being reconstructed at the same time.
+     */
+    Piece *currpiece;
+    /**
+     * Tells us if we are continuing a piece from a previous packet.
+     */
+    bool piece_in_flight;
+
     //Input file stream
     std::ifstream input_pipe;
 

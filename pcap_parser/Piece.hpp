@@ -18,7 +18,7 @@ typedef struct {
     //length of the block
     unsigned int len;
 
-    const char *block;
+   char *block;
 } Piece;
 
 #endif
