@@ -74,6 +74,21 @@ bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
     return false;
 }
 
+/**
+ * Returns the peer with this port and ip combination
+ */
+Peer *Session::getPeer(std::string peer_ip, u_short peer_port) {
+    //Find peer by IP
+    std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
+    if(it != peers.end()) {
+        //Check peer port
+        if((*it).second.port == peer_port) {
+            return &it.second;
+        }
+    }
+    return NULL;
+}
+
 void Session::activatePeer(std::string peer_ip) {
     //Find peer in list
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);

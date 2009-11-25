@@ -1,6 +1,5 @@
 /**
- * This class represents a module that parses a pcap file and identifies
- * BitTorrent sessions.
+ * This class takes Packets from the PacketHandler and forms Sessions
  *
  * Original Author: Aaron A. Lovato
  */
@@ -28,6 +27,9 @@
 #define REQUEST 6
 #define PIECE 7
 
+/**
+ * Take packets from the PacketHandler and form Sessions.
+ */
 class SessionFinder {
 public:
     SessionFinder(const char*);
@@ -37,6 +39,8 @@ private:
 
     //Get the session corresponding to a given host and tracker
     Session *findSession(std::string, std::string);
+    //Find a session that has an activated peer on ip:port
+    Session *findSession(std::string, u_short);
 
     //Input file stream
     std::ifstream input_pipe;

@@ -129,19 +129,22 @@ void SessionFinder::handlePacket(Packet pkt) {
          * packet as bittorrent.
          */
 
-        //check if the src ip and port match a peer we know
-        //src_idx = findPeerIP(ip_header->ip_src.s_addr);
+        Session *session = findSession(pkt.src_ip, pkt.src_port);
 
-        //if((src_idx == findPeerPort(tcp_header->th_sport)) && src_idx != 0) {
-                //now check the dst ip and port
-            //dst_idx = findPeerIP(ip_header->ip_dst.s_addr);
-            //if((dst_idx == findPeerPort(tcp_header->th_dport)) && dst_idx != 0) {
-            //this is a bittorrent packet
-            //packet format looks like(network byte order)
-            //[4-byte length][1 byte message ID][message-specific payload]
-            //for PIECE messages, the data may be spread over more than one
-            //tcp/ip packet, so we have to be sure to account for that.
-            //}
+        //Make sure the session contains both peers and that they are activated
+        if(session.hasPeer(pkt.dst_ip, pkt.dst_port)) {
+            Peer *peersrc = session->getPeer(pkt.src_ip, pkt.src_port);
+            Peer *peerdst = session->getPeer(pkt.dst_ip, pkt.dst_port);
+            if(peersrc->activated && peerdst->activated) {
+                /* This is a bittorrent packet
+                 * packet format looks like(network byte order)
+                 * [4-byte length][1 byte message ID][message-specific payload]
+                 * for PIECE messages, the data may be spread over more than one
+                 * tcp/ip packet, so we have to be sure to account for that.
+                 */
+
+            }
+        }
 	}
 }
 
@@ -160,5 +163,16 @@ Session *SessionFinder::findSession(std::string host_ip,
     }
     return NULL;
 
+}
+
+Session *findSession(std::string ip, u_short port) {
+    std::map<std::string, Session>::iterator it;
+
+    for(it = sessions.begin(); it != sessions.end(); it++) {
+        if((*it).second.hasPeer(ip, port)) {
+            return &((*it).second);
+        }
+    }
+    return NULL;
 }
 // vim: tabstop=4:expandtab
