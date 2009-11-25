@@ -54,6 +54,12 @@ private:
      */
     bool piece_in_flight;
 
+    /**
+     * Total length of the piece. When the piece we are building has a length
+     * equal to this we are done.
+     */
+    unsigned int total_len;
+
     //Input file stream
     std::ifstream input_pipe;
 

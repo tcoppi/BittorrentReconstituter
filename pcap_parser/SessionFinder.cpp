@@ -145,24 +145,31 @@ void SessionFinder::handlePacket(Packet pkt) {
 
                 //All we have to do is append the data from the packet to the
                 //old piece and update the length
-                //XXX c strings might not be the right way to do this since
-                //there can be NULs in the payload...
                 if(piece_in_flight) {
-                    buff = malloc(this->currpiece->len + strlen(pkt.payload.c_str()));
+                    buff = malloc(this->currpiece->len + pkt.payload.length);
 
                     if(!buff)
                             throw "Out of memory";
 
                     //copy in the old + new contents
                     buff = memcpy(buff, this->currpiece->block, this->currpiece->len);
-                    buff = memcpy(buff+this->currpiece->len, pkt.payload.c_str());
+                    buff = memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length);
 
                     free(this->currpiece->block);
                     this->currpiece->block = buff;
+
+                    if(this->currpiece->len == this->total_len) {
+                        this->currpiece = NULL;
+                        this->piece_in_flight = false;
+                        this->total_len = 0;
+                    }
                 }
                 //We have a new piece
                 else {
-                    buff = malloc(strlen(pkt.payload.c_str()));
+                    buff = malloc(pkt.payload.length);
+                    if(!buff)
+                            throw "Out of memory";
+//                    buff = memcpy(buff, pkt.payload.data(), );
                 }
             }
         }
