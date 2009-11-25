@@ -20,6 +20,7 @@ class Session {
         bool hasTracker(std::string);
         std::string getHost();
         void addPeer(std::string, u_short);
+        bool hasPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece();
     

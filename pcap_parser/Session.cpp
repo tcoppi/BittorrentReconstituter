@@ -45,16 +45,29 @@ bool Session::hasTracker(std::string tracker_ip) {
     }
     return false;
 }
+
 void Session::addPeer(std::string peer_ip, u_short peer_port) {
     //Make sure this peer isn't already in the list
-    std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
-    if(it != peers.end()) {
+    if(not hasPeer(peer_ip, peer_port)) {
         //Add the peer
         Peer new_peer;
         new_peer.ip = peer_ip;
         new_peer.port = peer_port;
         new_peer.active = false;
     }
+}
+
+//Returns whether the given peer and port combination is part of this session
+bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
+    //Find peer by IP
+    std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
+    if(it != peers.end()) {
+        //Check peer port
+        if((*it).second.port == peer_port) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Session::activatePeer(std::string peer_ip) {
