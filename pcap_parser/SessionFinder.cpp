@@ -155,3 +155,14 @@ Session* SessionFinder::findSession(std::string host_ip,
     return NULL;
 
 }
+
+Session *SessionFinder::findSession(std::string hash) {
+    std::map<std::string, Session>::iterator it;
+
+    for(it = sessions.begin(); it != sessions.end(); it++) {
+        if(((*it).second.getHash() == hash)) {
+            return &((*it).second);
+        }
+    }
+    return NULL;
+}

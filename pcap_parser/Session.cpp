@@ -25,6 +25,10 @@ std::string Session::getHost() {
     return std::string(host);
 }
 
+std::string Session::getHash() {
+    return std::string(info_hash);
+}
+
 void Session::addTracker(std::string tracker_ip) {
     //Check to make sure this tracker isn't already in the list
     if(not hasTracker(tracker_ip)) {

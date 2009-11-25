@@ -37,10 +37,12 @@ private:
 
     //Get the session corresponding to a given host and tracker
     Session* findSession(std::string, std::string);
-    
+    //Find a session by info_hash
+    Session* findSession(std::string);
+
     //Input file stream
     std::ifstream input_pipe;
-    
+
     //Map of session objects
     std::map<std::string, Session> sessions;
 };
