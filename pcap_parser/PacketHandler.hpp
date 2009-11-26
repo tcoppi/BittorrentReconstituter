@@ -24,7 +24,6 @@ class PacketHandler {
         * The constructor takes the name of the file and a flag representing the input
         * mode (live or offline).
         */
-        PacketHandler();
         PacketHandler(pcap_t*, const char*);
 
         /**
