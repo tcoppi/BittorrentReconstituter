@@ -16,6 +16,7 @@
 #include <fstream>
 #include "Piece.hpp"
 #include "Session.hpp"
+#include <boost/archive/text_iarchive.hpp>
 
 
 /* IDs of the bittorrent messages we might care about */
@@ -62,6 +63,9 @@ private:
 
     //Input file stream
     std::ifstream input_pipe;
+    
+    //Input archive
+    boost::archive::text_iarchive input_archive;
 
     //Map of session objects, indexed by info hash
     std::map<std::string, Session> sessions;

@@ -19,18 +19,29 @@ using std::endl;
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-SessionFinder::SessionFinder(const char* input_name) {
-    //Set up the input stream
-    input_pipe.open(input_name);
-}
+SessionFinder::SessionFinder(const char* pipe)
+    : input_pipe(pipe), input_archive(input_pipe){ }
 
 /**
- * Sets up the input handler.
+ * Runs the input handler.
  */
 void SessionFinder::run() {
     //Read each packet from the input pipe
+    Packet current;
+    while(true)
+    {
+        try {
+            input_archive >> current;
+            //Call handlePacket
+            handlePacket(current);
+        }
+        catch (boost::archive::archive_exception &e) {
+            //Stop processing packets if a problem occurs
+            //This exception covers both stream errors and EOF
+            break;
+        }
+    }
 
-    //Call handlePacket
 }
 
 /**
