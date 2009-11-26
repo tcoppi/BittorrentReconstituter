@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
+#include <boost/archive/text_oarchive.hpp>
 
 /**
  * Creates packets one by one from pcap and passes them on to the
@@ -37,6 +38,7 @@ class PacketHandler {
         void handlePacket(const u_char *packet, const struct pcap_pkthdr *header);
         pcap_t* input_handle;
         std::ofstream output_pipe;
+        boost::archive::text_oarchive output_archive;
 };
 #endif
 // vim: tabstop=4:expandtab

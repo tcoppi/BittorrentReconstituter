@@ -14,16 +14,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <boost/archive/text_oarchive.hpp>
+#include <fstream>
 
 PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
-    : input_handle(handler) {
-    //Open output file stream
-    output_pipe.open(pipe);
+    : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {
     }
 
 void PacketHandler::run() {
-
+    
     //Process the input
     struct pcap_pkthdr header;
     const u_char * packet = pcap_next(input_handle, &header);
@@ -88,7 +86,6 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.payload = std::string(payload);
 
     //Serialize packet to output pipe
-    boost::archive::text_oarchive output_archive(output_pipe);
     output_archive << pkt;
 }
 // vim: tabstop=4:expandtab
