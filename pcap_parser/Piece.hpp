@@ -5,6 +5,7 @@
 #ifndef PCAP_PARSER_PIECE_H
 #define PCAP_PARSER_PIECE_H
 
+#include <boost/archive/text_oarchive.hpp>
 /**
  * Holds all the data from a piece message.
  */
@@ -21,5 +22,20 @@ typedef struct {
    char *block;
 } Piece;
 
+// Boost serialization
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+                void serialize(Archive & ar, Piece & p, const unsigned int version)
+        {
+            ar & p.index;
+            ar & p.offset;
+            ar & p.len;
+            ar & p.block;
+        }
+
+    }
+}
 #endif
 // vim: tabstop=4:expandtab
