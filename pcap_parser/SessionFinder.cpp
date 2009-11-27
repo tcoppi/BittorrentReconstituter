@@ -73,7 +73,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
-	// FIXME we need to deurlencode and debencode this
+        // FIXME we need to deurlencode and debencode this
         std::string info_hash = std::string(pkt.payload.c_str()+offset, 20); //20 byte info hash
 
         Session session = Session(pkt.dst_ip, pkt.src_ip, info_hash);
@@ -121,15 +121,15 @@ void SessionFinder::handlePacket(Packet pkt) {
     //Decode a peer handshake
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
         offset = pkt.payload.find("BitTorrent protocol");
-	offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-    Session *session = sessions[std::string(pkt.payload.c_str()+offset)];
+        offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
+        Session session = sessions[std::string(pkt.payload.c_str()+offset)];
 
-    /*
-     * activate both because this handshake means both peers should be
-	 * "alive"
-	 */
-	session->activatePeer(pkt.dst_ip);
-	session->activatePeer(pkt.src_ip);
+        /*
+         * activate both because this handshake means both peers should be
+         * "alive"
+         */
+        session.activatePeer(pkt.dst_ip);
+        session.activatePeer(pkt.src_ip);
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
@@ -143,10 +143,10 @@ void SessionFinder::handlePacket(Packet pkt) {
         Session *session = findSession(pkt.src_ip, pkt.src_port);
 
         //Make sure the session contains both peers and that they are activated
-        if(session.hasPeer(pkt.dst_ip, pkt.dst_port)) {
+        if(session->hasPeer(pkt.dst_ip, pkt.dst_port)) {
             Peer *peersrc = session->getPeer(pkt.src_ip, pkt.src_port);
             Peer *peerdst = session->getPeer(pkt.dst_ip, pkt.dst_port);
-            if(peersrc->activated && peerdst->activated) {
+            if(peersrc->active && peerdst->active) {
                 /* This is a bittorrent packet
                  * packet format looks like(network byte order)
                  * [4-byte length][1 byte message ID][message-specific payload]
@@ -157,14 +157,14 @@ void SessionFinder::handlePacket(Packet pkt) {
                 //All we have to do is append the data from the packet to the
                 //old piece and update the length
                 if(piece_in_flight) {
-                    buff = malloc(this->currpiece->len + pkt.payload.length);
+                    char *buff = (char *)malloc(this->currpiece->len + pkt.payload.length());
 
                     if(!buff)
                             throw "Out of memory";
 
                     //copy in the old + new contents
-                    buff = memcpy(buff, this->currpiece->block, this->currpiece->len);
-                    buff = memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length);
+                    buff = (char *)memcpy(buff, this->currpiece->block, this->currpiece->len);
+                    buff = (char *)memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length());
 
                     free(this->currpiece->block);
                     this->currpiece->block = buff;
@@ -177,7 +177,7 @@ void SessionFinder::handlePacket(Packet pkt) {
                 }
                 //We have a new piece
                 else {
-                    buff = malloc(pkt.payload.length);
+                    char *buff = (char *)malloc(pkt.payload.length());
                     if(!buff)
                             throw "Out of memory";
 //                    buff = memcpy(buff, pkt.payload.data(), );
@@ -204,7 +204,7 @@ Session *SessionFinder::findSession(std::string host_ip,
 
 }
 
-Session *findSession(std::string ip, u_short port) {
+Session *SessionFinder::findSession(std::string ip, u_short port) {
     std::map<std::string, Session>::iterator it;
 
     for(it = sessions.begin(); it != sessions.end(); it++) {
