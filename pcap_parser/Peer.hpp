@@ -16,5 +16,20 @@ typedef struct {
     bool active;
 } Peer;
 
+// Boost serialization
+namespace boost {
+    namespace serialization {
+
+        template<class Archive>
+                void serialize(Archive & ar, Peer & p, const unsigned int version)
+        {
+            ar & p.ip;
+            ar & p.port;
+            ar & p.active;
+        }
+
+    }
+}
+
 #endif
 // vim: tabstop=4:expandtab

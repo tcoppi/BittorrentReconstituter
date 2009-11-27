@@ -12,6 +12,11 @@
 #include "Piece.hpp"
 #include "Peer.hpp"
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
+
 /**
  * Stores everything we know about a BitTorrent session.
  *
@@ -48,7 +53,21 @@ class Session {
         bool completed;
 };
 
-//TODO Add serialization code
+// Boost serialization
+namespace boost {
+    namespace serialization {
 
+        template<class Archive>
+                void serialize(Archive & ar, Session & s, const unsigned int version)
+        {
+            ar & s.info_hash;
+            ar & s.host;
+            ar & s.trackers;
+            ar & s.peers;
+            ar & s.pieces;
+        }
+
+    }
+}
 #endif
 // vim: tabstop=4:expandtab
