@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pcap.h>
+#include <cerrno>
 
 // The docs suggest this alias
 namespace po = boost::program_options;
@@ -64,8 +65,11 @@ int main(int argc, char **argv) {
     }
 
     // Spawn processes / pipes here and start passing them around
-    if (mkfifo("toFinder", 0744) == -1) {
-        // Dick with errno
+    while (mkfifo("toFinder", 0744) == -1) {
+        if (errno == EEXIST) {
+            remove("toFinder");
+            continue;
+        }
         return -1;
     }
 
@@ -99,10 +103,11 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    PacketHandler *ph = new PacketHandler(input_handle, "toFinder");
+
+    output << "Forking" << std::endl;
     pid_t pid = fork();
     if (pid == 0) {
-        output << "Starting SessionFinder";
+        output << "Starting SessionFinder" << std::endl;
         SessionFinder *sf = new SessionFinder("toFinder");
         sf->run();
     }
@@ -110,6 +115,8 @@ int main(int argc, char **argv) {
         std::cerr << "Someone set up us the bomb.\n";
         return -1;
     }
+    PacketHandler *ph = new PacketHandler(input_handle, "toFinder");
+    ph->run();
 
     return 0;
 }
