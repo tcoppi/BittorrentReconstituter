@@ -18,9 +18,9 @@ all: subdirs btfinder
 
 btfinder: driver.o $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
 ifeq ($(OSNAME),Darwin)
-	$(CPP) $(CFLAGS) -o btfinder -I/opt/local/include $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
+	$(CPP) $(CFLAGS) -o btfinder -I/opt/local/include $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
 else
-	$(CPP) $(CFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
+	$(CPP) $(CFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
 endif
 
 driver.o: driver.cpp
