@@ -102,4 +102,7 @@ Piece * Session::getLastPiece() {
     return pieces.back();
 }
 
+void Session::addPiece(Piece * newPiece) {
+    pieces.push_back(newPiece);
+}
 // vim: tabstop=4:expandtab
