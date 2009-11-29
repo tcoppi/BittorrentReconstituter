@@ -107,23 +107,30 @@ void SessionFinder::handlePacket(Packet pkt) {
         // The string is URL encoded, so we need to take out all the percents
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
-        std::cout << "saving a session with length " << info_hash.size() << std::endl;
-        Session *session = new Session(pkt.dst_ip, pkt.src_ip, info_hash);
+        if(pkt.payload.find("started") != std::string::npos) {
+            Session *session = new Session(pkt.src_ip, pkt.dst_ip, info_hash);
 
-        offset = pkt.payload.find("port=");
-        offset += strlen("port=");
-
-        // Add the peer - doesn't make sense to add host as peer
-/*        session->addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));*/
-        
-        //trace statements
-        std::cout << "got a request from " << pkt.src_ip << std::endl;
-        std::cout << "info hash: " << info_hash << std::endl;
-        std::cout << "payload: " << pkt.payload << std::endl;
-
-        
-        // Add the session
-        sessions[info_hash] = session;
+            offset = pkt.payload.find("port=");
+            offset += strlen("port=");
+            //trace statements
+            std::cout << "got a request from " << pkt.src_ip << std::endl;
+            std::cout << "info hash: " << info_hash << std::endl;
+            std::cout << "payload: " << pkt.payload << std::endl;
+    
+            
+            // Add the session
+            sessions[info_hash] = session;
+        }
+        else if(pkt.payload.find("completed") != std::string::npos) {
+            //TODO 
+            //Get session
+            
+            //Set completed
+            
+            //Remove from map
+            
+            //Write to output
+        }
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
@@ -131,28 +138,34 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find the corresponding session
         Session *session = findSession(pkt.dst_ip, pkt.src_ip);
         if (session == NULL) {
-            std::cout << "didn't find a session" << std::endl;
             return; 
         }
 
-        std::cout << "got a response from " << pkt.dst_ip << std::endl;
+        std::cout << "got a response from " << pkt.src_ip << std::endl;
         
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
         offset = pkt.payload.find("5:peers");
         offset += strlen("5:peers");
-        endoff = pkt.payload.find(":", offset); //get the next ':'
-        //divide by 6 because each peer is 4 bytes for ip + 2 for port
-        unsigned int peers_to_add;
-        peers_to_add = (unsigned int)strtol(pkt.payload.c_str()+offset, NULL, 10) /  6;
+        std::cout << "offset: " << offset << std::endl;
 
+        endoff = pkt.payload.find(":", offset); //get the next ':
+        std::cout << "end: " << endoff << std::endl;
+        
+        //divide by 6 because each peer is 4 bytes for ip + 2 for port
+        unsigned int peers_to_add = atoi(pkt.payload.substr(offset, endoff-offset).c_str());
+        peers_to_add /= 6;
+        
+        std::cout << "peers: " << peers_to_add << std::endl;
+        //TODO
         offset = endoff+2; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
         for(int i=0;i<peers_to_add;i++) {
             //decode ip
-            std::cout << "adding peer " << std::string(pkt.payload.c_str()+offset, 4) << " to session " << session->getHash() << std::endl;
+            std::string ip_str;
+            
             
             session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
@@ -235,9 +248,10 @@ Session *SessionFinder::findSession(std::string host_ip,
                                     std::string tracker_ip) {
     std::map<std::string, Session*>::iterator it;
     for (it = sessions.begin(); it != sessions.end(); ++it) {
-        if ((it->second->getHost() == host_ip) and
-            (it->second->hasTracker(tracker_ip))) {
-            return it->second;
+        if ((it->second->getHost() == host_ip)) {
+            if (it->second->hasTracker(tracker_ip)) {
+                return it->second;
+            }
         }
     }
     return NULL;
