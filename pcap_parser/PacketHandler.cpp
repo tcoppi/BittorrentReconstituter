@@ -82,6 +82,9 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.src_port = ntohs(tcp_header->th_sport);
     pkt.dst_port = ntohs(tcp_header->th_dport);
     pkt.payload = std::string(payload);
+    std::cout << "PH: " << pkt.src_ip << ":" << pkt.src_port << " -> " 
+            << pkt.dst_ip << ":" << pkt.dst_port << " with payload " << std::endl;
+    std::cout << "PH: " << pkt.payload << std::endl;
 
     //Serialize packet to output pipe
     output_archive << pkt;
