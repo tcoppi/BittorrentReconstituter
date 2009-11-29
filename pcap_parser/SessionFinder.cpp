@@ -109,8 +109,13 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = pkt.payload.find("port=");
         offset += strlen("port=");
 
-        // Add the peer
-        session->addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));
+        // Add the peer - doesn't make sense to add host as peer
+/*        session->addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));*/
+        
+        //trace statements
+        std::cout << "got a request from " << pkt.src_ip << std::endl;
+        std::cout << "info hash: " << info_hash << std::endl;
+        
         // Add the session
         sessions[info_hash] = session;
     }
@@ -121,6 +126,8 @@ void SessionFinder::handlePacket(Packet pkt) {
         Session *session = findSession(pkt.dst_ip, pkt.src_ip);
         if (session == NULL) { return; }
 
+        std::cout << "got a response from " << pkt.dst_ip << std::endl;
+        
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
@@ -136,6 +143,8 @@ void SessionFinder::handlePacket(Packet pkt) {
         //peer looks like [4 byte ip][2 byte port] in network byte order
         for(int i=0;i<peers_to_add;i++) {
             //decode ip
+            std::cout << "adding peer " << std::string(pkt.payload.c_str()+offset, 4) << " to session " << session->getHash() << std::endl;
+            
             session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
         }
