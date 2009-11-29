@@ -50,7 +50,8 @@ std::string decode_percents(std::string const& url_path) {
  * mode (live or offline).
  */
 SessionFinder::SessionFinder(const char* pipe)
-    : input_pipe(pipe), input_archive(input_pipe){ }
+    : input_pipe(pipe), input_archive(input_pipe){
+    }
 
 /**
  * Runs the input handler.
@@ -100,10 +101,13 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
 
+        //find the next field after info_hash
+        int hash_size = pkt.payload.find("&") - offset;
+        
         // The string is URL encoded, so we need to take out all the percents
         // and possibly ampersands.  info_hash is 20 bytes long.
-        std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, 20));
-
+        std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
+        std::cout << "saving a session with length " << info_hash.size() << std::endl;
         Session *session = new Session(pkt.dst_ip, pkt.src_ip, info_hash);
 
         offset = pkt.payload.find("port=");
@@ -126,7 +130,10 @@ void SessionFinder::handlePacket(Packet pkt) {
             (pkt.payload.find("d8:complete"))) {
         //Find the corresponding session
         Session *session = findSession(pkt.dst_ip, pkt.src_ip);
-        if (session == NULL) { return; }
+        if (session == NULL) {
+            std::cout << "didn't find a session" << std::endl;
+            return; 
+        }
 
         std::cout << "got a response from " << pkt.dst_ip << std::endl;
         
@@ -159,18 +166,20 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
         
         //The info_hash is the 20 bytes following the reserved byts
-        std::string hash = std::string(pkt.payload.c_str()+offset);
+        std::string hash = std::string(pkt.payload.c_str()+offset, 20);
         //Get rid of trailing data
-        hash.erase(20);
-                
+//         hash.erase(20);
+        std::cout << "getting a session with hash length" << hash.size() << std::endl;
+
         //Get session from hash
         std::map<std::string, Session*>::iterator found;
         found = sessions.find(hash);
         if(found == sessions.end()) {
+            std::cout << "didn't find a session" << std::endl;
             return;
         }
         Session *session = found->second;
-
+        std::cout << "found a piece with info_hash" << std::endl;
         // Activate both because this handshake means both peers should be alive
         session->activatePeer(pkt.src_ip);
     }
