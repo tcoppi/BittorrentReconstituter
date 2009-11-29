@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <pcap.h>
 
 // The docs suggest this alias
 namespace po = boost::program_options;
@@ -63,6 +64,52 @@ int main(int argc, char **argv) {
     }
 
     // Spawn processes / pipes here and start passing them around
+    if (mkfifo("toFinder", 0744) == -1) {
+        // Dick with errno
+        return -1;
+    }
+
+    // Fix later to allow live input -- just check if no input files
+    bool live = false;
+    // Just use the last name specified for now, fix later
+    std::string input_name = vm["input-file"].as<std::vector<std::string> >().back();
+    pcap_t* input_handle;
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    if (live) {
+        input_handle = pcap_open_live(input_name.c_str(), 65535, 1, 1000, errbuf);
+        if (input_handle == NULL) {
+            std::cerr << "Unable to open device " << input_name << ": " 
+                      << errbuf << std::endl;
+            return -1;
+        }
+    }
+    else {
+        input_handle = pcap_open_offline(input_name.c_str(), errbuf);
+        if (input_handle == NULL) {
+            std::cerr << "Unable to open file " << input_name << ": " 
+                      << errbuf << std::endl;
+            return -1;
+        }
+    }
+
+    // Make sure the data link layer is ethernet
+    if (pcap_datalink(input_handle) != DLT_EN10MB) {
+        std::cerr << "Not ethernet!" << std::endl;
+        return -1;
+    }
+
+    PacketHandler *ph = new PacketHandler(input_handle, "toFinder");
+    pid_t pid = fork();
+    if (pid == 0) {
+        output << "Starting SessionFinder";
+        SessionFinder *sf = new SessionFinder("toFinder");
+        sf->run();
+    }
+    else if (pid < 0) {
+        std::cerr << "Someone set up us the bomb.\n";
+        return -1;
+    }
 
     return 0;
 }

@@ -17,11 +17,9 @@
 #include <fstream>
 
 PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
-    : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {
-    }
+    : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {}
 
 void PacketHandler::run() {
-    
     //Process the input
     struct pcap_pkthdr header;
     const u_char * packet = pcap_next(input_handle, &header);
