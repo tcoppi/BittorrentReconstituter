@@ -142,14 +142,27 @@ void SessionFinder::handlePacket(Packet pkt) {
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
         }
     }
-    //Decode a peer handshake
+    //Decode a peer handshake by finding the "BitTorrent protocol" string
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
+        
+        //Found a handshake packet
         offset = pkt.payload.find("BitTorrent protocol");
         offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-        Session *session = sessions[std::string(pkt.payload.c_str()+offset)];
+        
+        //The info_hash is the 20 bytes following the reserved byts
+        std::string hash = std::string(pkt.payload.c_str()+offset);
+        //Get rid of trailing data
+        hash.erase(20);
+                
+        //Get session from hash
+        std::map<std::string, Session*>::iterator found;
+        found = sessions.find(hash);
+        if(found == sessions.end()) {
+            return;
+        }
+        Session *session = found->second;
 
         // Activate both because this handshake means both peers should be alive
-        session->activatePeer(pkt.dst_ip);
         session->activatePeer(pkt.src_ip);
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
