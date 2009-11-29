@@ -62,7 +62,6 @@ void SessionFinder::run() {
     while (true) {
         try {
             input_archive >> current;
-            //Call handlePacket
             handlePacket(current);
         }
         catch (boost::archive::archive_exception &e) {
@@ -113,10 +112,9 @@ void SessionFinder::handlePacket(Packet pkt) {
             offset = pkt.payload.find("port=");
             offset += strlen("port=");
             //trace statements
-            std::cout << "got a request from " << pkt.src_ip << std::endl;
-            std::cout << "info hash: " << info_hash << std::endl;
-            std::cout << "payload: " << pkt.payload << std::endl;
-    
+            std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
+            std::cout << "SF: Info hash: " << info_hash << std::endl;
+            std::cout << "SF: Payload: " << pkt.payload << std::endl;
             
             // Add the session
             sessions[info_hash] = session;
@@ -131,6 +129,9 @@ void SessionFinder::handlePacket(Packet pkt) {
             
             //Write to output
         }
+        
+        // Add the session
+        sessions[info_hash] = session;
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
@@ -141,7 +142,7 @@ void SessionFinder::handlePacket(Packet pkt) {
             return; 
         }
 
-        std::cout << "got a response from " << pkt.src_ip << std::endl;
+        std::cout << "SF: Got a response from " << pkt.dst_ip << std::endl;
         
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
@@ -166,7 +167,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             //decode ip
             std::string ip_str;
             
-            
             session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
         }
@@ -180,20 +180,17 @@ void SessionFinder::handlePacket(Packet pkt) {
         
         //The info_hash is the 20 bytes following the reserved byts
         std::string hash = std::string(pkt.payload.c_str()+offset, 20);
-        //Get rid of trailing data
-//         hash.erase(20);
-        std::cout << "getting a session with hash length" << hash.size() << std::endl;
 
         //Get session from hash
         std::map<std::string, Session*>::iterator found;
         found = sessions.find(hash);
         if(found == sessions.end()) {
-            std::cout << "didn't find a session" << std::endl;
+            std::cout << "SF: Didn't find a session" << std::endl;
             return;
         }
         Session *session = found->second;
-        std::cout << "found a piece with info_hash" << std::endl;
-        // Activate both because this handshake means both peers should be alive
+
+        // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
     //Move on to decoding bittorrent packets. We need to have at least found a

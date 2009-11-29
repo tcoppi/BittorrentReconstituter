@@ -28,16 +28,16 @@ typedef struct {
 
 // Non-instrusive Boost serialization
 namespace boost {
-    namespace serialization {
-        template<class Archive>
-        void serialize(Archive & ar, Packet & p, const unsigned int version) {
-            ar & p.src_ip;
-            ar & p.dst_ip;
-            ar & p.src_port;
-            ar & p.dst_port;
-            ar & p.payload;
-        }
+namespace serialization {
+    template<class Archive>
+    void serialize(Archive & ar, Packet & p, const unsigned int version) {
+        ar & p.src_ip;
+        ar & p.dst_ip;
+        ar & p.src_port;
+        ar & p.dst_port;
+        ar & p.payload;
     }
+}
 }
 
 #endif

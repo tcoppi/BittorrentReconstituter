@@ -22,7 +22,7 @@ PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
 void PacketHandler::run() {
     //Process the input
     struct pcap_pkthdr header;
-    const u_char * packet = pcap_next(input_handle, &header);
+    const u_char *packet = pcap_next(input_handle, &header);
     while (packet != NULL) {
         handlePacket(packet, &header);
         packet = pcap_next(input_handle, &header);
