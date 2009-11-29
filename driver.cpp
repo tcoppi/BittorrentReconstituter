@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 #include <boost/program_options.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 // The docs suggest this alias
 namespace po = boost::program_options;

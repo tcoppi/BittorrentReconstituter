@@ -9,7 +9,8 @@ else
 	LIBS=-lboost_program_options-mt -lboost_serialization-mt -lpcap
 endif
 
-PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o ./pcap_parser/Session.o
+PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o \
+  ./pcap_parser/Session.o ./pcap_parser/Piece.o
 FILERECONSTOBJECTS=
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) clean
@@ -23,7 +24,9 @@ else
 	$(CPP) $(CFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
 endif
 
-driver.o: driver.cpp
+driver.o: driver.cpp pcap_parser/SessionFinder.hpp pcap_parser/Packet.hpp \
+  pcap_parser/Piece.hpp pcap_parser/Session.hpp pcap_parser/Peer.hpp \
+  pcap_parser/PacketHandler.hpp
 
 subdirs: $(SUBDIRS)
 

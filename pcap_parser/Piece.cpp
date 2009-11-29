@@ -48,7 +48,7 @@ void Piece::addPayload(std::string payload) {
     }
     else if (block.size() > len) {
         //This piece is invalid
-        invalid = true;
+        valid = false;
     }
 }
 
