@@ -39,9 +39,9 @@ public:
 private:
 
     //Get the session corresponding to a given host and tracker
-    Session *findSession(std::string, std::string);
+    Session *findSession(std::string host, std::string tracker);
     //Find a session that has an activated peer on ip:port
-    Session *findSession(std::string, u_short);
+    Session *findSession(std::string ip, u_short port);
 
     /**
      * Since a piece can be too large for one packet, we need to keep some
@@ -50,6 +50,7 @@ private:
      * multiple sessions being reconstructed at the same time.
      */
     Piece *currpiece;
+
     /**
      * Tells us if we are continuing a piece from a previous packet.
      */
@@ -68,7 +69,7 @@ private:
     boost::archive::text_iarchive input_archive;
 
     //Map of session objects, indexed by info hash
-    std::map<std::string, Session> sessions;
+    std::map<std::string, Session*> sessions;
 };
 
 #endif

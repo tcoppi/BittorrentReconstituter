@@ -19,7 +19,7 @@ typedef struct {
     //length of the block
     unsigned int len;
 
-   char *block;
+    std::string block;
 } Piece;
 
 // Boost serialization

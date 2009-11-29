@@ -26,10 +26,9 @@ SessionFinder::SessionFinder(const char* pipe)
  * Runs the input handler.
  */
 void SessionFinder::run() {
-    //Read each packet from the input pipe
+    // Read each packet from the input pipe
     Packet current;
-    while(true)
-    {
+    while (true) {
         try {
             input_archive >> current;
             //Call handlePacket
@@ -41,7 +40,6 @@ void SessionFinder::run() {
             break;
         }
     }
-
 }
 
 /**
@@ -56,7 +54,6 @@ void SessionFinder::handlePacket(Packet pkt) {
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
     //Tracker requests can be decoded anytime, regardless of the current state
-
 
     // XXX We can make this short circuit by changing it to a not and flipping
     // the !=s to ==s and the &&s to ||s, which will be faster.
@@ -73,27 +70,26 @@ void SessionFinder::handlePacket(Packet pkt) {
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
-	// FIXME we need to deurlencode and debencode this
+
+        // FIXME we need to deurlencode and debencode this
         std::string info_hash = std::string(pkt.payload.c_str()+offset, 20); //20 byte info hash
 
-        Session session = Session(pkt.dst_ip, pkt.src_ip, info_hash);
+        Session *session = new Session(pkt.dst_ip, pkt.src_ip, info_hash);
 
         offset = pkt.payload.find("port=");
         offset += strlen("port=");
-        //Add the peer
-        session.addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));
 
-        //Add the session
+        // Add the peer
+        session->addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));
+        // Add the session
         sessions[info_hash] = session;
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
             (pkt.payload.find("d8:complete"))) {
         //Find the corresponding session
-        Session* session = findSession(pkt.dst_ip, pkt.src_ip);
-        if(session == NULL) {
-            return;
-        }
+        Session *session = findSession(pkt.dst_ip, pkt.src_ip);
+        if (session == NULL) { return; }
 
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
@@ -114,26 +110,21 @@ void SessionFinder::handlePacket(Packet pkt) {
             //decode ip
             session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
             (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
-
         }
-
     }
     //Decode a peer handshake
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
         offset = pkt.payload.find("BitTorrent protocol");
-	offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-    Session *session = sessions[std::string(pkt.payload.c_str()+offset)];
+        offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
+        Session *session = sessions[std::string(pkt.payload.c_str()+offset)];
 
-    /*
-     * activate both because this handshake means both peers should be
-	 * "alive"
-	 */
-	session->activatePeer(pkt.dst_ip);
-	session->activatePeer(pkt.src_ip);
+        // Activate both because this handshake means both peers should be alive
+        session->activatePeer(pkt.dst_ip);
+        session->activatePeer(pkt.src_ip);
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
-    else{
+    else {
         /*
          * General plan of attack - check if the ip belongs to a peer we know
          * about, is active, and if it is on the right port. Then decode the
@@ -143,10 +134,11 @@ void SessionFinder::handlePacket(Packet pkt) {
         Session *session = findSession(pkt.src_ip, pkt.src_port);
 
         //Make sure the session contains both peers and that they are activated
-        if(session.hasPeer(pkt.dst_ip, pkt.dst_port)) {
+        if (session->hasPeer(pkt.dst_ip, pkt.dst_port)) {
             Peer *peersrc = session->getPeer(pkt.src_ip, pkt.src_port);
             Peer *peerdst = session->getPeer(pkt.dst_ip, pkt.dst_port);
-            if(peersrc->activated && peerdst->activated) {
+            if (peersrc->active && peerdst->active) {
+                char *buff;
                 /* This is a bittorrent packet
                  * packet format looks like(network byte order)
                  * [4-byte length][1 byte message ID][message-specific payload]
@@ -156,32 +148,33 @@ void SessionFinder::handlePacket(Packet pkt) {
 
                 //All we have to do is append the data from the packet to the
                 //old piece and update the length
-                if(piece_in_flight) {
-                    buff = malloc(this->currpiece->len + pkt.payload.length);
-
-                    if(!buff)
-                            throw "Out of memory";
+#if 0
+                if (piece_in_flight) {
+                    buff = (char *)malloc(this->currpiece->len + pkt.payload.length);
 
                     //copy in the old + new contents
                     buff = memcpy(buff, this->currpiece->block, this->currpiece->len);
                     buff = memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length);
 
-                    free(this->currpiece->block);
+                    // Need to make sure that this is created with new,
+                    // otherwise we shouldn't be screwing with it
+                    delete this->currpiece->block;
                     this->currpiece->block = buff;
 
-                    if(this->currpiece->len == this->total_len) {
+                    if (this->currpiece->len == this->total_len) {
                         this->currpiece = NULL;
                         this->piece_in_flight = false;
                         this->total_len = 0;
                     }
+
                 }
-                //We have a new piece
+                // We have a new piece
                 else {
                     buff = malloc(pkt.payload.length);
-                    if(!buff)
-                            throw "Out of memory";
+                    if (not buff) throw "Out of memory";
 //                    buff = memcpy(buff, pkt.payload.data(), );
                 }
+#endif
             }
         }
 	}
@@ -191,25 +184,22 @@ void SessionFinder::handlePacket(Packet pkt) {
  * Gets a session associated with the given host and tracker.
  */
 Session *SessionFinder::findSession(std::string host_ip,
-                                   std::string tracker_ip) {
-    std::map<std::string, Session>::iterator it;
-
-    for(it = sessions.begin(); it != sessions.end(); it++) {
-        if(((*it).second.getHost() == host_ip) and
-              ((*it).second.hasTracker(tracker_ip))) {
-            return &((*it).second);
+                                    std::string tracker_ip) {
+    std::map<std::string, Session*>::iterator it;
+    for (it = sessions.begin(); it != sessions.end(); ++it) {
+        if ((it->second->getHost() == host_ip) and
+            (it->second->hasTracker(tracker_ip))) {
+            return it->second;
         }
     }
     return NULL;
-
 }
 
-Session *findSession(std::string ip, u_short port) {
-    std::map<std::string, Session>::iterator it;
-
-    for(it = sessions.begin(); it != sessions.end(); it++) {
-        if((*it).second.hasPeer(ip, port)) {
-            return &((*it).second);
+Session *SessionFinder::findSession(std::string ip, u_short port) {
+    std::map<std::string, Session*>::iterator it;
+    for (it = sessions.begin(); it != sessions.end(); ++it) {
+        if (it->second->hasPeer(ip, port)) {
+            return it->second;
         }
     }
     return NULL;
