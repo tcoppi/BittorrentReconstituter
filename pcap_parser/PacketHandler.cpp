@@ -69,7 +69,7 @@ void PacketHandler::handlePacket(const u_char *packet,
 
         //Get the packet's payload
         raw_payload = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-        payload = std::string(raw_payload);
+        payload = std::string(raw_payload, (ntohs(ip_header->ip_len) - (size_ip + size_tcp)));
     }
     else {
         return; // Not TCP, ignore this packet
@@ -82,9 +82,6 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.src_port = ntohs(tcp_header->th_sport);
     pkt.dst_port = ntohs(tcp_header->th_dport);
     pkt.payload = std::string(payload);
-    std::cout << "PH: " << pkt.src_ip << ":" << pkt.src_port << " -> " 
-            << pkt.dst_ip << ":" << pkt.dst_port << " with payload " << std::endl;
-    std::cout << "PH: " << pkt.payload << std::endl;
 
     //Serialize packet to output pipe
     output_archive << pkt;
