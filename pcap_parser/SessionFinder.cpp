@@ -3,13 +3,13 @@
  *
  * Original Author: Aaron A. Lovato
  */
-#include "SessionFinder.hpp"
-#include "headers.hpp"
-#include "Peer.hpp"
 #include <iostream>
 #include <sstream>
 #include <string.h>
 #include <stdlib.h>
+#include "SessionFinder.hpp"
+#include "headers.hpp"
+#include "Peer.hpp"
 #include "Session.hpp"
 #include "Packet.hpp"
 using std::cout;
