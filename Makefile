@@ -1,10 +1,17 @@
 CPP=g++
 CFLAGS=-Wall -g
 OBJFLAGS=-c
-LIBS=-lpcap
+OSNAME := $(shell uname -s)
 
-PCAPOBJECTS = ./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o
-FILERECONSTOBJECTS =
+ifeq ($(OSNAME),Darwin)
+	LIBS=-L/opt/local/lib -lboost_program_options-mt -lpcap
+else
+	LIBS=-lboost_program_options-mt -lpcap
+endif
+
+PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o
+FILERECONSTOBJECTS=
+
 
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) clean
@@ -12,10 +19,18 @@ SUBDIRS = pcap_parser file_reconstituter
 all: subdirs btfinder
 
 btfinder: driver.o
-	$(CPP) $(CFLAGS) -o btfinder $(PCAPOBJECTS) $(FILERECONSTOBJECTS) $(LIBS)
+ifeq ($(OSNAME),Darwin)
+	$(CPP) $(CFLAGS) -o btfinder -I/opt/local/include $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
+else
+	$(CPP) $(CFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
+endif
 
 driver.o: driver.cpp
-	$(CPP) $(CFLAGS) $(OBJFLAGS) driver.cpp
+ifeq ($(OSNAME),Darwin)
+	$(CPP) $(CFLAGS) $(OBJFLAGS) -I/opt/local/include $(LIBS) driver.cpp
+else
+	$(CPP) $(CFLAGS) $(OBJFLAGS) $(LIBS) driver.cpp
+endif
 
 subdirs: $(SUBDIRS)
 

@@ -46,7 +46,7 @@ class Session {
         //IP addresses of trackers
         std::vector<std::string> trackers;
 
-         //The IPs of the peers in this transfer
+        //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
         //The pieces transferred
         std::vector<Piece> pieces;
@@ -56,17 +56,14 @@ class Session {
 // Boost serialization
 namespace boost {
     namespace serialization {
-
         template<class Archive>
-                void serialize(Archive & ar, Session & s, const unsigned int version)
-        {
+        void serialize(Archive & ar, Session & s, const unsigned int version) {
             ar & s.info_hash;
             ar & s.host;
             ar & s.trackers;
             ar & s.peers;
             ar & s.pieces;
         }
-
     }
 }
 #endif
