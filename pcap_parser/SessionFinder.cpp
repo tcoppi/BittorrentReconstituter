@@ -115,6 +115,8 @@ void SessionFinder::handlePacket(Packet pkt) {
         //trace statements
         std::cout << "got a request from " << pkt.src_ip << std::endl;
         std::cout << "info hash: " << info_hash << std::endl;
+        std::cout << "payload: " << pkt.payload << std::endl;
+
         
         // Add the session
         sessions[info_hash] = session;
