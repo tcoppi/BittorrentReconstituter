@@ -1,8 +1,10 @@
-//#include "pcap_parser/SessionFinder.hpp"
-//#include "pcap_parser/PacketHandler.hpp"
+#include "pcap_parser/SessionFinder.hpp"
+#include "pcap_parser/PacketHandler.hpp"
 #include <fstream>
 #include <iostream>
 #include <streambuf>
+#include <vector>
+#include <string>
 #include <boost/program_options.hpp>
 
 // The docs suggest this alias
@@ -15,13 +17,17 @@ int main(int argc, char **argv) {
     // Yay, option parsing. XD  Add any new options to desc, directly below
     po::options_description desc("BitTorrent Reconstitutor Options");
     desc.add_options()
-        ("help", "Write out this help message.")
-        ("output-file,o", po::value<std::string>(), 
+        ("help,h", "Write out this help message.")
+        ("output-file,o", po::value<std::string>(),
          "Write stats and non-error messages to this file.  Defaults to stdout.")
+        ("input-file,i", po::value<std::vector<std::string> >(), "Input files")
         ;
 
+    po::positional_options_description p;
+    p.add("input-file", -1);
+
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
     po::notify(vm);
 
     if (vm.count("help")) {
@@ -43,8 +49,16 @@ int main(int argc, char **argv) {
     }
     // Finally construct the correct output stream
     std::ostream output(buffer);
-    
-    output << "Testing!" << std::endl;
+
+    // Input file stuff -- print out for debugging
+    if (vm.count("input-file")) {
+        output << "Input files: ";
+        std::vector<std::string> v = vm["input-file"].as<std::vector<std::string> >();
+        // I don't want to roll my own copy, so this leaves an extra ", " at the
+        // end.  You can't delete from the end of an ostream, either,
+        // apparently. XD
+        copy(v.begin(), v.end(), std::ostream_iterator<std::string>(output, ", "));
+    }
 
     // Spawn processes / pipes here and start passing them around
 
