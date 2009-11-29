@@ -98,4 +98,8 @@ void Session::activatePeer(std::string peer_ip) {
     }
 }
 
+Piece * Session::getLastPiece() {
+    return pieces.back();
+}
+
 // vim: tabstop=4:expandtab

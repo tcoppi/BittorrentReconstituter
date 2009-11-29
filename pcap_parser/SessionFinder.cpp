@@ -104,8 +104,6 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = endoff+2; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
-        //FIXME figure out a good way to translate to host order without all
-        //kinds of conversions between string->int->string
         for(int i=0;i<peers_to_add;i++) {
             //decode ip
             session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
@@ -144,52 +142,40 @@ void SessionFinder::handlePacket(Packet pkt) {
          * packet as bittorrent.
          */
 
+        //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
-
-        //Make sure the session contains both peers and that they are activated
-        if (session->hasPeer(pkt.dst_ip, pkt.dst_port)) {
-            Peer *peersrc = session->getPeer(pkt.src_ip, pkt.src_port);
-            Peer *peerdst = session->getPeer(pkt.dst_ip, pkt.dst_port);
-            if (peersrc->active && peerdst->active) {
-                char *buff;
-                /* This is a bittorrent packet
-                 * packet format looks like(network byte order)
-                 * [4-byte length][1 byte message ID][message-specific payload]
-                 * for PIECE messages, the data may be spread over more than one
-                 * tcp/ip packet, so we have to be sure to account for that.
-                 */
-
-                //All we have to do is append the data from the packet to the
-                //old piece and update the length
-#if 0
-                if (piece_in_flight) {
-                    buff = (char *)malloc(this->currpiece->len + pkt.payload.length);
-
-                    //copy in the old + new contents
-                    buff = memcpy(buff, this->currpiece->block, this->currpiece->len);
-                    buff = memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length);
-
-                    // Need to make sure that this is created with new,
-                    // otherwise we shouldn't be screwing with it
-                    delete this->currpiece->block;
-                    this->currpiece->block = buff;
-
-                    if (this->currpiece->len == this->total_len) {
-                        this->currpiece = NULL;
-                        this->piece_in_flight = false;
-                        this->total_len = 0;
-                    }
-
-                }
-                // We have a new piece
-                else {
-                    buff = malloc(pkt.payload.length);
-                    if (not buff) throw "Out of memory";
-//                    buff = memcpy(buff, pkt.payload.data(), );
-                }
-#endif
-            }
+        if (session == NULL) {
+            return;
         }
+        
+        //Make sure the destination ip matches the host
+        if(pkt.dst_ip != session->getHost()) {
+            return;
+        }
+        
+        //Make sure the peer corresponding to the source is active
+        Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
+        if (!source->active) {
+            //The peer isn't active, drop this packet
+            return;
+        }
+        
+        //Continue a piece in flight
+        if(not session->getLastPiece()->isCompleted()) {
+            //Update last piece
+            session->getLastPiece()->addPayload(pkt.payload);
+            return;
+        }
+        
+        //This packet should correspond to session
+        //Attempt to decode it as a Piece message
+        Piece * piece = new Piece(pkt.payload);
+        if(not piece->isValid()) {
+            return;
+        }
+        
+        //Add piece to session
+        session->addPiece(piece);
 	}
 }
 

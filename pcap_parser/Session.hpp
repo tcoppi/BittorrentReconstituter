@@ -35,7 +35,8 @@ class Session {
         bool hasPeer(std::string, u_short);
         Peer *getPeer(std::string, u_short);
         void activatePeer(std::string);
-        void addPiece();
+        void addPiece(Piece*);
+        Piece * getLastPiece();
 
     private:
         std::string info_hash; /* url and bencoded, shouldn't matter since
@@ -49,7 +50,7 @@ class Session {
         //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
         //The pieces transferred
-        std::vector<Piece> pieces;
+        std::vector<Piece*> pieces;
         bool completed;
 };
 
