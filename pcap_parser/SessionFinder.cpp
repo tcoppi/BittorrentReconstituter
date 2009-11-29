@@ -129,9 +129,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             
             //Write to output
         }
-        
-        // Add the session
-        sessions[info_hash] = session;
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
