@@ -15,6 +15,36 @@
 using std::cout;
 using std::cerr;
 using std::endl;
+
+// This function taken from http://www.boost.org/doc/libs/1_41_0/tools/inspect/link_check.cpp
+// Copyright Beman Dawes 2002.
+// Distributed under the Boost Software License, Version 1.0.
+// Decode percent encoded characters, returns an empty string if there's an error.
+std::string decode_percents(std::string const& url_path) {
+    std::string::size_type pos = 0, next;
+    std::string result;
+    result.reserve(url_path.length());
+
+    while((next = url_path.find('%', pos)) != std::string::npos) {
+        result.append(url_path, pos, next - pos);
+        pos = next;
+        switch(url_path[pos]) {
+        case '%': {
+            if(url_path.length() - next < 3) return "";
+            char hex[3] = { url_path[next + 1], url_path[next + 2], '\0' };
+            char* end_ptr;
+            result += (char) std::strtol(hex, &end_ptr, 16);
+            if(*end_ptr) return "";
+            pos = next + 3;
+            break;
+        }
+        }
+    }
+    result.append(url_path, pos, url_path.length());
+
+    return result;
+}
+
 /**
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
@@ -48,8 +78,7 @@ void SessionFinder::run() {
  * is discarded.
  */
 void SessionFinder::handlePacket(Packet pkt) {
-    //Temp vars
-    unsigned int offset, endoff;
+    unsigned int offset, endoff; // Temps
 
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
@@ -71,8 +100,9 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
 
-        // FIXME we need to deurlencode and debencode this
-        std::string info_hash = std::string(pkt.payload.c_str()+offset, 20); //20 byte info hash
+        // The string is URL encoded, so we need to take out all the percents
+        // and possibly ampersands.  info_hash is 20 bytes long.
+        std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, 20));
 
         Session *session = new Session(pkt.dst_ip, pkt.src_ip, info_hash);
 
@@ -136,8 +166,7 @@ void SessionFinder::handlePacket(Packet pkt) {
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
     else {
-        /*
-         * General plan of attack - check if the ip belongs to a peer we know
+        /* General plan of attack - check if the ip belongs to a peer we know
          * about, is active, and if it is on the right port. Then decode the
          * packet as bittorrent.
          */
