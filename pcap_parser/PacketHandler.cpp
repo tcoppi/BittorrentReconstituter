@@ -27,6 +27,7 @@ void PacketHandler::run() {
         handlePacket(packet, &header);
         packet = pcap_next(input_handle, &header);
     }
+    output_pipe.close();
 }
 
 void PacketHandler::handlePacket(const u_char *packet,
