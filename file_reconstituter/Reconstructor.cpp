@@ -38,15 +38,20 @@ void Reconstructor::reconstructSession(Session *s) {
     // We get file.  How are you gentlemen?  Output me to your base.
 }
 
-bool Reconstructor::addPiece(Piece *piece) {
-    //we need a way to get the length of a whole piece.
-    //one way to do this may be to hold off adding pieces to the data until we
-    //have all the individual blocks of one piece index and add its length
-    //together. Assuming 32kb for now, since that is the block size of all our
-    //test torrents
-    unsigned int length_of_piece = 32768;
-    this->m_data.insert((piece->getIndex() * length_of_piece) + piece->getOffset(), piece->getBlock());
-
-    return true;
+void File::addPiece(Piece *piece) {
+    // Insert the piece's data into the correct macropiece position and offset.
+    this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
 }
+
+void File::writeFile(void) {
+    // Take every macropiece and add them all sequentially to the final buffer
+    // and write it to disk
+
+    std::map<unsigned int, std::string>::iterator s, e;
+
+    for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
+        this->m_data.insert((*s).second.length() * (*s).first, (*s).second);
+    }
+}
+
 // vim: tabstop=4:expandtab

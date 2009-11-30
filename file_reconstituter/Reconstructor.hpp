@@ -29,10 +29,8 @@ public:
      *
      * Uses the information in the piece to add it to the correct place in the
      * buffer.
-     *
-     * Returns true if piece was successfully added, false otherwise.
      */
-    bool addPiece(Piece *piece);
+    void addPiece(Piece *);
 
     /**
      * Outputs the current contents of the buffer buffer to the file in m_name.
@@ -42,6 +40,11 @@ public:
 private:
     std::string m_name;
     std::string m_data;
+
+    /**
+     * Map of all the large pieces, indexed by the piece's index.
+     */
+    std::map<unsigned int, std::string> macropieces;
 };
 
 #endif
