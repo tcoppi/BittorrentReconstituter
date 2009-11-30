@@ -13,6 +13,9 @@ Session::Session() {}
 
 Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std::string info_hash) {
 
+    //Set completed flag
+    completed = false;
+    
     //Set the host ip and info hash
     host = std::string(host_ip);
     host_port = port;
@@ -22,6 +25,9 @@ Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std:
     trackers.push_back(tracker_ip);
 }
 
+void Session::setCompleted(bool comp) {
+    completed = comp;
+}
 std::string Session::getHost() {
     return std::string(host);
 }
@@ -63,7 +69,9 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
     }
 }
 
-//Returns whether the given peer and port combination is part of this session
+/**
+ * Returns whether the given peer and port combination is part of this session
+ */
 bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
     //Find peer by IP
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
@@ -107,7 +115,7 @@ Piece * Session::getLastPiece() {
     return NULL;
 }
 
-void Session::addPiece(Piece * newPiece) {
+void Session::addPiece(Piece *newPiece) {
     pieces.push_back(newPiece);
 }
 
