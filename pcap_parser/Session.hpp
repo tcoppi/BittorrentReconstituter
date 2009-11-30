@@ -39,6 +39,8 @@ class Session {
         void addPiece(Piece*);
         Piece *getLastPiece();
 
+        std::vector<Piece*> getPieces() { return this->pieces; }
+
     private:
         std::string info_hash; /* url and bencoded, shouldn't matter since
                                 * we don't *need* the raw value, just the
