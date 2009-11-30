@@ -1,3 +1,4 @@
+CPP=g++
 CXX=g++
 CXXFLAGS=-Wall -g
 OBJFLAGS=-c

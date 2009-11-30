@@ -15,6 +15,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <fstream>
+#include <unistd.h>
 
 PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
     : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {}
@@ -27,7 +28,7 @@ void PacketHandler::run() {
         handlePacket(packet, &header);
         packet = pcap_next(input_handle, &header);
     }
-    output_pipe.close();
+    std::cout << "PH: run exiting" << std::endl;
 }
 
 void PacketHandler::handlePacket(const u_char *packet,
@@ -71,6 +72,7 @@ void PacketHandler::handlePacket(const u_char *packet,
         //Get the packet's payload
         raw_payload = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
         payload = std::string(raw_payload, (ntohs(ip_header->ip_len) - (size_ip + size_tcp)));
+//         std::cout << payload << std::endl;
     }
     else {
         return; // Not TCP, ignore this packet
@@ -84,7 +86,11 @@ void PacketHandler::handlePacket(const u_char *packet,
     pkt.dst_port = ntohs(tcp_header->th_dport);
     pkt.payload = std::string(payload);
 
+//     std::cout << "writing payload " << pkt.payload << std::endl;
+
     //Serialize packet to output pipe
     output_archive << pkt;
+    output_pipe.flush();
+// 
 }
 // vim: tabstop=4:expandtab

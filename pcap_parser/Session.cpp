@@ -11,10 +11,11 @@
 
 Session::Session() {}
 
-Session::Session(std::string host_ip, std::string tracker_ip, std::string info_hash) {
+Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std::string info_hash) {
 
     //Set the host ip and info hash
     host = std::string(host_ip);
+    host_port = port;
     this->info_hash = std::string(info_hash);
 
     //Add the tracker to the list of trackers
@@ -58,6 +59,7 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
         new_peer.ip = peer_ip;
         new_peer.port = peer_port;
         new_peer.active = false;
+        peers[peer_ip] = new_peer;
     }
 }
 
@@ -107,4 +109,9 @@ Piece *Session::getLastPiece() {
 void Session::addPiece(Piece *newPiece) {
     pieces.push_back(newPiece);
 }
+
+u_short Session::getHostPort() {
+    return host_port;
+}
+
 // vim: tabstop=4:expandtab

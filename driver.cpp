@@ -10,6 +10,8 @@
 #include <sys/stat.h>
 #include <pcap.h>
 #include <cerrno>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 // The docs suggest this alias
 namespace po = boost::program_options;
@@ -65,9 +67,16 @@ int main(int argc, char **argv) {
     }
 
     // Spawn processes / pipes here and start passing them around
-    while (mkfifo("toFinder", 0744) == -1) {
+    while (mkfifo("intoFinder", 0744) == -1) {
         if (errno == EEXIST) {
-            remove("toFinder");
+            remove("intoFinder");
+            continue;
+        }
+        return -1;
+    }
+    while (mkfifo("outofFinder", 0744) == -1) {
+        if (errno == EEXIST) {
+            remove("outofFinder");
             continue;
         }
         return -1;
@@ -105,6 +114,7 @@ int main(int argc, char **argv) {
 
     pid_t pid = fork();
     if (pid == 0) {
+        //This is the child
         output << "Starting SessionFinder" << std::endl;
         SessionFinder *sf = new SessionFinder("intoFinder", "outofFinder");
         sf->run();
@@ -113,11 +123,15 @@ int main(int argc, char **argv) {
         std::cerr << "Someone set up us the bomb.\n";
         return -1;
     }
-    PacketHandler *ph = new PacketHandler(input_handle, "intoFinder");
-    ph->run();
-
-    remove("intoFinder");
-    remove("outofFinder");
+    else {
+        //Parent 
+        PacketHandler *ph = new PacketHandler(input_handle, "intoFinder");
+        ph->run();
+        std::cout << "waiting: " << waitpid(pid, NULL, 0) << std::endl;
+        remove("intoFinder");
+        remove("outofFinder");
+        
+    }
 
     return 0;
 }
