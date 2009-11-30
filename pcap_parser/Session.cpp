@@ -15,7 +15,7 @@ Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std:
 
     //Set completed flag
     completed = false;
-    
+
     //Set the host ip and info hash
     host = std::string(host_ip);
     host_port = port;
@@ -34,6 +34,10 @@ std::string Session::getHost() {
 
 std::string Session::getHash() {
     return std::string(info_hash);
+}
+
+std::map<std::string, Peer> Session::getPeers() {
+    return this->peers;
 }
 
 void Session::addTracker(std::string tracker_ip) {

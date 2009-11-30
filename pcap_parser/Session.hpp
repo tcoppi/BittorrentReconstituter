@@ -36,6 +36,7 @@ class Session {
         u_short getHostPort();
         Piece *getLastPiece();
         std::vector<Piece*> getPieces() { return this->pieces; }
+        std::map<std::string, Peer> getPeers();
 
         void addPeer(std::string, u_short);
         bool hasPeer(std::string, u_short);

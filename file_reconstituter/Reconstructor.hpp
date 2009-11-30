@@ -10,13 +10,14 @@
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe);
+    Reconstructor(const char *input_pipe, std::ofstream out);
     void reconstructSession(Session *session);
     void run();
 private:
     std::ifstream m_input;
     Session *m_curr_session;
     boost::archive::text_iarchive m_inpipe;
+    std::ofstream output;
 };
 
 class File {
@@ -34,9 +35,11 @@ public:
     void addPiece(Piece *);
 
     /**
-     * Outputs the current contents of the buffer buffer to the file in m_name.
+     * Outputs the current contents of the buffer buffer to the file.
+     *
+     * Returns the number of bytes written.
      */
-    void writeFile(void);
+    unsigned int writeFile(void);
 
 private:
     std::string m_name;
