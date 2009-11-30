@@ -59,6 +59,7 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
         new_peer.ip = peer_ip;
         new_peer.port = peer_port;
         new_peer.active = false;
+        peers[peer_ip] = new_peer;
     }
 }
 
