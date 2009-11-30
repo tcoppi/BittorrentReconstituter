@@ -181,7 +181,7 @@ started running. However, this design would have made working with a live input
 nearly impossible and thus we worked on an alternate design, which led to the
 concurrent processing used in our implementation.
 
-\section{Deliverable}
+\section{Deliverables}
 \subsection{Functionality}
 The application identifies and reconstructs any files transferred using the
 BitTorrent protocol from network traffic. It can be run against both live input
@@ -231,6 +231,17 @@ distributed through DHT, which has a big impact on our program.  As of now,
 we're assuming that the torrent file has to somehow magically be captured
 separately from the BitTorrent traffic.  If we can incorporate DHT technology
 into our program, we can eliminate this constraint.
+
+Another extension to the BitTorrent protocol that has become popular is
+protocol encryption.  This encapsulates BitTorrent protocol traffic in
+relatively weak RC-4 encryption as a way to get around some protocol shapers
+that detect BitTorrent traffic and throttle it slower as a way to reduce load
+on the network. This complicates matters because it prevents us from reading
+both the BitTorrent protocol header and the payload. The keys for encryption
+are exchanged using Diffie-Hellman, and as we are a passive observer, we have
+no way to obtain the key.  If it were possible to obtain the key used, such as
+by using traditional host forensics, decrypting the stream would be a simple
+addition to the Session Finder's packet decoding.
 
 \section{Conclusion}
 In conclusion, this application solves the problem of being unable to extract
