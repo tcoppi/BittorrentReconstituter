@@ -3,34 +3,74 @@
  *
  * Original Author: Aaron A. Lovato
  */
-#include "SessionFinder.hpp"
-#include "headers.hpp"
-#include "Peer.hpp"
 #include <iostream>
 #include <sstream>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include "SessionFinder.hpp"
+#include "headers.hpp"
+#include "Peer.hpp"
 #include "Session.hpp"
 #include "Packet.hpp"
 using std::cout;
 using std::cerr;
 using std::endl;
+
+// This function taken from http://www.boost.org/doc/libs/1_41_0/tools/inspect/link_check.cpp
+// Copyright Beman Dawes 2002.
+// Distributed under the Boost Software License, Version 1.0.
+// Decode percent encoded characters, returns an empty string if there's an error.
+std::string decode_percents(std::string const& url_path) {
+    std::string::size_type pos = 0, next;
+    std::string result;
+    result.reserve(url_path.length());
+
+    while((next = url_path.find('%', pos)) != std::string::npos) {
+        result.append(url_path, pos, next - pos);
+        pos = next;
+        switch(url_path[pos]) {
+        case '%': {
+            if(url_path.length() - next < 3) return "";
+            char hex[3] = { url_path[next + 1], url_path[next + 2], '\0' };
+            char* end_ptr;
+            result += (char) std::strtol(hex, &end_ptr, 16);
+            if(*end_ptr) return "";
+            pos = next + 3;
+            break;
+        }
+        }
+    }
+    result.append(url_path, pos, url_path.length());
+
+    return result;
+}
+
 /**
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-SessionFinder::SessionFinder(const char* input_name) {
-    //Set up the input stream
-    input_pipe.open(input_name);
-}
+SessionFinder::SessionFinder(const char* pipe)
+    : input_pipe(pipe), input_archive(input_pipe){
+    }
 
 /**
- * Sets up the input handler.
+ * Runs the input handler.
  */
 void SessionFinder::run() {
-    //Read each packet from the input pipe
-
-    //Call handlePacket
+    // Read each packet from the input pipe
+    Packet current;
+    while (true) {
+        try {
+            input_archive >> current;
+            handlePacket(current);
+        }
+        catch (boost::archive::archive_exception &e) {
+            //Stop processing packets if a problem occurs
+            //This exception covers both stream errors and EOF
+            break;
+        }
+    }
 }
 
 /**
@@ -39,13 +79,11 @@ void SessionFinder::run() {
  * is discarded.
  */
 void SessionFinder::handlePacket(Packet pkt) {
-    //Temp vars
-    unsigned int offset, endoff;
+    unsigned int offset, endoff; // Temps
 
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
     //Tracker requests can be decoded anytime, regardless of the current state
-
 
     // XXX We can make this short circuit by changing it to a not and flipping
     // the !=s to ==s and the &&s to ||s, which will be faster.
@@ -62,117 +100,169 @@ void SessionFinder::handlePacket(Packet pkt) {
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
         offset += strlen("info_hash=");
-        // FIXME we need to deurlencode and debencode this
-        std::string info_hash = std::string(pkt.payload.c_str()+offset, 20); //20 byte info hash
 
-        Session session = Session(pkt.dst_ip, pkt.src_ip, info_hash);
+        //find the next field after info_hash
+        int hash_size = pkt.payload.find("&") - offset;
 
-        offset = pkt.payload.find("port=");
-        offset += strlen("port=");
-        //Add the peer
-        session.addPeer(pkt.src_ip, (u_short)strtol(pkt.payload.c_str()+offset, NULL, 10));
+        // The string is URL encoded, so we need to take out all the percents
+        // and possibly ampersands.  info_hash is 20 bytes long.
+        std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
+        if(pkt.payload.find("started") != std::string::npos) {
+            Session *session = new Session(pkt.src_ip, pkt.dst_ip, info_hash);
 
-        //Add the session
-        sessions[info_hash] = session;
+            offset = pkt.payload.find("port=");
+            offset += strlen("port=");
+            //trace statements
+            std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
+            std::cout << "SF: Info hash: " << info_hash << std::endl;
+            std::cout << "SF: Payload: " << pkt.payload << std::endl;
+
+            // Add the session
+            sessions[info_hash] = session;
+            std::cout << "SF: Added session" << std::endl;
+        }
+        else if(pkt.payload.find("completed") != std::string::npos) {
+            //TODO
+            //Get session
+
+            //Set completed
+
+            //Remove from map
+
+            //Write to output
+        }
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
             (pkt.payload.find("d8:complete"))) {
         //Find the corresponding session
-        Session* session = findSession(pkt.dst_ip, pkt.src_ip);
-        if(session == NULL) {
+        Session *session = findSession(pkt.dst_ip, pkt.src_ip);
+        if (session == NULL) {
             return;
         }
+
+        std::cout << "SF: Got a response from " << pkt.dst_ip << std::endl;
 
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
         offset = pkt.payload.find("5:peers");
         offset += strlen("5:peers");
-        endoff = pkt.payload.find(":", offset); //get the next ':'
-        //divide by 6 because each peer is 4 bytes for ip + 2 for port
-        unsigned int peers_to_add;
-        peers_to_add = (unsigned int)strtol(pkt.payload.c_str()+offset, NULL, 10) /  6;
+        std::cout << "offset: " << offset << std::endl;
 
-        offset = endoff+2; //skip over the ':'
+        endoff = pkt.payload.find(":", offset); //get the next ':
+        std::cout << "end: " << endoff << std::endl;
+
+        //divide by 6 because each peer is 4 bytes for ip + 2 for port
+        unsigned int peers_to_add = atoi(pkt.payload.substr(offset, endoff-offset).c_str());
+        peers_to_add /= 6;
+
+        std::cout << "peers: " << peers_to_add << std::endl;
+        //TODO
+        offset = endoff+1; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
-        //FIXME figure out a good way to translate to host order without all
-        //kinds of conversions between string->int->string
         for(int i=0;i<peers_to_add;i++) {
-            //decode ip
-            session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
-            (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
+            char *inet_tmp = (char *)malloc(16);
+            u_short tmp_port;
+            const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
+            if (not inet_tmp)
+                    throw "Out of memory";
 
+            //decode ip and port
+            snprintf(inet_tmp, 15, "%d.%d.%d.%d", raw_data[0], raw_data[1],
+                                                  raw_data[2], raw_data[3]);
+
+
+            //FIXME XXX It looks like the port we get here is INCORRECT for the
+            //first peer, the port in the handshake looks like it is accurate
+            raw_data = pkt.payload.c_str()+offset+4;
+            tmp_port = (u_short)((unsigned char)raw_data[0]) << 8;
+            tmp_port |= (unsigned char)raw_data[1];
+
+            session->addPeer(std::string(inet_tmp),
+            tmp_port);
+
+            std::cout << "SF: Added peer " << inet_tmp << ":" << tmp_port << std::endl;
+
+            free(inet_tmp);
+
+            offset += 6;
         }
-
     }
-    //Decode a peer handshake
+    //Decode a peer handshake by finding the "BitTorrent protocol" string
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
+        //Found a handshake packet
         offset = pkt.payload.find("BitTorrent protocol");
         offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-        Session session = sessions[std::string(pkt.payload.c_str()+offset)];
 
-        /*
-         * activate both because this handshake means both peers should be
-         * "alive"
-         */
-        session.activatePeer(pkt.dst_ip);
-        session.activatePeer(pkt.src_ip);
+        //The info_hash is the 20 bytes following the reserved byts
+        std::string hash = std::string(pkt.payload.c_str()+offset, 20);
+
+        //Get session from hash
+        std::map<std::string, Session*>::iterator found;
+        found = sessions.find(hash);
+        if(found == sessions.end()) {
+            std::cout << "SF: Didn't find a session" << std::endl;
+            return;
+        }
+        Session *session = found->second;
+
+        // Activate peer because this handshake means it should be alive
+        session->activatePeer(pkt.src_ip);
+        std::cout << "Activated peer " << pkt.src_ip << std::endl;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
-    else{
-        /*
-         * General plan of attack - check if the ip belongs to a peer we know
+    else {
+        /* General plan of attack - check if the ip belongs to a peer we know
          * about, is active, and if it is on the right port. Then decode the
          * packet as bittorrent.
          */
 
+        //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
-
-        //Make sure the session contains both peers and that they are activated
-        if(session->hasPeer(pkt.dst_ip, pkt.dst_port)) {
-            Peer *peersrc = session->getPeer(pkt.src_ip, pkt.src_port);
-            Peer *peerdst = session->getPeer(pkt.dst_ip, pkt.dst_port);
-            if(peersrc->active && peerdst->active) {
-                /* This is a bittorrent packet
-                 * packet format looks like(network byte order)
-                 * [4-byte length][1 byte message ID][message-specific payload]
-                 * for PIECE messages, the data may be spread over more than one
-                 * tcp/ip packet, so we have to be sure to account for that.
-                 */
-
-                //All we have to do is append the data from the packet to the
-                //old piece and update the length
-                if(piece_in_flight) {
-                    char *buff = (char *)malloc(this->currpiece->len + pkt.payload.length());
-
-                    if(!buff)
-                            throw "Out of memory";
-
-                    //copy in the old + new contents
-                    buff = (char *)memcpy(buff, this->currpiece->block, this->currpiece->len);
-                    buff = (char *)memcpy(buff+this->currpiece->len, pkt.payload.data(), pkt.payload.length());
-
-                    free(this->currpiece->block);
-                    this->currpiece->block = buff;
-
-                    if(this->currpiece->len == this->total_len) {
-                        this->currpiece = NULL;
-                        this->piece_in_flight = false;
-                        this->total_len = 0;
-                    }
-                }
-                //We have a new piece
-                else {
-                    char *buff = (char *)malloc(pkt.payload.length());
-                    if(!buff)
-                            throw "Out of memory";
-//                    buff = memcpy(buff, pkt.payload.data(), );
-                }
+        if (session == NULL) {
+            //std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+            session = findSession(pkt.dst_ip, pkt.dst_port);
+            if (session == NULL) {
+             //   std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+                return;
             }
+            return;
         }
+        std::cout << "Test " << pkt.payload << std::endl;
+
+        //Make sure the destination ip matches the host
+        if (pkt.dst_ip != session->getHost()) {
+            return;
+        }
+
+        //Make sure the peer corresponding to the source is active
+        Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
+        if (!source->active) {
+            //The peer isn't active, drop this packet
+            return;
+        }
+
+        //Continue a piece in flight
+        if (not session->getLastPiece()->isCompleted()) {
+            //Update last piece
+            session->getLastPiece()->addPayload(pkt.payload);
+            return;
+        }
+
+        //This packet should correspond to session
+        //Attempt to decode it as a Piece message
+        Piece *piece = new Piece(pkt.payload);
+        if (not piece->isValid()) {
+            return;
+        }
+
+        std::cout << "Payload: " << pkt.payload << std::endl;
+
+        //Add piece to session
+        session->addPiece(piece);
 	}
 }
 
@@ -180,25 +270,23 @@ void SessionFinder::handlePacket(Packet pkt) {
  * Gets a session associated with the given host and tracker.
  */
 Session *SessionFinder::findSession(std::string host_ip,
-                                   std::string tracker_ip) {
-    std::map<std::string, Session>::iterator it;
-
-    for(it = sessions.begin(); it != sessions.end(); it++) {
-        if(((*it).second.getHost() == host_ip) and
-              ((*it).second.hasTracker(tracker_ip))) {
-            return &((*it).second);
+                                    std::string tracker_ip) {
+    std::map<std::string, Session*>::iterator it;
+    for (it = sessions.begin(); it != sessions.end(); ++it) {
+        if ((it->second->getHost() == host_ip)) {
+            if (it->second->hasTracker(tracker_ip)) {
+                return it->second;
+            }
         }
     }
     return NULL;
-
 }
 
 Session *SessionFinder::findSession(std::string ip, u_short port) {
-    std::map<std::string, Session>::iterator it;
-
-    for(it = sessions.begin(); it != sessions.end(); it++) {
-        if((*it).second.hasPeer(ip, port)) {
-            return &((*it).second);
+    std::map<std::string, Session*>::iterator it;
+    for (it = sessions.begin(); it != sessions.end(); ++it) {
+        if (it->second->hasPeer(ip, port)) {
+            return it->second;
         }
     }
     return NULL;

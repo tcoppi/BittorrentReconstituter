@@ -83,7 +83,7 @@ Peer *Session::getPeer(std::string peer_ip, u_short peer_port) {
     if(it != peers.end()) {
         //Check peer port
         if((*it).second.port == peer_port) {
-            return &(*it).second;
+            return &((*it).second);
         }
     }
     return NULL;
@@ -98,4 +98,11 @@ void Session::activatePeer(std::string peer_ip) {
     }
 }
 
+Piece * Session::getLastPiece() {
+    return pieces.back();
+}
+
+void Session::addPiece(Piece * newPiece) {
+    pieces.push_back(newPiece);
+}
 // vim: tabstop=4:expandtab

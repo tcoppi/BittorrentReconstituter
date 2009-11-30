@@ -1,0 +1,18 @@
+This compiler is the work of Charlie Moore, Aaron Lovato, and Thomas Coppi for
+the CS 489 Network Forensics class.
+
+===--------------------------------------------------------------------------===
+
+Usage: ./btfinder [options] <input files>
+  The input files can be any number of pcap files and possibly the accompanying
+  torrent files.  If torrent files are specified they are attempted to be
+  matched with one of the pcap files if possible for verification.
+
+Options:
+  --output-file[=]<filename>, -o <filename>
+    This option changes where the output will go.  By default, useful output is
+    written to stdout and errors are written to stderr.  The '=' in the long
+    form is optional.
+
+  --help
+    Show a help message describing these options

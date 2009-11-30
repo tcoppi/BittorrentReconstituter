@@ -17,18 +17,17 @@
 #include <fstream>
 
 PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
-    : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {
-    }
+    : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {}
 
 void PacketHandler::run() {
-    
     //Process the input
     struct pcap_pkthdr header;
-    const u_char * packet = pcap_next(input_handle, &header);
+    const u_char *packet = pcap_next(input_handle, &header);
     while (packet != NULL) {
         handlePacket(packet, &header);
         packet = pcap_next(input_handle, &header);
     }
+    output_pipe.close();
 }
 
 void PacketHandler::handlePacket(const u_char *packet,
@@ -71,7 +70,7 @@ void PacketHandler::handlePacket(const u_char *packet,
 
         //Get the packet's payload
         raw_payload = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-        payload = std::string(raw_payload);
+        payload = std::string(raw_payload, (ntohs(ip_header->ip_len) - (size_ip + size_tcp)));
     }
     else {
         return; // Not TCP, ignore this packet

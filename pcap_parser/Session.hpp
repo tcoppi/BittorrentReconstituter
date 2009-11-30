@@ -12,6 +12,11 @@
 #include "Piece.hpp"
 #include "Peer.hpp"
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/map.hpp>
+
 /**
  * Stores everything we know about a BitTorrent session.
  *
@@ -30,7 +35,8 @@ class Session {
         bool hasPeer(std::string, u_short);
         Peer *getPeer(std::string, u_short);
         void activatePeer(std::string);
-        void addPiece();
+        void addPiece(Piece*);
+        Piece * getLastPiece();
 
     private:
         std::string info_hash; /* url and bencoded, shouldn't matter since
@@ -41,14 +47,25 @@ class Session {
         //IP addresses of trackers
         std::vector<std::string> trackers;
 
-         //The IPs of the peers in this transfer
+        //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
         //The pieces transferred
-        std::vector<Piece> pieces;
+        std::vector<Piece*> pieces;
         bool completed;
 };
 
-//TODO Add serialization code
-
+// Boost serialization
+namespace boost {
+    namespace serialization {
+        template<class Archive>
+        void serialize(Archive & ar, Session & s, const unsigned int version) {
+            ar & s.info_hash;
+            ar & s.host;
+            ar & s.trackers;
+            ar & s.peers;
+            ar & s.pieces;
+        }
+    }
+}
 #endif
 // vim: tabstop=4:expandtab
