@@ -18,6 +18,10 @@ public:
     bool isValid();
     void addPayload(std::string);
     
+    unsigned int getIndex() { return this->index; }
+    unsigned int getOffset() { return this->offset; }
+    std::string getBlock() { return this->block; }
+
 private:
     //Function to convert bytes in a string to an unsigned int
     unsigned int convertUInt(std::string);
