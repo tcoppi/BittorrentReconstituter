@@ -6,12 +6,19 @@
  * Piece constructor - performs packet parsing magic.
  */
 Piece::Piece(std::string payload) {
+
+    //Make sure payload is long enough for decoding
+    if(payload.size() < 13) {
+        valid = false;
+        return;
+    }
+
     //Find 0x07 in 5th byte
     if(payload[4] != 0x07) {
         valid = false;
         return;
     }
-    
+
     //Get length
     len = convertUInt(payload.substr(0, 4));
     //length is len - 9

@@ -13,6 +13,9 @@ Session::Session() {}
 
 Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std::string info_hash) {
 
+    //Set completed flag
+    completed = false;
+    
     //Set the host ip and info hash
     host = std::string(host_ip);
     host_port = port;
@@ -22,6 +25,9 @@ Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std:
     trackers.push_back(tracker_ip);
 }
 
+void Session::setCompleted(bool comp) {
+    completed = comp;
+}
 std::string Session::getHost() {
     return std::string(host);
 }

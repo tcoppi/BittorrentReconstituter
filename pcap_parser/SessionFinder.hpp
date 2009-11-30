@@ -17,6 +17,7 @@
 #include "Piece.hpp"
 #include "Session.hpp"
 #include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 
 /* IDs of the bittorrent messages we might care about */
@@ -43,30 +44,17 @@ private:
     //Find a session that has an activated peer on ip:port
     Session *findSession(std::string, u_short);
 
-    /**
-     * Since a piece can be too large for one packet, we need to keep some
-     * state about the current piece that is being reconstructed.
-     * XXX We may need to keep track of more than one piece in the case of
-     * multiple sessions being reconstructed at the same time.
-     */
-    Piece *currpiece;
-
-    /**
-     * Tells us if we are continuing a piece from a previous packet.
-     */
-    bool piece_in_flight;
-
-    /**
-     * Total length of the piece. When the piece we are building has a length
-     * equal to this we are done.
-     */
-    unsigned int total_len;
-
     //Input file stream
     std::ifstream input_pipe;
     
     //Input archive
     boost::archive::text_iarchive input_archive;
+    
+    //Output file stream
+    std::ofstream output_pipe;
+    
+    //Output archive
+    boost::archive::text_oarchive output_archive;
 
     //Map of session objects, indexed by info hash
     std::map<std::string, Session*> sessions;

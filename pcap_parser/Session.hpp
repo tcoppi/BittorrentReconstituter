@@ -38,8 +38,17 @@ class Session {
         void activatePeer(std::string);
         void addPiece(Piece*);
         Piece * getLastPiece();
+        void setCompleted(bool);
 
     private:
+        friend std::ostream & operator<<(std::ostream &, const Session &);
+        friend class boost::serialization::access;
+        template<class Archive>
+                void serialize(Archive & ar, const unsigned int){
+            ar & info_hash & host & trackers & peers & pieces;
+                }
+
+                
         std::string info_hash; /* url and bencoded, shouldn't matter since
                                 * we don't *need* the raw value, just the
                                 * fact that it is unique. */
@@ -58,18 +67,5 @@ class Session {
         bool completed;
 };
 
-// Boost serialization
-namespace boost {
-    namespace serialization {
-        template<class Archive>
-        void serialize(Archive & ar, Session & s, const unsigned int version) {
-            ar & s.info_hash;
-            ar & s.host;
-            ar & s.trackers;
-            ar & s.peers;
-            ar & s.pieces;
-        }
-    }
-}
 #endif
 // vim: tabstop=4:expandtab

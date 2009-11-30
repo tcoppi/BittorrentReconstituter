@@ -51,7 +51,8 @@ std::string decode_percents(std::string const& url_path) {
  * mode (live or offline).
  */
 SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
-    : input_pipe(in_pipe), input_archive(input_pipe){
+    : input_pipe(in_pipe), input_archive(input_pipe), output_pipe(out_pipe), 
+      output_archive(output_pipe){
     }
 
 /**
@@ -121,17 +122,42 @@ void SessionFinder::handlePacket(Packet pkt) {
 
             // Add the session
             sessions[info_hash] = session;
-//             std::cout << "SF: Added session" << std::endl;
         }
         else if(pkt.payload.find("completed") != std::string::npos) {
-            //TODO
+            std::cout << "at completed" << std::endl;
             //Get session
+            //Extract out the content of each field
+            //info_hash is unique for every transfer so it goes in the class
+            offset = pkt.payload.find("info_hash=");
+            offset += strlen("info_hash=");
 
+            //find the next field after info_hash
+            int hash_size = pkt.payload.find("&") - offset;
+
+            // The string is URL encoded, so we need to take out all the percents
+            // and possibly ampersands.  info_hash is 20 bytes long.
+            std::string info_hash = decode_percents(
+                    std::string(pkt.payload.c_str()+offset, hash_size));
+            
+            std::map<std::string, Session*>::iterator it = 
+                    sessions.find(info_hash);
+            if(it == sessions.end()) {
+                //Didn't find a session with this info hash, discard packet
+                return;
+            }
+            Session * session = it->second;
+            
+            Piece *p = session->getLastPiece();
+            std::cout << "saving a session with payload " << p->getBlock() << std::endl;
             //Set completed
-
+            session->setCompleted(true);
+            
             //Remove from map
-
+            sessions.erase(session->getHash());
+            
             //Write to output
+            output_archive << (*session);
+            output_pipe.flush();
         }
     }
     //Decode a tracker response, need to have at least a tracker request first.
@@ -143,28 +169,22 @@ void SessionFinder::handlePacket(Packet pkt) {
             return;
         }
 
-//         std::cout << "SF: Got a response from " << pkt.dst_ip << std::endl;
-
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
         offset = pkt.payload.find("5:peers");
         offset += strlen("5:peers");
-//         std::cout << "offset: " << offset << std::endl;
 
         endoff = pkt.payload.find(":", offset); //get the next ':
-//         std::cout << "end: " << endoff << std::endl;
 
         //divide by 6 because each peer is 4 bytes for ip + 2 for port
         unsigned int peers_to_add = atoi(pkt.payload.substr(offset, endoff-offset).c_str());
         peers_to_add /= 6;
 
-//         std::cout << "peers: " << peers_to_add << std::endl;
-        //TODO
         offset = endoff+1; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
-        for(int i=0;i<peers_to_add;i++) {
+        for(u_int i=0;i<peers_to_add;i++) {
             char *inet_tmp = (char *)malloc(16);
             const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
             if (not inet_tmp)
@@ -180,7 +200,6 @@ void SessionFinder::handlePacket(Packet pkt) {
 
             session->addPeer(std::string(inet_tmp), port);
 
-//             std::cout << "SF: Added peer " << inet_tmp << ":" << port << std::endl;
             offset += 6;
             free(inet_tmp);
 
@@ -199,14 +218,13 @@ void SessionFinder::handlePacket(Packet pkt) {
         std::map<std::string, Session*>::iterator found;
         found = sessions.find(hash);
         if(found == sessions.end()) {
-//             std::cout << "SF: Didn't find a session" << std::endl;
             return;
         }
         Session *session = found->second;
 
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
-//         std::cout << "Activated peer " << pkt.src_ip << ":" << pkt.src_port << std::endl;
+        std::cout << "Activated peer " << pkt.src_ip << ":" << pkt.src_port << std::endl;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
@@ -237,10 +255,9 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Continue a piece in flight
         if (session->getLastPiece() != NULL) {
             if (not session->getLastPiece()->isCompleted()) {
-            //Update last piece
-            session->getLastPiece()->addPayload(pkt.payload);
-            std::cout << "added data " << pkt.payload << std::endl;
-            return;
+                //Update last piece
+                session->getLastPiece()->addPayload(pkt.payload);
+                return;
             }
         }
 
@@ -251,8 +268,7 @@ void SessionFinder::handlePacket(Packet pkt) {
             return;
         }
 
-        std::cout << "Created a piece with payload: " << pkt.payload << std::endl;
-
+        std::cout << "created a Piece!" << std::endl;
         //Add piece to session
         session->addPiece(piece);
 	}
