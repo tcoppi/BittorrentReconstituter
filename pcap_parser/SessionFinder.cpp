@@ -164,27 +164,30 @@ void SessionFinder::handlePacket(Packet pkt) {
         //peer looks like [4 byte ip][2 byte port] in network byte order
         for(int i=0;i<peers_to_add;i++) {
             char *inet_tmp = (char *)malloc(16);
-            char *port_tmp = (char *)malloc(16);
+            u_short tmp_port;
             const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
-            if (not inet_tmp or not port_tmp)
+            if (not inet_tmp)
                     throw "Out of memory";
+
             //decode ip and port
             snprintf(inet_tmp, 15, "%d.%d.%d.%d", raw_data[0], raw_data[1],
                                                   raw_data[2], raw_data[3]);
 
 
-            //FIXME XXX It looks like the port we get here is INCORRECT, the port in
-            //the handshake looks like it is accurate
+            //FIXME XXX It looks like the port we get here is INCORRECT for the
+            //first peer, the port in the handshake looks like it is accurate
             raw_data = pkt.payload.c_str()+offset+4;
-            snprintf(port_tmp, 15, "%d%d", raw_data[0], raw_data[1]);
+            tmp_port = (u_short)((unsigned char)raw_data[0]) << 8;
+            tmp_port |= (unsigned char)raw_data[1];
 
             session->addPeer(std::string(inet_tmp),
-            (u_short)strtol(port_tmp, NULL, 10));
+            tmp_port);
 
-            std::cout << "SF: Added peer " << inet_tmp << ":" << port_tmp << std::endl;
+            std::cout << "SF: Added peer " << inet_tmp << ":" << tmp_port << std::endl;
 
             free(inet_tmp);
-            free(port_tmp);
+
+            offset += 6;
         }
     }
     //Decode a peer handshake by finding the "BitTorrent protocol" string
