@@ -10,12 +10,13 @@
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ostream &output);
+    Reconstructor(const char *input_pipe);
     void run();
    
 private:
-    Session *curr_session;
-    boost::archive::text_iarchive input;
+    std::ifstream m_input;
+    Session *m_curr_session;
+    boost::archive::text_iarchive m_inpipe;
 };
 
 class File {
