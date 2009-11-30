@@ -23,6 +23,22 @@ class File {
 public:
     std::string name() { return this->m_name; }
     std::string data() { return this->m_data; }
+
+    /**
+     * Add a piece to the file.
+     *
+     * Uses the information in the piece to add it to the correct place in the
+     * buffer.
+     *
+     * Returns true if piece was successfully added, false otherwise.
+     */
+    bool addPiece(Piece *piece);
+
+    /**
+     * Outputs the current contents of the buffer buffer to the file in m_name.
+     */
+    void writeFile(void);
+
 private:
     std::string m_name;
     std::string m_data;
