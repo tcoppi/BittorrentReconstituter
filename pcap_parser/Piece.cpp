@@ -71,11 +71,7 @@ unsigned int Piece::convertUInt(std::string payload) {
     std::string str_val;
     str_val = payload.substr(0, 4);
     const char * c_len = str_val.data();
-    unsigned int val = 0;
-    val = (val << 8) + c_len[0];
-    val = (val << 8) + c_len[1];
-    val = (val << 8) + c_len[2];
-    val = (val << 8) + c_len[3];
+    unsigned int val = (c_len[0] << 24) | (c_len[1] << 16) | (c_len[2] << 8) | c_len[3];
 
     return val;
 }

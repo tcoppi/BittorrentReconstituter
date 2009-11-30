@@ -193,8 +193,7 @@ void SessionFinder::handlePacket(Packet pkt) {
                                                   raw_data[2], raw_data[3]);
             raw_data = pkt.payload.c_str()+offset+4;
             unsigned short port = 0;
-            port = (port << 8) + raw_data[0];
-            port = (port << 8) + raw_data[1];
+            port = (raw_data[0] << 8) | raw_data[1];
 
             session->addPeer(std::string(inet_tmp), port);
 
