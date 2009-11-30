@@ -11,16 +11,23 @@
 
 Session::Session() {}
 
-Session::Session(std::string host_ip, std::string tracker_ip, std::string info_hash) {
+Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std::string info_hash) {
 
+    //Set completed flag
+    completed = false;
+    
     //Set the host ip and info hash
     host = std::string(host_ip);
+    host_port = port;
     this->info_hash = std::string(info_hash);
 
     //Add the tracker to the list of trackers
     trackers.push_back(tracker_ip);
 }
 
+void Session::setCompleted(bool comp) {
+    completed = comp;
+}
 std::string Session::getHost() {
     return std::string(host);
 }
@@ -58,10 +65,13 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
         new_peer.ip = peer_ip;
         new_peer.port = peer_port;
         new_peer.active = false;
+        peers[peer_ip] = new_peer;
     }
 }
 
-//Returns whether the given peer and port combination is part of this session
+/**
+ * Returns whether the given peer and port combination is part of this session
+ */
 bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
     //Find peer by IP
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
@@ -96,6 +106,21 @@ void Session::activatePeer(std::string peer_ip) {
         //Activate the peer
         (*it).second.active = true;
     }
+}
+
+Piece * Session::getLastPiece() {
+    if(pieces.size() != 0) {
+        return pieces.back();
+    }
+    return NULL;
+}
+
+void Session::addPiece(Piece *newPiece) {
+    pieces.push_back(newPiece);
+}
+
+u_short Session::getHostPort() {
+    return host_port;
 }
 
 // vim: tabstop=4:expandtab
