@@ -28,24 +28,35 @@ This paper describes the BitTorrent Reconstitutor project.
 \section{Introduction}
 The BitTorrent Reconstitutor identifies BitTorrent file transfers in network
 traffic and extracts the original file.  We assume that a full and complete
-packet capture has been performed.  We will decode the traffic according to the
+packet capture has been performed.  We decode the traffic according to the
 official BitTorrent
 specification\footnote{\url{http://wiki.theory.org/BitTorrentSpecification}} and
-ignore extensions for now.
+ignore extensions to the protocol for now.
 
-
+\section{Short overview of the BitTorrent Protocol}
+BitTorrent is a protocol designed for efficient transfer of both large and
+small files over the Internet. The novel technique it uses to achieve this is
+that it breaks the file to be transfered into multiple same sized "Pieces".
+These pieces are then distributed amongst the peers(clients downloading the
+file) in such a way that each peer downloads the next piece that it can
+download fastest from another set of peers, not necessarily the next one in
+sequential order.  The peers coordinate each other through a centralized
+tracker service that each peer can query to see the status of other peers and
+how to connect to them.  This method of transferring files in pieces gives it
+the property that it is impossible to recover the original file or determine if
+a file was actually downloaded or uploaded in whole just from a straightforward
+examination of the network traffic.
 
 \section{Problem Addressed}
 Prior to this project, there was no publicly available tool for network
 forensics analysts to use to extract files transferred over BitTorrent. Such
-tools do exists for other protocols (such as tcpxtract
+tools do exists for other file transfer protocols (such as tcpxtract
 \footnote{\url{http://tcpxtract.sourceforge.net}}) so this tool extends the
 capability to extract files from network traffic to include the BitTorrent
 protocol. This gap in capabilities was deemed to be particularly interesting
 because manually recovering a file transferred over BitTorrent from network
-traffic would be impractical due to the variable number of peers and
-piece-based distribution of files.
-
+traffic would be impractical due to the variable number of peers and the
+chunking of files into pieces that are transfered in a random order.
 
 \section{Threat Model}
 One of the ways of breaking up threats is by inbound and outbound threats.
@@ -81,7 +92,7 @@ provides the only source of a sample of the malware used. Retrieving this file
 or files from the network would be useful for further mitigation of the
 attack. Also, identifying the peers involved in the download would allow action
 to be taken to prevent them from being used in further attacks. To this end, our
-tool will also list all IP addresses involved in the transfer of each file.
+tool also lists all IP addresses involved in the transfer of each file.
 
 One last obvious use case is to mitigate exfiltration of data.  If the user is
 using the BitTorrent protocol to send data out of the network, we would like to
@@ -157,7 +168,7 @@ is contained in the 3 modules it runs.
 
 \subsection{Challenges Encountered}
 The first challenge in this project came from the wide variety of unofficial
-extensions to the  BitTorrent protocol used by various clients. As mentioned
+extensions to the BitTorrent protocol used by various clients. As mentioned
 above, our solution to this problem is to handle traffic according to the
 official specification and design our code in a way that allows future
 improvements to support new extensions to the protocol without redesigning the
@@ -214,12 +225,12 @@ incident.
 \subsection{Future}
 As a possible future extension, DHT (distributed hash table) is close
 to becoming standardized and is currently in use by many big BitTorrent names.
-DHT makes it so that we don't have to use trackers and distributors to get the
-peer and metadata information.  Torrent files can be distributed through the
-DHT, which has a big impact on our program.  As of now, we're assuming that the
-torrent file has to somehow magically be captured separately from the BitTorrent
-traffic.  If we can incorporate DHT technology into our program, we can
-eliminate this constraint.
+DHT allows for every peer to be a tracker, so centralized tracker services are
+not needed to get the peer and metadata information. Torrent files can be
+distributed through DHT, which has a big impact on our program.  As of now,
+we're assuming that the torrent file has to somehow magically be captured
+separately from the BitTorrent traffic.  If we can incorporate DHT technology
+into our program, we can eliminate this constraint.
 
 \section{Conclusion}
 In conclusion, this application solves the problem of being unable to extract
