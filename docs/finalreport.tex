@@ -38,14 +38,14 @@ BitTorrent is a protocol designed for efficient transfer of both large and
 small files over the Internet. The novel technique it uses to achieve this is
 that it breaks the file to be transfered into multiple same sized "Pieces".
 These pieces are then distributed amongst the peers(clients downloading the
-file) in such a way that each peer downloads the next piece that it can
-download fastest from another set of peers, not necessarily the next one in
-sequential order.  The peers coordinate each other through a centralized
-tracker service that each peer can query to see the status of other peers and
-how to connect to them.  This method of transferring files in pieces gives it
-the property that it is impossible to recover the original file or determine if
-a file was actually downloaded or uploaded in whole just from a straightforward
-examination of the network traffic.
+file) in such a way that each peer chooses the next piece to download based on
+which one it can download fastest from the set of peers, not necessarily the
+next one in sequential order.  The peers coordinate each other through a
+centralized tracker service that each peer can query to see the status of other
+peers and how to connect to them.  This method of transferring files in pieces
+gives it the property that it is impossible to recover the original file or
+determine if a file was actually downloaded or uploaded in whole just from a
+straightforward examination of the network traffic.
 
 \section{Problem Addressed}
 Prior to this project, there was no publicly available tool for network
@@ -81,9 +81,9 @@ example of such a situation would be an investigation searching for child
 pornography transferred across a network. Without a tool of this sort, analysts
 would have to manually reconstruct the files and do so in such a way as to not
 compromise their admissibility in court. Furthermore, the analyst would have to
-ensure that all parts were received by the computer in question. We will attempt
-to verify the successful download of all parts of the file in order to verify
-the integrity of the data our tool produces.
+ensure that all parts were received by the computer in question. We attempt to
+verify the successful download of all parts of the file in order to verify the
+integrity of the data our tool produces.
 
 Another situation in which this tool will be useful occurs when malware is
 downloaded to a compromised computer using BitTorrent. If the attackers clean up
@@ -183,23 +183,23 @@ concurrent processing used in our implementation.
 
 \section{Deliverable}
 \subsection{Functionality}
-The application will identify and reconstruct any files transferred using the
+The application identifies and reconstructs any files transferred using the
 BitTorrent protocol from network traffic. It can be run against both live input
-and stored packet capture (pcap) files. It will take as input either a network
+and stored packet capture (pcap) files. It takes as input either a network
 interface (for live input) or a pcap file and a list of \texttt{.torrent}
-files. The \texttt{.torrent} files are necessary for verification of files found
-in the network traffic; however, all files will be reconstructed, not just those
-that can be verified. The application will produce the files as output along
-with data pertaining to the transfer of the files as well as whether each file
-was verified.
+files. The \texttt{.torrent} files are necessary for verification of files
+found in the network traffic; however, all files will be reconstructed, not
+just those that can be verified. The application produces the files as output
+along with data pertaining to the transfer of the files as well as whether each
+file was verified.
 
-Specifically, this application will perform the following tasks: identify files,
-reconstruct them, log information about the file transfer, and verify the
-integrity of the file based on a \texttt{.torrent} file (if provided). It will not
+Specifically, this application performs the following tasks: identifies files,
+reconstructs them, logs information about the file transfer, and verifies the
+integrity of the file based on a \texttt{.torrent} file (if provided). It does not
 perform any processing or analysis of the files other than that which is
-necessary for identification and reconstruction of the files. Other applications
-and/or manual analysis will be needed to process the files separately from this
-application.
+necessary for identification and reconstruction of the files. Other
+applications and/or manual analysis will be needed to process the files
+separately from this application.
 
 
 \section{Team Members}
