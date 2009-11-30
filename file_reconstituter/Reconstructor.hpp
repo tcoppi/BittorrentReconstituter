@@ -10,14 +10,14 @@
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ofstream out);
+    Reconstructor(const char *input_pipe, std::ofstream o);
     void reconstructSession(Session *session);
     void run();
 private:
     std::ifstream m_input;
     Session *m_curr_session;
     boost::archive::text_iarchive m_inpipe;
-    std::ofstream output;
+    std::ofstream *ohandle;
 };
 
 class File {

@@ -3,9 +3,9 @@
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
 
-Reconstructor::Reconstructor(const char *input, std::ofstream out)
+Reconstructor::Reconstructor(const char *input, std::ofstream o)
     : m_input(input), m_inpipe(m_input) {
-    this->output = out;
+    this->ohandle = &o;
 }
 
 void Reconstructor::run() {
@@ -38,16 +38,16 @@ void Reconstructor::reconstructSession(Session *s) {
     }
 
     //Output statistics
-    this->output << "SHA-1 Info Hash: " << s->getHash() << std::endl;
-    this->output << "Peers: " << std::endl;
+    *(this->ohandle) << "SHA-1 Info Hash: " << s->getHash() << std::endl;
+    *(this->ohandle) << "Peers: " << std::endl;
 
-    //output ip:port for each peer
-    for(it = peers.begin(); it = peers.end(); it++) {
-        this->output << "\t" << (*it).second.ip << std::endl << "\t" << (*it).second.port << std::endl;
+    //ohandle ip:port for each peer
+    for(it = peers.begin(); it == peers.end(); it++) {
+        *(this->ohandle) << "\t" << (*it).second.ip << std::endl << "\t" << (*it).second.port << std::endl;
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
-    this->output << "Reconstructed file size: " << file.writeFile() << std::endl;
+    *(this->ohandle) << "Reconstructed file size: " << file.writeFile() << std::endl;
 }
 
 File::File(std::string name) {
@@ -59,7 +59,7 @@ void File::addPiece(Piece *piece) {
     this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
 }
 
-void File::writeFile(std::ofstream out) {
+unsigned int File::writeFile(void) {
     // Take every macropiece and add them all to the final buffer
     // and write it to disk
     std::ofstream outfile;
@@ -73,7 +73,7 @@ void File::writeFile(std::ofstream out) {
     }
 
     //write to the file
-    outfile.open(this->m_name);
+    outfile.open(this->m_name.c_str());
     outfile << this->m_data;
     outfile.close();
 
