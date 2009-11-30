@@ -52,6 +52,8 @@ void File::writeFile(void) {
 
     std::map<unsigned int, std::string>::iterator s, e;
 
+    //FIXME Here is where we should probably check the hashes of the individual
+    //pieces, if we have the torrent file.
     for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
         this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
     }
