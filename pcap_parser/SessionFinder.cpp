@@ -61,21 +61,17 @@ void SessionFinder::run() {
     // Read each packet from the input pipe
     Packet current;
     while (true) {
-        /*try*/
+        try {
             input_archive >> current;
-            std::cout << "got payload " << current.payload << std::endl;
-
             handlePacket(current);
-    }
+        }
 
-    std::cout << "SF: run exitiing! WTF?" << std::endl;
-//         catch (boost::archive::archive_exception &e) {
-//             //Stop processing packets if a problem occurs
-//             //This exception covers both stream errors and EOF
-//             std::cout << "error" << e.what() << std::endl;
-//             break;
-//         }
-//     }
+        catch (boost::archive::archive_exception &e) {
+            //Stop processing packets if a problem occurs
+            //This exception covers both stream errors and EOF
+            break;
+        }
+    }
 }
 
 /**
@@ -221,9 +217,6 @@ void SessionFinder::handlePacket(Packet pkt) {
          */
 
         //Find a session with the source as a peer
-//         std::cout << "Trying to find session for  "  << pkt.src_ip << ":"
-//                    << pkt.src_port << " -> " << pkt.dst_ip << ":" << pkt.dst_port;
-//         std::cout << std::endl << pkt.payload << std::endl;
         Session *session = findSession(pkt.src_ip, pkt.src_port);
         if (session == NULL) {
             return;
@@ -242,10 +235,13 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Continue a piece in flight
-        if (not session->getLastPiece()->isCompleted()) {
+        if (session->getLastPiece() != NULL) {
+            if (not session->getLastPiece()->isCompleted()) {
             //Update last piece
             session->getLastPiece()->addPayload(pkt.payload);
+            std::cout << "added data " << pkt.payload << std::endl;
             return;
+            }
         }
 
         //This packet should correspond to session
@@ -255,7 +251,7 @@ void SessionFinder::handlePacket(Packet pkt) {
             return;
         }
 
-//         std::cout << "Payload: " << pkt.payload << std::endl;
+        std::cout << "Created a piece with payload: " << pkt.payload << std::endl;
 
         //Add piece to session
         session->addPiece(piece);

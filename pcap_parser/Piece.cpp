@@ -36,6 +36,7 @@ Piece::Piece(std::string payload) {
     else {
         complete = false;
     }
+    valid = true;
 }
 
 /**

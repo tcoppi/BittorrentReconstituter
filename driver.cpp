@@ -115,9 +115,9 @@ int main(int argc, char **argv) {
     pid_t pid = fork();
     if (pid == 0) {
         //This is the child
-        output << "Starting SessionFinder" << std::endl;
         SessionFinder *sf = new SessionFinder("intoFinder", "outofFinder");
         sf->run();
+        return 0;
     }
     else if (pid < 0) {
         std::cerr << "Someone set up us the bomb.\n";
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
         //Parent 
         PacketHandler *ph = new PacketHandler(input_handle, "intoFinder");
         ph->run();
-        std::cout << "waiting: " << waitpid(pid, NULL, 0) << std::endl;
+        waitpid(pid, NULL, 0);
         remove("intoFinder");
         remove("outofFinder");
         

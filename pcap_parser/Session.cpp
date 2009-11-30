@@ -102,8 +102,11 @@ void Session::activatePeer(std::string peer_ip) {
     }
 }
 
-Piece *Session::getLastPiece() {
-    return pieces.back();
+Piece * Session::getLastPiece() {
+    if(pieces.size() != 0) {
+        return pieces.back();
+    }
+    return NULL;
 }
 
 void Session::addPiece(Piece *newPiece) {
