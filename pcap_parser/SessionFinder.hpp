@@ -46,8 +46,6 @@ private:
     /**
      * Since a piece can be too large for one packet, we need to keep some
      * state about the current piece that is being reconstructed.
-     * XXX We may need to keep track of more than one piece in the case of
-     * multiple sessions being reconstructed at the same time.
      */
     Piece *currpiece;
 
@@ -64,7 +62,7 @@ private:
 
     //Input file stream
     std::ifstream input_pipe;
-    
+
     //Input archive
     boost::archive::text_iarchive input_archive;
 

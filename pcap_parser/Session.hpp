@@ -36,7 +36,7 @@ class Session {
         Peer *getPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece(Piece*);
-        Piece * getLastPiece();
+        Piece *getLastPiece();
 
     private:
         std::string info_hash; /* url and bencoded, shouldn't matter since

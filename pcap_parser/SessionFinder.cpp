@@ -52,7 +52,7 @@ std::string decode_percents(std::string const& url_path) {
  */
 SessionFinder::SessionFinder(const char* pipe)
     : input_pipe(pipe), input_archive(input_pipe){
-    }
+}
 
 /**
  * Runs the input handler.
@@ -162,7 +162,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = endoff+1; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
-        for(int i=0;i<peers_to_add;i++) {
+        for(unsigned int i=0;i<peers_to_add;i++) {
             char *inet_tmp = (char *)malloc(16);
             u_short tmp_port;
             const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
