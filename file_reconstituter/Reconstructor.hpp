@@ -21,6 +21,7 @@ private:
 
 class File {
 public:
+    File(std::string);
     std::string name() { return this->m_name; }
     std::string data() { return this->m_data; }
 
