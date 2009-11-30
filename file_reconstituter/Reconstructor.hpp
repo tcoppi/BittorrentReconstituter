@@ -21,11 +21,31 @@ private:
 
 class File {
 public:
+    File(std::string);
     std::string name() { return this->m_name; }
     std::string data() { return this->m_data; }
+
+    /**
+     * Add a piece to the file.
+     *
+     * Uses the information in the piece to add it to the correct place in the
+     * buffer.
+     */
+    void addPiece(Piece *);
+
+    /**
+     * Outputs the current contents of the buffer buffer to the file in m_name.
+     */
+    void writeFile(void);
+
 private:
     std::string m_name;
     std::string m_data;
+
+    /**
+     * Map of all the large pieces, indexed by the piece's index.
+     */
+    std::map<unsigned int, std::string> macropieces;
 };
 
 #endif
