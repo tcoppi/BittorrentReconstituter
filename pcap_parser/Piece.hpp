@@ -11,7 +11,7 @@
  * Holds all the data from a piece message.
  */
 class Piece {
-    
+
 public:
     Piece() {}
     Piece(std::string);
@@ -19,10 +19,9 @@ public:
     bool isValid();
     void addPayload(std::string);
     std::string getBlock() {return this->block;}
-    
+
     unsigned int getIndex() { return this->index; }
     unsigned int getOffset() { return this->offset; }
-    std::string getBlock() { return this->block; }
 
 private:
     friend std::ostream & operator<<(std::ostream &, const Piece &);
@@ -33,13 +32,13 @@ private:
             }
     //Function to convert bytes in a string to an unsigned int
     unsigned int convertUInt(std::string);
-    
+
     //Whether this piece is complete
     bool complete;
-    
+
     //Whether this piece is valid
     bool valid;
-    
+
     //Index of the piece
     unsigned int index;
 

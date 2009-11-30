@@ -52,12 +52,6 @@ private:
 
     //Input archive
     boost::archive::text_iarchive input_archive;
-    
-    //Output file stream
-    std::ofstream output_pipe;
-    
-    //Output archive
-    boost::archive::text_oarchive output_archive;
 
     //Output archive
     boost::archive::text_oarchive output_archive;
