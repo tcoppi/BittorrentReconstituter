@@ -11,7 +11,7 @@
 class Reconstructor {
 public:
     Reconstructor(const char *input_pipe);
-    void reconstructSession(Session session);
+    void reconstructSession(Session *session);
     void run();
 private:
     std::ifstream m_input;

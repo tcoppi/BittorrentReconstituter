@@ -2,8 +2,8 @@
 #include "../pcap_parser/Session.hpp"
 #include "../pcap_parser/Piece.hpp"
 
-Reconstructor::Reconstructor(const char *ipipe)
-    : input_pipe(ipipe), input(input_pipe) {
+Reconstructor::Reconstructor(const char *input)
+    : m_input(input), m_inpipe(m_input) {
 }
 
 // for each session:
