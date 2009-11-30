@@ -19,7 +19,7 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-This paper describes the BitTorrent Reconstitor project.
+This paper describes the BitTorrent Reconstitutor project.
 \end{abstract}
 %\keywords{}
 
@@ -28,24 +28,35 @@ This paper describes the BitTorrent Reconstitor project.
 \section{Introduction}
 The BitTorrent Reconstitutor identifies BitTorrent file transfers in network
 traffic and extracts the original file.  We assume that a full and complete
-packet capture has been performed.  We will decode the traffic according to the
+packet capture has been performed.  We decode the traffic according to the
 official BitTorrent
 specification\footnote{\url{http://wiki.theory.org/BitTorrentSpecification}} and
-ignore extensions for now.
+ignore extensions to the protocol for now.
 
-
+\section{Short overview of the BitTorrent Protocol}
+BitTorrent is a protocol designed for efficient transfer of both large and
+small files over the Internet. The novel technique it uses to achieve this is
+that it breaks the file to be transfered into multiple same sized "Pieces".
+These pieces are then distributed amongst the peers(clients downloading the
+file) in such a way that each peer downloads the next piece that it can
+download fastest from another set of peers, not necessarily the next one in
+sequential order.  The peers coordinate each other through a centralized
+tracker service that each peer can query to see the status of other peers and
+how to connect to them.  This method of transferring files in pieces gives it
+the property that it is impossible to recover the original file or determine if
+a file was actually downloaded or uploaded in whole just from a straightforward
+examination of the network traffic.
 
 \section{Problem Addressed}
-Prior to this project, there was no publicly available tool for network 
-forensics analysts to use to extract files transferred over BitTorrent. Such 
-tools do exists for other protocols (such as tcpxtract
-\footnote{\url{http://tcpxtract.sourceforge.net}}) so this tool extends the 
-capability to extract files from network traffic to include the BitTorrent 
-protocol. This gap in capabilties was deemed to be particularly interesting 
-because manually recovering a file transferred over BitTorrent from network 
-traffic would be impractical due to the variable number of peers and 
-piece-based distribution of files.
-
+Prior to this project, there was no publicly available tool for network
+forensics analysts to use to extract files transferred over BitTorrent. Such
+tools do exists for other file transfer protocols (such as tcpxtract
+\footnote{\url{http://tcpxtract.sourceforge.net}}) so this tool extends the
+capability to extract files from network traffic to include the BitTorrent
+protocol. This gap in capabilities was deemed to be particularly interesting
+because manually recovering a file transferred over BitTorrent from network
+traffic would be impractical due to the variable number of peers and the
+chunking of files into pieces that are transfered in a random order.
 
 \section{Threat Model}
 One of the ways of breaking up threats is by inbound and outbound threats.
@@ -76,12 +87,12 @@ the integrity of the data our tool produces.
 
 Another situation in which this tool will be useful occurs when malware is
 downloaded to a compromised computer using BitTorrent. If the attackers clean up
-the the compromised computer before a disk image is taken, network traffic
+the compromised computer before a disk image is taken, network traffic
 provides the only source of a sample of the malware used. Retrieving this file
 or files from the network would be useful for further mitigation of the
 attack. Also, identifying the peers involved in the download would allow action
 to be taken to prevent them from being used in further attacks. To this end, our
-tool will also list all IP addresses involved in the transfer of each file.
+tool also lists all IP addresses involved in the transfer of each file.
 
 One last obvious use case is to mitigate exfiltration of data.  If the user is
 using the BitTorrent protocol to send data out of the network, we would like to
@@ -92,7 +103,83 @@ This will require using a live capture stream.
 
 
 \section{Approach}
+We started this project by extensively reviewing the BitTorrent protocol
+specification\footnote{\url{http://wiki.theory.org/BitTorrentSpecification}}.
+Based on our own experiences as well as comments from our proposal presentation,
+we found that many clients use unofficial extensions to the protocol, such as
+using UDP instead of TCP. In light of the fact that reviewing and supporting
+the many different implementations would require a much greater amount of time
+than our project would allow, we decided to use the official specification to
+decode traffic. Extending our project in the future to handle unofficial
+implementations would entail replacing or modifying a module based on the
+specific extension desired. Such modifications are made feasible by splitting
+our code into three modules: a packet handler, a BitTorrent session identifier,
+and a file reconstructor.
+
+\subsection{Packet Handler}
+The Packet Handler performs the initial decoding of network packets up to the
+transport layer. Since the official specification states that BitTorrent runs
+over TCP, this module is built specifically to decode TCP/IP packets. It
+produces a data structure that contains information needed to identify
+BitTorrent sessions. Each of these data structures is written to a pipe for
+concurrent processing by the next module. The main purpose of modularizing this
+part of the code is to allow future extensions to support implementations of
+the BitTorrent protocol that use a different transport layer protocol
+(e.g., UDP instead of TCP). Building in a different module for UDP that
+produces the same output would allow the rest of the code to operate as it is
+currently designed without consideration of the underlying protocol.
+
+\subsection{Session Finder}
+The Session Finder module reads in the packet data structures from the packet
+handler and parses them to identify BitTorrent sessions. A BitTorrent session is
+defined by a tracker request for one or more files, the response, the pieces in
+the actual file(s), and the tracker request stating that the download has
+completed. When a "starting" request and corresponding response is found, the
+session finder attempts to parse any non-tracker related packets into BitTorrent
+pieces. If a packet is not a piece message, it will be discarded. Otherwise, the
+session finder will either add a new piece to the corresponding session or add
+the data to an unfinished piece. Once the "completed" tracker request is found,
+the session is considered complete and is then written to a pipe for
+processing. Incomplete sessions will not be processed because we cannot be sure
+that the data in the session is meaningful until it is complete. The session
+finder terminates when the packet handler closes the input pipe and all packets
+have been processed.
+
+\subsection{File Reconstructor}
+The File Reconstructor module takes in BitTorrent sessions created by the
+Session Finder module and uses the pieces in the session to reconstruct the
+original file.  It does this using the information each piece has, such as the
+number of the major piece it is contained within and the offset within this
+major piece.  With this, the reconstructor can rebuild the major pieces that
+the file was originally broken up into, verify their hashes if possible, and
+use them to piece together the original file.
+
+\subsection{Tying It All Together}
+We designed the system to run the modules concurrently, using pipes to
+communicate with each other, for several reasons. The main motivation was to be
+able to handle live input because sequential execution of the modules would not
+be possible if the packet handler never exited. Since the packet handler would
+never terminate when run with a live input, all of the modules need to be run in
+parallel. Accordingly, the driver for the application sets up pipes and creates
+3 processes to run each of the modules. Each module will block until its pipes
+are opened by another module. The driver performs several other tasks including
+parsing input options and cleanup of the pipes, but all of the major processing
+is contained in the 3 modules it runs.
+
 \subsection{Challenges Encountered}
+The first challenge in this project came from the wide variety of unofficial
+extensions to the BitTorrent protocol used by various clients. As mentioned
+above, our solution to this problem is to handle traffic according to the
+official specification and design our code in a way that allows future
+improvements to support new extensions to the protocol without redesigning the
+whole project.
+
+The next challenge we faced was discovered while designing the project.
+Initially, we were planning to run each module successively to ensure all parts
+of the input file had been processed by one module before the next module
+started running. However, this design would have made working with a live input
+nearly impossible and thus we worked on an alternate design, which led to the
+concurrent processing used in our implementation.
 
 \section{Deliverable}
 \subsection{Functionality}
@@ -135,17 +222,15 @@ collected. However, some uses in which the application is processing live input
 can be used to initially identify an incident rather than respond to a known
 incident.
 
-\pagebreak
-
 \subsection{Future}
 As a possible future extension, DHT (distributed hash table) is close
 to becoming standardized and is currently in use by many big BitTorrent names.
-DHT makes it so that we don't have to use trackers and distributors to get the
-peer and metadata information.  Torrent files can be distributed through the
-DHT, which has a big impact on our program.  As of now, we're assuming that the
-torrent file has to somehow magically be captured separately from the BitTorrent
-traffic.  If we can incorporate DHT technology into our program, we can
-eliminate this constraint.
+DHT allows for every peer to be a tracker, so centralized tracker services are
+not needed to get the peer and metadata information. Torrent files can be
+distributed through DHT, which has a big impact on our program.  As of now,
+we're assuming that the torrent file has to somehow magically be captured
+separately from the BitTorrent traffic.  If we can incorporate DHT technology
+into our program, we can eliminate this constraint.
 
 \section{Conclusion}
 In conclusion, this application solves the problem of being unable to extract
