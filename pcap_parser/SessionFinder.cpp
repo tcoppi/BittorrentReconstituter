@@ -51,7 +51,7 @@ std::string decode_percents(std::string const& url_path) {
  * mode (live or offline).
  */
 SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
-    : input_pipe(in_pipe), input_archive(input_pipe), output_pipe(out_pipe), 
+    : input_pipe(in_pipe), input_archive(input_pipe), output_pipe(out_pipe),
       output_archive(output_pipe){
     }
 
@@ -138,8 +138,8 @@ void SessionFinder::handlePacket(Packet pkt) {
             // and possibly ampersands.  info_hash is 20 bytes long.
             std::string info_hash = decode_percents(
                     std::string(pkt.payload.c_str()+offset, hash_size));
-            
-            std::map<std::string, Session*>::iterator it = 
+
+            std::map<std::string, Session*>::iterator it =
                     sessions.find(info_hash);
             if(it == sessions.end()) {
                 //Didn't find a session with this info hash, discard packet
@@ -149,10 +149,10 @@ void SessionFinder::handlePacket(Packet pkt) {
 
             //Set completed
             session->setCompleted(true);
-            
+
             //Remove from map
             sessions.erase(session->getHash());
-            
+
             //Write to output
             output_archive << (*session);
             output_pipe.flush();
@@ -287,6 +287,9 @@ Session *SessionFinder::findSession(std::string host_ip, u_short host_port,
     return NULL;
 }
 
+/**
+ * Gets a session associated with the given peer(ip:port)
+ */
 Session *SessionFinder::findSession(std::string ip, u_short port) {
     std::map<std::string, Session*>::iterator it;
     for (it = sessions.begin(); it != sessions.end(); ++it) {

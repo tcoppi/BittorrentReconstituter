@@ -29,17 +29,19 @@ class Session {
         Session(std::string, u_short, std::string, std::string);
         void addTracker(std::string);
         bool hasTracker(std::string);
+
         std::string getHost();
         std::string getHash();
+        Peer *getPeer(std::string, u_short);
         u_short getHostPort();
+        Piece *getLastPiece();
+        std::vector<Piece*> getPieces() { return this->pieces; }
+
         void addPeer(std::string, u_short);
         bool hasPeer(std::string, u_short);
-        Peer *getPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece(Piece*);
-        Piece * getLastPiece();
         void setCompleted(bool);
-        std::vector<Piece*> getPieces() { return this->pieces; }
 
     private:
         friend std::ostream & operator<<(std::ostream &, const Session &);
@@ -49,7 +51,7 @@ class Session {
             ar & info_hash & host & trackers & peers & pieces;
                 }
 
-                
+
         std::string info_hash; /* url and bencoded, shouldn't matter since
                                 * we don't *need* the raw value, just the
                                 * fact that it is unique. */
@@ -57,7 +59,7 @@ class Session {
         //The receiving host's IP address and port
         std::string host;
         u_short host_port;
-        
+
         //IP addresses of trackers
         std::vector<std::string> trackers;
 

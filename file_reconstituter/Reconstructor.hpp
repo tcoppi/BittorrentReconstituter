@@ -1,7 +1,7 @@
 // Take a complete session and reconstruct the files in it from the pieces.
 
 #ifndef __RECONSTRUCTOR_H
-#define __RECONSTRUCTOR_H 
+#define __RECONSTRUCTOR_H
 #include "../pcap_parser/Session.hpp"
 #include <boost/archive/text_iarchive.hpp>
 #include <ostream>
@@ -10,11 +10,14 @@
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ostream &output);
+    Reconstructor(const char *ipipe);
+//    Reconstructor(const char *ipipe, std::ostream &output);
+    void reconstructSession(Session session);
     void run();
-   
+
 private:
     Session *curr_session;
+    std::ifstream input_pipe;
     boost::archive::text_iarchive input;
 };
 
@@ -28,3 +31,4 @@ private:
 };
 
 #endif
+// vim: tabstop=4:expandtab
