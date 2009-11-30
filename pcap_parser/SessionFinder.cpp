@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "SessionFinder.hpp"
 #include "headers.hpp"
 #include "Peer.hpp"
@@ -102,7 +103,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         //find the next field after info_hash
         int hash_size = pkt.payload.find("&") - offset;
-        
+
         // The string is URL encoded, so we need to take out all the percents
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
@@ -115,18 +116,19 @@ void SessionFinder::handlePacket(Packet pkt) {
             std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
             std::cout << "SF: Info hash: " << info_hash << std::endl;
             std::cout << "SF: Payload: " << pkt.payload << std::endl;
-            
+
             // Add the session
             sessions[info_hash] = session;
+            std::cout << "SF: Added session" << std::endl;
         }
         else if(pkt.payload.find("completed") != std::string::npos) {
-            //TODO 
+            //TODO
             //Get session
-            
+
             //Set completed
-            
+
             //Remove from map
-            
+
             //Write to output
         }
     }
@@ -136,11 +138,11 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find the corresponding session
         Session *session = findSession(pkt.dst_ip, pkt.src_ip);
         if (session == NULL) {
-            return; 
+            return;
         }
 
         std::cout << "SF: Got a response from " << pkt.dst_ip << std::endl;
-        
+
         //next thing we care about is the peer response. we will assume a
         //compact(non-dictionary) response since 99.9% of trackers use this now
         //this is in big-endian so we have to byteswap it
@@ -150,31 +152,47 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         endoff = pkt.payload.find(":", offset); //get the next ':
         std::cout << "end: " << endoff << std::endl;
-        
+
         //divide by 6 because each peer is 4 bytes for ip + 2 for port
         unsigned int peers_to_add = atoi(pkt.payload.substr(offset, endoff-offset).c_str());
         peers_to_add /= 6;
-        
+
         std::cout << "peers: " << peers_to_add << std::endl;
         //TODO
-        offset = endoff+2; //skip over the ':'
+        offset = endoff+1; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
         for(int i=0;i<peers_to_add;i++) {
-            //decode ip
-            std::string ip_str;
-            
-            session->addPeer(std::string(pkt.payload.c_str()+offset, 4),
-            (u_short)strtol(pkt.payload.c_str()+offset+4, NULL, 10));
+            char *inet_tmp = (char *)malloc(16);
+            char *port_tmp = (char *)malloc(16);
+            const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
+            if (not inet_tmp or not port_tmp)
+                    throw "Out of memory";
+            //decode ip and port
+            snprintf(inet_tmp, 15, "%d.%d.%d.%d", raw_data[0], raw_data[1],
+                                                  raw_data[2], raw_data[3]);
+
+
+            //FIXME XXX It looks like the port we get here is INCORRECT, the port in
+            //the handshake looks like it is accurate
+            raw_data = pkt.payload.c_str()+offset+4;
+            snprintf(port_tmp, 15, "%d%d", raw_data[0], raw_data[1]);
+
+            session->addPeer(std::string(inet_tmp),
+            (u_short)strtol(port_tmp, NULL, 10));
+
+            std::cout << "SF: Added peer " << inet_tmp << ":" << port_tmp << std::endl;
+
+            free(inet_tmp);
+            free(port_tmp);
         }
     }
     //Decode a peer handshake by finding the "BitTorrent protocol" string
     else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
-        
         //Found a handshake packet
         offset = pkt.payload.find("BitTorrent protocol");
         offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
-        
+
         //The info_hash is the 20 bytes following the reserved byts
         std::string hash = std::string(pkt.payload.c_str()+offset, 20);
 
@@ -189,6 +207,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
+        std::cout << "Activated peer " << pkt.src_ip << std::endl;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
@@ -201,35 +220,44 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
         if (session == NULL) {
+            //std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+            session = findSession(pkt.dst_ip, pkt.dst_port);
+            if (session == NULL) {
+             //   std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+                return;
+            }
             return;
         }
-        
+        std::cout << "Test " << pkt.payload << std::endl;
+
         //Make sure the destination ip matches the host
-        if(pkt.dst_ip != session->getHost()) {
+        if (pkt.dst_ip != session->getHost()) {
             return;
         }
-        
+
         //Make sure the peer corresponding to the source is active
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
         if (!source->active) {
             //The peer isn't active, drop this packet
             return;
         }
-        
+
         //Continue a piece in flight
-        if(not session->getLastPiece()->isCompleted()) {
+        if (not session->getLastPiece()->isCompleted()) {
             //Update last piece
             session->getLastPiece()->addPayload(pkt.payload);
             return;
         }
-        
+
         //This packet should correspond to session
         //Attempt to decode it as a Piece message
-        Piece * piece = new Piece(pkt.payload);
-        if(not piece->isValid()) {
+        Piece *piece = new Piece(pkt.payload);
+        if (not piece->isValid()) {
             return;
         }
-        
+
+        std::cout << "Payload: " << pkt.payload << std::endl;
+
         //Add piece to session
         session->addPiece(piece);
 	}
@@ -253,6 +281,7 @@ Session *SessionFinder::findSession(std::string host_ip,
 
 Session *SessionFinder::findSession(std::string ip, u_short port) {
     std::map<std::string, Session*>::iterator it;
+    int i = 0;
     for (it = sessions.begin(); it != sessions.end(); ++it) {
         if (it->second->hasPeer(ip, port)) {
             return it->second;
