@@ -6,7 +6,6 @@ Reconstructor::Reconstructor(const char *input)
     : m_input(input), m_inpipe(m_input) {
 }
 
-// for each session:
 void Reconstructor::run() {
     Session s;
     while (true) {
@@ -22,6 +21,7 @@ void Reconstructor::run() {
 
 void Reconstructor::reconstructSession(Session *s) {
     std::vector<Piece*> pieces = s->getPieces();
+    File file(s->getHash()); //we need to pass along the output file name from the driver somehow
 
     std::vector<Piece*>::iterator p, e;
     for (p = pieces.begin(), e = pieces.end(); p != e; ++p) {
@@ -30,12 +30,15 @@ void Reconstructor::reconstructSession(Session *s) {
                 return;
         }
 
-        // use index and offset to block info
-
-        // Add new info to our file
+        file.addPiece(*p);
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
+    file.writeFile();
+}
+
+File::File(std::string name) {
+    this->m_name = name;
 }
 
 void File::addPiece(Piece *piece) {
