@@ -65,9 +65,16 @@ int main(int argc, char **argv) {
     }
 
     // Spawn processes / pipes here and start passing them around
-    while (mkfifo("toFinder", 0744) == -1) {
+    while (mkfifo("intoFinder", 0744) == -1) {
         if (errno == EEXIST) {
-            remove("toFinder");
+            remove("intoFinder");
+            continue;
+        }
+        return -1;
+    }
+    while (mkfifo("outofFinder", 0744) == -1) {
+        if (errno == EEXIST) {
+            remove("outofFinder");
             continue;
         }
         return -1;

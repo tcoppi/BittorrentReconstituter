@@ -26,11 +26,12 @@
 class Session {
     public:
         Session();
-        Session(std::string, std::string, std::string);
+        Session(std::string, u_short, std::string, std::string);
         void addTracker(std::string);
         bool hasTracker(std::string);
         std::string getHost();
         std::string getHash();
+        u_short getHostPort();
         void addPeer(std::string, u_short);
         bool hasPeer(std::string, u_short);
         Peer *getPeer(std::string, u_short);
@@ -42,8 +43,11 @@ class Session {
         std::string info_hash; /* url and bencoded, shouldn't matter since
                                 * we don't *need* the raw value, just the
                                 * fact that it is unique. */
-        //The receiving host's IP address
+
+        //The receiving host's IP address and port
         std::string host;
+        u_short host_port;
+        
         //IP addresses of trackers
         std::vector<std::string> trackers;
 

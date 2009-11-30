@@ -50,7 +50,7 @@ std::string decode_percents(std::string const& url_path) {
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-SessionFinder::SessionFinder(const char* pipe)
+SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
     : input_pipe(pipe), input_archive(input_pipe){
     }
 
@@ -108,7 +108,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
         if(pkt.payload.find("started") != std::string::npos) {
-            Session *session = new Session(pkt.src_ip, pkt.dst_ip, info_hash);
+            Session *session = new Session(pkt.src_ip, pkt.src_port, pkt.dst_ip, info_hash);
 
             offset = pkt.payload.find("port=");
             offset += strlen("port=");
@@ -136,7 +136,7 @@ void SessionFinder::handlePacket(Packet pkt) {
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
             (pkt.payload.find("d8:complete"))) {
         //Find the corresponding session
-        Session *session = findSession(pkt.dst_ip, pkt.src_ip);
+        Session *session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
         if (session == NULL) {
             return;
         }
@@ -220,12 +220,12 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
         if (session == NULL) {
-            //std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
-            session = findSession(pkt.dst_ip, pkt.dst_port);
-            if (session == NULL) {
-             //   std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
-                return;
-            }
+//             //std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+//             session = findSession(pkt.dst_ip, pkt.dst_port);
+//             if (session == NULL) {
+//              //   std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
+//                 return;
+//             }
             return;
         }
         std::cout << "Test " << pkt.payload << std::endl;
@@ -266,11 +266,11 @@ void SessionFinder::handlePacket(Packet pkt) {
 /**
  * Gets a session associated with the given host and tracker.
  */
-Session *SessionFinder::findSession(std::string host_ip,
+Session *SessionFinder::findSession(std::string host_ip, u_short host_port,
                                     std::string tracker_ip) {
     std::map<std::string, Session*>::iterator it;
     for (it = sessions.begin(); it != sessions.end(); ++it) {
-        if ((it->second->getHost() == host_ip)) {
+        if ((it->second->getHost() == host_ip and it->second->getHostPort() == host_port)) {
             if (it->second->hasTracker(tracker_ip)) {
                 return it->second;
             }

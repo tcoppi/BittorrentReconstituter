@@ -33,15 +33,15 @@
  */
 class SessionFinder {
 public:
-    SessionFinder(const char*);
+    SessionFinder(const char*, const char*);
     void run();
     void handlePacket(Packet pkt);
 private:
 
     //Get the session corresponding to a given host and tracker
-    Session *findSession(std::string host, std::string tracker);
+    Session *findSession(std::string, u_short, std::string);
     //Find a session that has an activated peer on ip:port
-    Session *findSession(std::string ip, u_short port);
+    Session *findSession(std::string, u_short);
 
     /**
      * Since a piece can be too large for one packet, we need to keep some
