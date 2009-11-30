@@ -36,7 +36,15 @@ ignore extensions for now.
 
 
 \section{Problem Addressed}
-
+Prior to this project, there was no publicly available tool for network 
+forensics analysts to use to extract files transferred over BitTorrent. Such 
+tools do exists for other protocols (such as tcpxtract
+\footnote{\url{http://tcpxtract.sourceforge.net}}) so this tool extends the 
+capability to extract files from network traffic to include the BitTorrent 
+protocol. This gap in capabilties was deemed to be particularly interesting 
+because manually recovering a file transferred over BitTorrent from network 
+traffic would be impractical due to the variable number of peers and 
+piece-based distribution of files.
 
 
 \section{Threat Model}
@@ -84,7 +92,7 @@ This will require using a live capture stream.
 
 
 \section{Approach}
-
+\subsection{Challenges Encountered}
 
 \section{Deliverable}
 \subsection{Functionality}
