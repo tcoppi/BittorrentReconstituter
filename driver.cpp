@@ -103,20 +103,21 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-
-    output << "Forking" << std::endl;
     pid_t pid = fork();
     if (pid == 0) {
         output << "Starting SessionFinder" << std::endl;
-        SessionFinder *sf = new SessionFinder("toFinder");
+        SessionFinder *sf = new SessionFinder("intoFinder", "outofFinder");
         sf->run();
     }
     else if (pid < 0) {
         std::cerr << "Someone set up us the bomb.\n";
         return -1;
     }
-    PacketHandler *ph = new PacketHandler(input_handle, "toFinder");
+    PacketHandler *ph = new PacketHandler(input_handle, "intoFinder");
     ph->run();
+
+    remove("intoFinder");
+    remove("outofFinder");
 
     return 0;
 }
