@@ -63,8 +63,14 @@ private:
     //Input file stream
     std::ifstream input_pipe;
 
+    //Output file stream
+    std::ofstream output_pipe;
+
     //Input archive
     boost::archive::text_iarchive input_archive;
+
+    //Output archive
+    boost::archive::text_oarchive output_archive;
 
     //Map of session objects, indexed by info hash
     std::map<std::string, Session*> sessions;

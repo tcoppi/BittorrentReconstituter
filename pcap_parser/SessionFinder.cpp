@@ -50,8 +50,9 @@ std::string decode_percents(std::string const& url_path) {
  * The constructor takes the name of the file and a flag representing the input
  * mode (live or offline).
  */
-SessionFinder::SessionFinder(const char* pipe)
-    : input_pipe(pipe), input_archive(input_pipe){
+SessionFinder::SessionFinder(const char *inpipe, const char *outpipe)
+    : input_pipe(inpipe), input_archive(input_pipe), output_pipe(outpipe),
+        output_archive(output_pipe) {
 }
 
 /**
