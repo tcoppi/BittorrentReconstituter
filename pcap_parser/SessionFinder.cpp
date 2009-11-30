@@ -103,7 +103,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         //find the next field after info_hash
         int hash_size = pkt.payload.find("&") - offset;
-        
+
         // The string is URL encoded, so we need to take out all the percents
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
@@ -182,6 +182,9 @@ void SessionFinder::handlePacket(Packet pkt) {
             (u_short)strtol(port_tmp, NULL, 10));
 
             std::cout << "SF: Added peer " << inet_tmp << ":" << port_tmp << std::endl;
+
+            free(inet_tmp);
+            free(port_tmp);
         }
     }
     //Decode a peer handshake by finding the "BitTorrent protocol" string
@@ -217,12 +220,15 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
         if (session == NULL) {
+            //std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
             session = findSession(pkt.dst_ip, pkt.dst_port);
             if (session == NULL) {
+             //   std::cout << "ip: " << pkt.src_ip << " port: " << pkt.src_port << std::endl;
                 return;
             }
             return;
         }
+        std::cout << "Test " << pkt.payload << std::endl;
 
         //Make sure the destination ip matches the host
         if (pkt.dst_ip != session->getHost()) {
@@ -275,6 +281,7 @@ Session *SessionFinder::findSession(std::string host_ip,
 
 Session *SessionFinder::findSession(std::string ip, u_short port) {
     std::map<std::string, Session*>::iterator it;
+    int i = 0;
     for (it = sessions.begin(); it != sessions.end(); ++it) {
         if (it->second->hasPeer(ip, port)) {
             return it->second;
