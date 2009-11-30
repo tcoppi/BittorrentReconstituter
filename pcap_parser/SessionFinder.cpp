@@ -146,9 +146,7 @@ void SessionFinder::handlePacket(Packet pkt) {
                 return;
             }
             Session * session = it->second;
-            
-            Piece *p = session->getLastPiece();
-            std::cout << "saving a session with payload " << p->getBlock() << std::endl;
+
             //Set completed
             session->setCompleted(true);
             

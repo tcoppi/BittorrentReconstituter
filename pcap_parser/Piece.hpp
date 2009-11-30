@@ -19,7 +19,6 @@ public:
     bool isValid();
     void addPayload(std::string);
     std::string getBlock() {return this->block;}
-
     unsigned int getIndex() { return this->index; }
     unsigned int getOffset() { return this->offset; }
 
