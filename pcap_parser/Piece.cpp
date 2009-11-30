@@ -1,6 +1,7 @@
-#include "Piece.hpp"
 #include <string>
 #include <iostream>
+#include "Piece.hpp"
+#include "SessionFinder.hpp"
 
 /**
  * Piece constructor - performs packet parsing magic.
@@ -14,7 +15,7 @@ Piece::Piece(std::string payload) {
     }
 
     //Find 0x07 in 5th byte
-    if(payload[4] != 0x07) {
+    if(payload[4] != PIECE) {
         valid = false;
         return;
     }
@@ -23,18 +24,18 @@ Piece::Piece(std::string payload) {
     len = convertUInt(payload.substr(0, 4));
     //length is len - 9
     len = len - 9;
-    
+
     //Get the index
     index = convertUInt(payload.substr(5, 4));
-    
+
     //Get the offset
     offset = convertUInt(payload.substr(9, 4));
-    
+
     //Data is everything after the first 13 bytes
     std::string data = payload.substr(13);
-    
+
     block = std::string(data);
-    
+
     if (data.size() == len) {
         //We have the whole block in this payload
         complete = true;

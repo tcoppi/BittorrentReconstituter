@@ -39,6 +39,7 @@ class Session {
         void addPiece(Piece*);
         Piece * getLastPiece();
         void setCompleted(bool);
+        std::vector<Piece*> getPieces() { return this->pieces; }
 
     private:
         friend std::ostream & operator<<(std::ostream &, const Session &);

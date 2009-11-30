@@ -69,7 +69,9 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
     }
 }
 
-//Returns whether the given peer and port combination is part of this session
+/**
+ * Returns whether the given peer and port combination is part of this session
+ */
 bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
     //Find peer by IP
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
@@ -113,7 +115,7 @@ Piece * Session::getLastPiece() {
     return NULL;
 }
 
-void Session::addPiece(Piece * newPiece) {
+void Session::addPiece(Piece *newPiece) {
     pieces.push_back(newPiece);
 }
 

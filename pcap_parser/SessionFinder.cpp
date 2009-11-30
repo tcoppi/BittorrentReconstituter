@@ -66,7 +66,7 @@ void SessionFinder::run() {
             input_archive >> current;
             handlePacket(current);
         }
-        
+
         catch (boost::archive::archive_exception &e) {
             //Stop processing packets if a problem occurs
             //This exception covers both stream errors and EOF
@@ -81,7 +81,7 @@ void SessionFinder::run() {
  * is discarded.
  */
 void SessionFinder::handlePacket(Packet pkt) {
-    
+
     unsigned int offset, endoff; // Temps
 
     //First thing, we need to look at tracker requests and responses
@@ -189,7 +189,7 @@ void SessionFinder::handlePacket(Packet pkt) {
             const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
             if (not inet_tmp)
                     throw "Out of memory";
-            
+
             //decode ip and port
             snprintf(inet_tmp, 15, "%d.%d.%d.%d", raw_data[0], raw_data[1],
                                                   raw_data[2], raw_data[3]);

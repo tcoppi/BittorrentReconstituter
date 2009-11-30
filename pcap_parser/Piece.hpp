@@ -20,6 +20,10 @@ public:
     void addPayload(std::string);
     std::string getBlock() {return this->block;}
     
+    unsigned int getIndex() { return this->index; }
+    unsigned int getOffset() { return this->offset; }
+    std::string getBlock() { return this->block; }
+
 private:
     friend std::ostream & operator<<(std::ostream &, const Piece &);
     friend class boost::serialization::access;
