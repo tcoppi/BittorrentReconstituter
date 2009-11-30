@@ -44,13 +44,13 @@ void File::addPiece(Piece *piece) {
 }
 
 void File::writeFile(void) {
-    // Take every macropiece and add them all sequentially to the final buffer
+    // Take every macropiece and add them all to the final buffer
     // and write it to disk
 
     std::map<unsigned int, std::string>::iterator s, e;
 
     for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
-        this->m_data.insert((*s).second.length() * (*s).first, (*s).second);
+        this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
     }
 }
 
