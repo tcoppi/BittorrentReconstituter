@@ -51,8 +51,6 @@ Piece::Piece(std::string payload) {
  */
 void Piece::addPayload(std::string payload) {
     block.append(payload);
-    std::cout << "block size: " << block.size() << std::endl;
-    std::cout << "piece len: " << len << std::endl;
 
     if (block.size() == len) {
         //We have finished this piece
@@ -60,7 +58,6 @@ void Piece::addPayload(std::string payload) {
     }
     else if (block.size() > len) {
         //This piece is invalid
-        std::cout << "setting invalid" << std::endl;
         valid = false;
     }
 }
@@ -70,7 +67,6 @@ void Piece::addPayload(std::string payload) {
  * equivalent.
  */
 unsigned int Piece::convertUInt(std::string payload) {
-    std::cout << "converting payload: " << payload << std::endl;
     //Get length of data - WARNING! ugly-ass code follows
     std::string str_val;
     str_val = payload.substr(0, 4);
