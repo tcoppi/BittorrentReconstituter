@@ -1,24 +1,83 @@
 #include "pcap_parser/SessionFinder.hpp"
 #include "pcap_parser/PacketHandler.hpp"
+#include <boost/exception/get_error_info.hpp>
+#include <boost/program_options.hpp>
+#include <cassert>
+#include <cerrno>
 #include <fstream>
 #include <iostream>
-#include <streambuf>
-#include <vector>
-#include <string>
-#include <boost/program_options.hpp>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <pcap.h>
-#include <cerrno>
+#include <streambuf>
+#include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <vector>
+
+// Does the work of spawning processes and running pipes between them
+void handle_pcap_file(pcap_t *input_handle, int i) {
+    std::string in_pipe_str("intoFinder" + i);
+    const char *in_pipe = in_pipe_str.c_str();
+    std::string out_pipe_str("outofFinder" + i);
+    const char *out_pipe = out_pipe_str.c_str();
+
+    std::cout << "In handle pcap file" << std::endl;
+
+    // Make sure the data link layer is ethernet
+    if (pcap_datalink(input_handle) != DLT_EN10MB) {
+        std::cerr << "Not ethernet!" << std::endl;
+        return;
+    }
+
+    // If the pipe already exists just remove it and try to make again
+    while (mkfifo(in_pipe, 0744) == -1) {
+        if (errno == EEXIST) {
+            remove(in_pipe);
+            continue;
+        }
+        return;
+    }
+    while (mkfifo(out_pipe, 0744) == -1) {
+        if (errno == EEXIST) {
+            remove(out_pipe);
+            continue;
+        }
+        return;
+    }
+
+    pid_t pid = fork();
+    if (pid == 0) {
+        //This is the child
+        SessionFinder *sf = new SessionFinder(in_pipe, out_pipe);
+        sf->run();
+    }
+    else if (pid < 0) {
+        std::cerr << "Someone set up us the bomb.\n";
+    }
+    else {
+        //Parent 
+        PacketHandler *ph = new PacketHandler(input_handle, in_pipe);
+        ph->run();
+        waitpid(pid, NULL, 0);
+        remove(in_pipe);
+        remove(out_pipe);
+    }
+    return;
+}
+
 
 // The docs suggest this alias
 namespace po = boost::program_options;
 
 int main(int argc, char **argv) {
-    std::streambuf *buffer; // Buffer to figure out which stream to use
+    bool live = false; // False unless an interface is given
+    pcap_t* input_handle;
     std::ofstream outfile; // File buffer to figure out which stream to use
+    std::streambuf *buffer; // Buffer to figure out which stream to use
+    std::string interface_name;
+    std::vector<std::string> pcap_files;
+    std::vector<std::string> torrent_files;
 
     // Yay, option parsing. XD  Add any new options to desc, directly below
     po::options_description desc("BitTorrent Reconstitutor Options");
@@ -26,12 +85,14 @@ int main(int argc, char **argv) {
         ("help,h", "Write out this help message.")
         ("output-file,o", po::value<std::string>(),
          "Write stats and non-error messages to this file.  Defaults to stdout.")
-        ("input-file,i", po::value<std::vector<std::string> >(), "Input files")
+        ("input-file,r", po::value<std::vector<std::string> >(), "Pcap / Torrent files")
+        ("interface,i", po::value<std::string>(), "Specify interface for live processing")
         ;
 
     po::positional_options_description p;
     p.add("input-file", -1);
 
+    try { // Don't change the indentation level here because it spans the rest of the function
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
     po::notify(vm);
@@ -56,82 +117,80 @@ int main(int argc, char **argv) {
     // Finally construct the correct output stream
     std::ostream output(buffer);
 
-    // Input file stuff -- print out for debugging
-    if (vm.count("input-file")) {
-        output << "Input files: ";
+    // interface and input-file are mutually exclusive options
+    if (vm.count("interface")) {
+        live = true;
+        interface_name = vm["interface"].as<std::string>();
+    }
+    else if (vm.count("input-file")) {
+        // Input file stuff, parse out the pcap and torrent vectors and figure
+        // out if we're going live
         std::vector<std::string> v = vm["input-file"].as<std::vector<std::string> >();
-        // I don't want to roll my own copy, so this leaves an extra ", " at the
-        // end.  You can't delete from the end of an ostream, either,
-        // apparently. XD
-        copy(v.begin(), v.end(), std::ostream_iterator<std::string>(output, ", "));
+
+        std::vector<std::string>::iterator i, e;
+        for (i = v.begin(), e = v.end(); i != e; ++i) {
+            if ((*i).substr((*i).size()-5, (*i).size()) == ".pcap") {
+                pcap_files.push_back(*i);
+            }
+            else if((*i).substr( (*i).size()-8, (*i).size()) == ".torrent") {
+                torrent_files.push_back(*i);
+            }
+        }
+        // Keep this for debugging purposes:
+        // Leaves an extra ", " at the end, but you can't delete from ostreams, so oh well
+        //     output << "Input files: ";
+        //     copy(v.begin(), v.end(), std::ostream_iterator<std::string>(output, ", "));
+    }
+    else {
+        // We have no input of any sort, toss out the help message
+        std::cout << desc << std::endl;
+        return 1;
     }
 
-    // Spawn processes / pipes here and start passing them around
-    while (mkfifo("intoFinder", 0744) == -1) {
-        if (errno == EEXIST) {
-            remove("intoFinder");
-            continue;
-        }
-        return -1;
-    }
-    while (mkfifo("outofFinder", 0744) == -1) {
-        if (errno == EEXIST) {
-            remove("outofFinder");
-            continue;
-        }
-        return -1;
-    }
-
-    // Fix later to allow live input -- just check if no input files
-    bool live = false;
     // Just use the last name specified for now, fix later
-    std::string input_name = vm["input-file"].as<std::vector<std::string> >().back();
-    pcap_t* input_handle;
     char errbuf[PCAP_ERRBUF_SIZE];
-
     if (live) {
-        input_handle = pcap_open_live(input_name.c_str(), 65535, 1, 1000, errbuf);
+        // Automatically detect the routing interface
+        // with: netstat -nr | grep -e 'default|0.0.0.0' | awk '{ print $NF; }'
+        // ^ We don't need that, use the -i option instead
+        input_handle = pcap_open_live(interface_name.c_str(), 65535, 1, 1000, errbuf);
         if (input_handle == NULL) {
-            std::cerr << "Unable to open device " << input_name << ": " 
+            std::cerr << "Unable to open device " << interface_name << ": " 
                       << errbuf << std::endl;
             return -1;
         }
+        handle_pcap_file(input_handle, 0);
     }
     else {
-        input_handle = pcap_open_offline(input_name.c_str(), errbuf);
-        if (input_handle == NULL) {
-            std::cerr << "Unable to open file " << input_name << ": " 
-                      << errbuf << std::endl;
-            return -1;
+        std::vector<std::string>::iterator i, e;
+        int num;
+        for (i = pcap_files.begin(), e = pcap_files.end(), num = 0; i != e; ++i, ++num) {
+            std::string input_name = *i;
+
+            input_handle = pcap_open_offline(input_name.c_str(), errbuf); 
+            if (input_handle == NULL) {
+                std::cerr << "Unable to open file " << input_name << ": " 
+                          << errbuf << std::endl;
+                return -1;
+            }
+            handle_pcap_file(input_handle, num);
         }
     }
-
-    // Make sure the data link layer is ethernet
-    if (pcap_datalink(input_handle) != DLT_EN10MB) {
-        std::cerr << "Not ethernet!" << std::endl;
+    } // end intentional malformed indentation
+    catch (const char *c) {
+        std::cerr << "Error: " << c << std::endl;
         return -1;
     }
-
-    pid_t pid = fork();
-    if (pid == 0) {
-        //This is the child
-        SessionFinder *sf = new SessionFinder("intoFinder", "outofFinder");
-        sf->run();
-        return 0;
-    }
-    else if (pid < 0) {
-        std::cerr << "Someone set up us the bomb.\n";
+    catch (boost::exception& e) { // If we have a failed arg parse
+        //        std::cerr << "Error: " << boost::get_error_info(e) << std::endl;
+        // Just error out generically for now, I guess.  The boost exception stuff is acting up
+        std::cerr << "Error with arg parsing" << std::endl; 
         return -1;
     }
-    else {
-        //Parent 
-        PacketHandler *ph = new PacketHandler(input_handle, "intoFinder");
-        ph->run();
-        waitpid(pid, NULL, 0);
-        remove("intoFinder");
-        remove("outofFinder");
-        
+    catch (...) { // Something bad happened -- we should have caught this
+        assert(0 && "Failing badly.");
     }
-
+    
     return 0;
 }
+
