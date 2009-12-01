@@ -64,7 +64,7 @@ void Reconstructor::reconstructSession(Session *s) {
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
-    std::cout << "Reconstructed file size: " << file.writeFile() << " bytes." << std::endl;
+    std::cout << "Reconstructed file size: " << file.writeFile(this->piece_hashes) << " bytes." << std::endl;
 }
 
 File::File(std::string name) {
@@ -76,7 +76,18 @@ void File::addPiece(Piece *piece) {
     this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
 }
 
-unsigned int File::writeFile(void) {
+/**
+ * Compare the two SHA-1 hashes byte-byte byte and return true if they are the
+ * same, false otherwise.
+ */
+bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
+    for (int i = 0; i < 20; i++) {
+       if (a[i] != b[i]) return false;
+    }
+    return true;
+}
+
+unsigned int File::writeFile(hash_map_t hashes){
     // Take every macropiece and add them all to the final buffer
     // and write it to disk
     std::ofstream outfile;
@@ -91,8 +102,17 @@ unsigned int File::writeFile(void) {
     for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
         //compute the hash
         SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
-        //TODO verify the hash. if it doesn't match, throw an error and die
+        //Verify the hash. if it doesn't match, throw an error and die
+        if (hashes.find(this->m_name) == hashes.end())
+            std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
+        else {
+            std::cout << "Found a torrent file with the same SHA-1 Info hash, verifying the piece(s) SHA-1(s)" << std::endl;
+            if (not compare_sha1s((unsigned char *)hashes[this->m_name][index].data(), hash)) {
+                throw "Invalid SHA-1 hash for piece";
+            }
 
+            std::cout << "SHA-1(s) verified successfully!" << std::endl;
+        }
         this->m_data.insert(index, s->second);
         index += s->second.size();
 

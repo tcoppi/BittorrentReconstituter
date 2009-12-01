@@ -41,7 +41,7 @@ public:
      *
      * Returns the number of bytes written.
      */
-    unsigned int writeFile(void);
+    unsigned int writeFile(hash_map_t);
 
 private:
     std::string m_name;
