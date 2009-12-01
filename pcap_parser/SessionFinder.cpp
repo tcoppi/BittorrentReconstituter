@@ -73,6 +73,9 @@ void SessionFinder::run() {
             break;
         }
     }
+    std::cout << "Closing pipes." << std::endl;
+    input_pipe.close();
+    output_pipe.close();
 }
 
 /**

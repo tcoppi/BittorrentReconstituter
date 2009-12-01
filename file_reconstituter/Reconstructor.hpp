@@ -11,7 +11,7 @@ typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ofstream o, hash_map_t hashes);
+    Reconstructor(const char *input_pipe, std::ofstream &o, hash_map_t hashes);
     void reconstructSession(Session *session);
     void run();
 private:

@@ -5,7 +5,7 @@
 #include "../pcap_parser/Peer.hpp"
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
-Reconstructor::Reconstructor(const char *input, std::ofstream o, hash_map_t phashes)
+Reconstructor::Reconstructor(const char *input, std::ofstream &o, hash_map_t phashes)
     : m_input(input), m_inpipe(m_input) {
     this->ohandle = &o;
     this->piece_hashes = phashes;
@@ -15,10 +15,13 @@ void Reconstructor::run() {
     Session s;
     while (true) {
         try {
+            std::cout << "Waiting on input" << std::endl;
             this->m_inpipe >> s;
+            std::cout << "Got input" << std::endl;
             this->reconstructSession(&s);
         }
         catch (boost::archive::archive_exception &e) {
+            std::cout << "Catching archive exception" << std::endl;
             break;
         }
     }

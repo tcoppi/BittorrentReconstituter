@@ -16,17 +16,15 @@
 #include <sys/wait.h>
 #include <vector>
 #include <openssl/sha.h>
-
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 // Does the work of spawning processes and running pipes between them
-void handle_pcap_file(pcap_t *input_handle, int i, hash_map_t hashes) {
+void handle_pcap_file(pcap_t *input_handle, int i, 
+                      hash_map_t hashes, std::ofstream &output) {
     std::string in_pipe_str("intoFinder" + i);
     const char *in_pipe = in_pipe_str.c_str();
     std::string out_pipe_str("outofFinder" + i);
     const char *out_pipe = out_pipe_str.c_str();
-
-    std::cout << "In handle pcap file" << std::endl;
 
     // Make sure the data link layer is ethernet
     if (pcap_datalink(input_handle) != DLT_EN10MB) {
@@ -50,6 +48,7 @@ void handle_pcap_file(pcap_t *input_handle, int i, hash_map_t hashes) {
         return;
     }
 
+    // Warning: What follows is some relatively nasty process action
     pid_t pid = fork();
     if (pid == 0) {
         //This is the child
@@ -58,14 +57,27 @@ void handle_pcap_file(pcap_t *input_handle, int i, hash_map_t hashes) {
     }
     else if (pid < 0) {
         std::cerr << "Someone set up us the bomb.\n";
+        return;
     }
     else {
         //Parent 
-        PacketHandler *ph = new PacketHandler(input_handle, in_pipe);
-        ph->run();
-        waitpid(pid, NULL, 0);
-        remove(in_pipe);
-        remove(out_pipe);
+        pid_t newpid = fork();
+        if (newpid == 0) {
+            Reconstructor *recon = new Reconstructor(out_pipe, output, hashes);
+            recon->run();
+        }
+        else if (pid < 0) {
+            std::cerr << "You have no chance to survive, make your time.\n";
+            return;
+        }
+        else {
+            PacketHandler *ph = new PacketHandler(input_handle, in_pipe);
+            ph->run();
+            waitpid(newpid, NULL, 0);
+            waitpid(pid, NULL, 0);
+            remove(in_pipe);
+            remove(out_pipe);
+        }
     }
     return;
 }
@@ -237,7 +249,7 @@ int main(int argc, char **argv) {
                       << errbuf << std::endl;
             return -1;
         }
-        handle_pcap_file(input_handle, 0, hashes);
+        handle_pcap_file(input_handle, 0, hashes, outfile);
     }
     else {
         std::vector<std::string>::iterator i, e;
@@ -251,7 +263,7 @@ int main(int argc, char **argv) {
                           << errbuf << std::endl;
                 return -1;
             }
-            handle_pcap_file(input_handle, num, hashes);
+            handle_pcap_file(input_handle, num, hashes, outfile);
         }
     }
     } // end intentional malformed indentation
