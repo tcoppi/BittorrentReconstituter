@@ -5,9 +5,9 @@ OBJFLAGS=-c
 OSNAME := $(shell uname -s)
 
 ifeq ($(OSNAME),Darwin)
-	LIBS=-L/opt/local/lib -lboost_program_options-mt -lboost_serialization-mt -lpcap
+	LIBS=-L/opt/local/lib -lboost_program_options-mt -lboost_serialization-mt -lpcap -lcrypto
 else
-	LIBS=-lboost_program_options-mt -lboost_serialization-mt -lpcap
+	LIBS=-lboost_program_options-mt -lboost_serialization-mt -lpcap -lcrypto
 endif
 
 PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o \

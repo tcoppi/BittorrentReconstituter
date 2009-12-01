@@ -1,3 +1,5 @@
+#include <openssl/sha.h>
+
 #include "Reconstructor.hpp"
 #include "../pcap_parser/Session.hpp"
 #include "../pcap_parser/Piece.hpp"
@@ -63,12 +65,18 @@ unsigned int File::writeFile(void) {
     // Take every macropiece and add them all to the final buffer
     // and write it to disk
     std::ofstream outfile;
+    unsigned char hash[20];
 
     std::map<unsigned int, std::string>::iterator s, e;
 
     //FIXME Here is where we should probably check the hashes of the individual
     //pieces, if we have the torrent file.
     for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
+        //compute the hash
+        SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
+        //TODO verify the hash. if it doesn't match, throw an error and die
+
+        //insert the data into its correct place in the buffer
         this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
     }
 

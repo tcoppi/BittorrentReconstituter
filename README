@@ -5,7 +5,7 @@ the CS 489 Network Forensics class.
 
 Requirements
 ------------
-A POSIX compatible system is required, as well as the boost and libpcap
+A POSIX compatible system is required, as well as the boost, pcap, and OpenSSL
 libraries. We have tested on Linux and Mac OS X.
 
 Compilation
