@@ -3,16 +3,14 @@ CXX=g++
 CXXFLAGS=-Wall -g
 OBJFLAGS=-c
 OSNAME := $(shell uname -s)
-
 ifeq ($(OSNAME),Darwin)
 	LIBS=-L/opt/local/lib -lboost_program_options-mt -lboost_serialization-mt -lpcap -lcrypto
 else
 	LIBS=-lboost_program_options-mt -lboost_serialization-mt -lpcap -lcrypto
 endif
-
 PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o \
   ./pcap_parser/Session.o ./pcap_parser/Piece.o
-FILERECONSTOBJECTS=
+FILERECONSTOBJECTS=./file_reconstituter/Reconstructor.o
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) clean
 
@@ -20,9 +18,9 @@ all: subdirs btfinder
 
 btfinder: driver.o $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
 ifeq ($(OSNAME),Darwin)
-	$(CPP) $(CFLAGS) -o btfinder -I/opt/local/include $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
+	$(CPP) $(CXXFLAGS) -o btfinder -I/opt/local/include $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
 else
-	$(CPP) $(CFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
+	$(CPP) $(CXXFLAGS) -o btfinder $(LIBS) $(PCAPOBJECTS) $(FILERECONSTOBJECTS) driver.o
 endif
 
 driver.o: driver.cpp pcap_parser/SessionFinder.hpp pcap_parser/Packet.hpp \
@@ -35,7 +33,6 @@ $(SUBDIRS):
 	$(MAKE) -C $@
 
 # The rest of these targets are for convenience
-
 tags:
 	ctags `find . -iname '*.[c,h]pp'`
 

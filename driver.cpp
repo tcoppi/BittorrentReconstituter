@@ -1,5 +1,6 @@
 #include "pcap_parser/SessionFinder.hpp"
 #include "pcap_parser/PacketHandler.hpp"
+#include "file_reconstituter/Reconstructor.hpp"
 #include <boost/exception/get_error_info.hpp>
 #include <boost/program_options.hpp>
 #include <cassert>
@@ -16,10 +17,10 @@
 #include <vector>
 #include <openssl/sha.h>
 
+typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 // Does the work of spawning processes and running pipes between them
-void handle_pcap_file(pcap_t *input_handle, int i, 
-                     std::map<std::string, std::vector<std::string> > hashes) {
+void handle_pcap_file(pcap_t *input_handle, int i, hash_map_t hashes) {
     std::string in_pipe_str("intoFinder" + i);
     const char *in_pipe = in_pipe_str.c_str();
     std::string out_pipe_str("outofFinder" + i);
@@ -81,8 +82,7 @@ int main(int argc, char **argv) {
     std::string interface_name;
     std::vector<std::string> pcap_files;
     std::vector<std::string> torrent_files;
-    //Map of info hashes to list of piece hashes
-    std::map<std::string, std::vector<std::string> > hashes; 
+    hash_map_t hashes; // Map of info hashes to list of piece hashes
 
     // Yay, option parsing. XD  Add any new options to desc, directly below
     po::options_description desc("BitTorrent Reconstitutor Options");

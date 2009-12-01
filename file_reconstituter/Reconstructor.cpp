@@ -1,11 +1,11 @@
 #include <openssl/sha.h>
-
 #include "Reconstructor.hpp"
 #include "../pcap_parser/Session.hpp"
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
+typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
-Reconstructor::Reconstructor(const char *input, std::ofstream o, std::map<std::string, std::vector<std::string> > phashes)
+Reconstructor::Reconstructor(const char *input, std::ofstream o, hash_map_t phashes)
     : m_input(input), m_inpipe(m_input) {
     this->ohandle = &o;
     this->piece_hashes = phashes;
