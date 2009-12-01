@@ -64,7 +64,7 @@ void Reconstructor::reconstructSession(Session *s) {
     for (p = pieces.begin(), e = pieces.end(); p != e; ++p) {
         if (not (*p)->isValid()) {
                 std::cerr << "Invalid piece" << std::endl;
-                return;
+//                return;
         }
 
         file.addPiece(*p);
@@ -129,7 +129,8 @@ unsigned int File::writeFile(hash_map_t hashes){
             throw "Invalid SHA-1 hash for piece";
         }
 
-        std::cout << "SHA-1 verified successfully for piece " << (*s).first << std::endl;
+        if (havetorrent)
+            std::cout << "SHA-1 verified successfully for piece " << (*s).first << std::endl;
 
         std::cout << "Added piece " << (*s).first << std::endl;
 
