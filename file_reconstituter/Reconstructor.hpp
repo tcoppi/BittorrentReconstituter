@@ -10,7 +10,7 @@
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ofstream o);
+    Reconstructor(const char *input_pipe, std::ofstream o, std::map<std::string, std::vector<std::string> >);
     void reconstructSession(Session *session);
     void run();
 private:
@@ -18,6 +18,7 @@ private:
     Session *m_curr_session;
     boost::archive::text_iarchive m_inpipe;
     std::ofstream *ohandle;
+    std::map<std::string, std::vector<std::string> > piece_hashes;
 };
 
 class File {

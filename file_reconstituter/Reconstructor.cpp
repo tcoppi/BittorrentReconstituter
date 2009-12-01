@@ -5,9 +5,10 @@
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
 
-Reconstructor::Reconstructor(const char *input, std::ofstream o)
+Reconstructor::Reconstructor(const char *input, std::ofstream o, std::map<std::string, std::vector<std::string> > phashes)
     : m_input(input), m_inpipe(m_input) {
     this->ohandle = &o;
+    this->piece_hashes = phashes;
 }
 
 void Reconstructor::run() {
