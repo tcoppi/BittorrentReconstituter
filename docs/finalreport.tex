@@ -19,7 +19,8 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-This paper describes the BitTorrent Reconstitutor project.
+This paper describes the BitTorrent Reconstitutor project. Specifically, it
+contains an overview of the BitTorrent protocol...
 \end{abstract}
 %\keywords{}
 
@@ -154,7 +155,7 @@ major piece.  With this, the reconstructor can rebuild the major pieces that
 the file was originally broken up into, verify their hashes if possible, and
 use them to piece together the original file.
 
-\subsection{Tying It All Together}
+\subsection{Putting It All Together}
 We designed the system to run the modules concurrently, using pipes to
 communicate with each other, for several reasons. The main motivation was to be
 able to handle live input because sequential execution of the modules would not
@@ -182,6 +183,9 @@ nearly impossible and thus we worked on an alternate design, which led to the
 concurrent processing used in our implementation.
 
 \section{Deliverables}
+Our deliverable mainly consists of the source code to our application, a
+Makefile to build the code, and a readme. It also contains a set of sample data
+to run the application against to demonstrate its operation.
 \subsection{Functionality}
 The application identifies and reconstructs any files transferred using the
 BitTorrent protocol from network traffic. It can be run against both live input
