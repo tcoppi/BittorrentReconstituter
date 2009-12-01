@@ -33,12 +33,33 @@ void Reconstructor::run() {
 
 void Reconstructor::reconstructSession(Session *s) {
     std::vector<Piece*> pieces = s->getPieces();
-    File file(s->getHash()); //we need to pass along the output file name from the driver somehow
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
+    char hash_string[42];
 
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
+    //Output statistics
+    std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
+    const char *h = s->getHash().data();
+    for (int i = 0; i < 20; i++) {
+            printf("%x", (unsigned char)h[i]);
+    }
+    std::cout << std::endl;
+
+    //XXX FIXME this is disgusting
+    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+                    (unsigned char)h[0], (unsigned char)h[1],
+                    (unsigned char)h[2], (unsigned char)h[3],
+                    (unsigned char)h[4], (unsigned char)h[5],
+                    (unsigned char)h[6], (unsigned char)h[7],
+                    (unsigned char)h[8], (unsigned char)h[9],
+                    (unsigned char)h[10], (unsigned char)h[11],
+                    (unsigned char)h[12], (unsigned char)h[13],
+                    (unsigned char)h[14], (unsigned char)h[15],
+                    (unsigned char)h[16], (unsigned char)h[17],
+                    (unsigned char)h[18], (unsigned char)h[19]);
+    File file(hash_string);
     std::vector<Piece*>::iterator p, e;
     for (p = pieces.begin(), e = pieces.end(); p != e; ++p) {
         if (not (*p)->isValid()) {
@@ -48,13 +69,6 @@ void Reconstructor::reconstructSession(Session *s) {
 
         file.addPiece(*p);
     }
-
-    //Output statistics
-    std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
-    const char *h = s->getHash().data();
-    for (int i = 0; i < 20; i++)
-            printf("%x", (unsigned char)h[i]);
-    std::cout << std::endl;
 
     std::cout << "Peers: " << std::endl;
 
@@ -92,40 +106,42 @@ unsigned int File::writeFile(hash_map_t hashes){
     // and write it to disk
     std::ofstream outfile;
     unsigned char hash[20];
+    bool havetorrent = false;
 
     std::map<unsigned int, std::string>::iterator s, e;
 
-    int index = 0;
-
+    if (hashes.find(this->m_name) == hashes.end()) {
+        std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
+    }
+    else {
+            havetorrent = 1;
+            std::cout << "Found a torrent file with the same SHA-1 Info hash, verifying the piece(s) SHA-1(s)" << std::endl;
+    }
     //FIXME Here is where we should probably check the hashes of the individual
     //pieces, if we have the torrent file.
     for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
         //compute the hash
         SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
-        //Verify the hash. if it doesn't match, throw an error and die
-        if (hashes.find(this->m_name) == hashes.end())
-            std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
-        else {
-            std::cout << "Found a torrent file with the same SHA-1 Info hash, verifying the piece(s) SHA-1(s)" << std::endl;
-            if (not compare_sha1s((unsigned char *)hashes[this->m_name][index].data(), hash)) {
-                throw "Invalid SHA-1 hash for piece";
-            }
 
-            std::cout << "SHA-1(s) verified successfully!" << std::endl;
+        //Verify the hash. if it doesn't match, throw an error and die
+        if (havetorrent and (not compare_sha1s((unsigned char *)hashes[this->m_name][(*s).first].data(), hash))) {
+            std::cout << "error" << std::endl;
+            throw "Invalid SHA-1 hash for piece";
         }
-        this->m_data.insert(index, s->second);
-        index += s->second.size();
+
+        std::cout << "SHA-1 verified successfully for piece " << (*s).first << std::endl;
+
+        std::cout << "Added piece " << (*s).first << std::endl;
 
         //insert the data into its correct place in the buffer
-
-
-//         this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
+        this->m_data.insert((*s).second.length() * ((*s).first), (*s).second);
     }
 
     //write to the file
-//     outfile.open(this->m_name.c_str());
-    std::cout << this->m_data;
-//     outfile.close();
+     outfile.open(this->m_name.c_str());
+//    std::cout << this->m_data;
+     outfile << this->m_data;
+     outfile.close();
 
     return this->m_data.length();
 }
