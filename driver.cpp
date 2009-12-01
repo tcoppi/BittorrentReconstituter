@@ -14,9 +14,12 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
+#include <openssl/sha.h>
+
 
 // Does the work of spawning processes and running pipes between them
-void handle_pcap_file(pcap_t *input_handle, int i) {
+void handle_pcap_file(pcap_t *input_handle, int i, 
+                     std::map<std::string, std::vector<std::string> > hashes) {
     std::string in_pipe_str("intoFinder" + i);
     const char *in_pipe = in_pipe_str.c_str();
     std::string out_pipe_str("outofFinder" + i);
@@ -78,6 +81,8 @@ int main(int argc, char **argv) {
     std::string interface_name;
     std::vector<std::string> pcap_files;
     std::vector<std::string> torrent_files;
+    //Map of info hashes to list of piece hashes
+    std::map<std::string, std::vector<std::string> > hashes; 
 
     // Yay, option parsing. XD  Add any new options to desc, directly below
     po::options_description desc("BitTorrent Reconstitutor Options");
@@ -146,6 +151,79 @@ int main(int argc, char **argv) {
         std::cout << desc << std::endl;
         return 1;
     }
+    
+    //Create map of hashes
+    std::vector<std::string>::iterator torrent_file;
+    for (torrent_file = torrent_files.begin(); 
+         torrent_file != torrent_files.end(); ++torrent_file) {
+
+        std::string data;
+        char current;
+    
+        //Open input file
+        std::ifstream input_file((*torrent_file).c_str());
+        
+        //Read all data from file;
+        while (input_file.good()) {
+            current = input_file.get();
+            if (input_file.good()) {
+                data.push_back(current);
+            }
+
+        }
+        
+        //Find info dictionary
+        size_t offset = data.find("4:info") + 6;
+        std::string info_dict = data.substr(offset);
+    
+        //Get end of info dictionary
+        size_t announce_off = data.find("8:announce");
+        if(announce_off == std::string::npos) {
+            //Invalid torrent file
+            continue;
+        }
+        if(announce_off > offset) {
+            info_dict = info_dict.substr(0, announce_off);
+        }
+        
+        //Find the first if any field after the info dictionary
+        if(info_dict.find("8:url-list") != std::string::npos) {
+            info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
+        }
+        if(info_dict.find("13:creation date") != std::string::npos) {
+            info_dict = info_dict.substr(0, info_dict.find("13:creation date"));
+        }
+        if(info_dict.find("7:comment") != std::string::npos) {
+            info_dict = info_dict.substr(0, info_dict.find("7:comment"));
+        }
+        if(info_dict.find("10:created by") != std::string::npos) {
+            info_dict = info_dict.substr(0, info_dict.find("10:created by"));
+        }
+        if(info_dict.find("8:encoding") != std::string::npos) {
+            info_dict = info_dict.substr(0, info_dict.find("8:encoding"));
+        }
+        
+        //Get the info hash
+        const unsigned char* raw_info_dict = (const unsigned char*) info_dict.data();
+        unsigned char raw_info_hash[20];
+        SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
+        std::string info_hash = std::string((const char*) raw_info_hash, 20);
+        
+        //Get length of pieces
+        size_t pieces_off = info_dict.find("6:pieces") + 8;
+        size_t endoff = info_dict.find(":", pieces_off);
+        size_t pieces_len = (int) atoi(info_dict.substr(pieces_off, endoff-pieces_off).c_str());
+
+        //Get the pieces string
+        std::string pieces = info_dict.substr(endoff+1, pieces_len);
+
+        //Get the piece hashes themselves
+        size_t num_pieces = pieces_len / 20;
+        for(size_t i = 0; i < num_pieces; i++) {
+            //Add to map
+            hashes[info_hash].push_back(pieces.substr(i*20, 20));
+        }
+    }
 
     // Just use the last name specified for now, fix later
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -159,7 +237,7 @@ int main(int argc, char **argv) {
                       << errbuf << std::endl;
             return -1;
         }
-        handle_pcap_file(input_handle, 0);
+        handle_pcap_file(input_handle, 0, hashes);
     }
     else {
         std::vector<std::string>::iterator i, e;
@@ -173,7 +251,7 @@ int main(int argc, char **argv) {
                           << errbuf << std::endl;
                 return -1;
             }
-            handle_pcap_file(input_handle, num);
+            handle_pcap_file(input_handle, num, hashes);
         }
     }
     } // end intentional malformed indentation
