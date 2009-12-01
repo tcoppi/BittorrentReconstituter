@@ -37,6 +37,8 @@ void Reconstructor::reconstructSession(Session *s) {
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
 
+//    std::cout.rdbuf((*(this->ohandle)).rdbuf());
+
     std::vector<Piece*>::iterator p, e;
     for (p = pieces.begin(), e = pieces.end(); p != e; ++p) {
         if (not (*p)->isValid()) {
@@ -48,16 +50,21 @@ void Reconstructor::reconstructSession(Session *s) {
     }
 
     //Output statistics
-    *(this->ohandle) << "SHA-1 Info Hash: " << s->getHash() << std::endl;
-    *(this->ohandle) << "Peers: " << std::endl;
+    std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
+    const char *h = s->getHash().data();
+    for (int i = 0; i < 20; i++)
+            printf("%x", (unsigned char)h[i]);
+    std::cout << std::endl;
 
-    //ohandle ip:port for each peer
-    for(it = peers.begin(); it != peers.end(); it++) {
-        *(this->ohandle) << "\t" << (*it).second.ip << std::endl << "\t" << (*it).second.port << std::endl;
+    std::cout << "Peers: " << std::endl;
+
+    //output ip:port for each peer
+    for (it = peers.begin(); it != peers.end(); it++) {
+        std::cout << "\t" << (*it).second.ip << ":" << (*it).second.port << std::endl;
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
-    *(this->ohandle) << "Reconstructed file size: " << file.writeFile() << std::endl;
+    std::cout << "Reconstructed file size: " << file.writeFile() << " bytes." << std::endl;
 }
 
 File::File(std::string name) {
@@ -81,17 +88,17 @@ unsigned int File::writeFile(void) {
 
     //FIXME Here is where we should probably check the hashes of the individual
     //pieces, if we have the torrent file.
-    for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
+    for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
         //compute the hash
         SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
         //TODO verify the hash. if it doesn't match, throw an error and die
 
         this->m_data.insert(index, s->second);
         index += s->second.size();
-        
+
         //insert the data into its correct place in the buffer
-        
-        
+
+
 //         this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
     }
 

@@ -19,7 +19,7 @@
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 // Does the work of spawning processes and running pipes between them
-void handle_pcap_file(pcap_t *input_handle, int i, 
+void handle_pcap_file(pcap_t *input_handle, int i,
                       hash_map_t hashes, std::ofstream &output) {
     std::string in_pipe_str("intoFinder" + i);
     const char *in_pipe = in_pipe_str.c_str();
@@ -60,7 +60,7 @@ void handle_pcap_file(pcap_t *input_handle, int i,
         return;
     }
     else {
-        //Parent 
+        //Parent
         pid_t newpid = fork();
         if (newpid == 0) {
             Reconstructor *recon = new Reconstructor(out_pipe, output, hashes);
@@ -163,18 +163,18 @@ int main(int argc, char **argv) {
         std::cout << desc << std::endl;
         return 1;
     }
-    
+
     //Create map of hashes
     std::vector<std::string>::iterator torrent_file;
-    for (torrent_file = torrent_files.begin(); 
+    for (torrent_file = torrent_files.begin();
          torrent_file != torrent_files.end(); ++torrent_file) {
 
         std::string data;
         char current;
-    
+
         //Open input file
         std::ifstream input_file((*torrent_file).c_str());
-        
+
         //Read all data from file;
         while (input_file.good()) {
             current = input_file.get();
@@ -183,11 +183,11 @@ int main(int argc, char **argv) {
             }
 
         }
-        
+
         //Find info dictionary
         size_t offset = data.find("4:info") + 6;
         std::string info_dict = data.substr(offset);
-    
+
         //Get end of info dictionary
         size_t announce_off = data.find("8:announce");
         if(announce_off == std::string::npos) {
@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
         if(announce_off > offset) {
             info_dict = info_dict.substr(0, announce_off);
         }
-        
+
         //Find the first if any field after the info dictionary
         if(info_dict.find("8:url-list") != std::string::npos) {
             info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
@@ -214,13 +214,13 @@ int main(int argc, char **argv) {
         if(info_dict.find("8:encoding") != std::string::npos) {
             info_dict = info_dict.substr(0, info_dict.find("8:encoding"));
         }
-        
+
         //Get the info hash
         const unsigned char* raw_info_dict = (const unsigned char*) info_dict.data();
         unsigned char raw_info_hash[20];
         SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
         std::string info_hash = std::string((const char*) raw_info_hash, 20);
-        
+
         //Get length of pieces
         size_t pieces_off = info_dict.find("6:pieces") + 8;
         size_t endoff = info_dict.find(":", pieces_off);
@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
         // ^ We don't need that, use the -i option instead
         input_handle = pcap_open_live(interface_name.c_str(), 65535, 1, 1000, errbuf);
         if (input_handle == NULL) {
-            std::cerr << "Unable to open device " << interface_name << ": " 
+            std::cerr << "Unable to open device " << interface_name << ": "
                       << errbuf << std::endl;
             return -1;
         }
@@ -257,9 +257,9 @@ int main(int argc, char **argv) {
         for (i = pcap_files.begin(), e = pcap_files.end(), num = 0; i != e; ++i, ++num) {
             std::string input_name = *i;
 
-            input_handle = pcap_open_offline(input_name.c_str(), errbuf); 
+            input_handle = pcap_open_offline(input_name.c_str(), errbuf);
             if (input_handle == NULL) {
-                std::cerr << "Unable to open file " << input_name << ": " 
+                std::cerr << "Unable to open file " << input_name << ": "
                           << errbuf << std::endl;
                 return -1;
             }
@@ -274,13 +274,13 @@ int main(int argc, char **argv) {
     catch (boost::exception& e) { // If we have a failed arg parse
         //        std::cerr << "Error: " << boost::get_error_info(e) << std::endl;
         // Just error out generically for now, I guess.  The boost exception stuff is acting up
-        std::cerr << "Error with arg parsing" << std::endl; 
+        std::cerr << "Error with arg parsing" << std::endl;
         return -1;
     }
     catch (...) { // Something bad happened -- we should have caught this
         assert(0 && "Failing badly.");
     }
-    
+
     return 0;
 }
 
