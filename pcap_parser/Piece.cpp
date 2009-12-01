@@ -51,12 +51,16 @@ Piece::Piece(std::string payload) {
  */
 void Piece::addPayload(std::string payload) {
     block.append(payload);
+    std::cout << "block size: " << block.size() << std::endl;
+    std::cout << "piece len: " << len << std::endl;
+
     if (block.size() == len) {
         //We have finished this piece
         complete = true;
     }
     else if (block.size() > len) {
         //This piece is invalid
+        std::cout << "setting invalid" << std::endl;
         valid = false;
     }
 }

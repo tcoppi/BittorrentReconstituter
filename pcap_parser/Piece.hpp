@@ -27,7 +27,7 @@ private:
     friend class boost::serialization::access;
     template<class Archive>
             void serialize(Archive & ar, const unsigned int){
-        ar & index & offset & len & block;
+        ar & index & offset & len & block & valid & complete;
             }
     //Function to convert bytes in a string to an unsigned int
     unsigned int convertUInt(std::string);
