@@ -3,6 +3,16 @@ the CS 489 Network Forensics class.
 
 ===--------------------------------------------------------------------------===
 
+Requirements
+------------
+A POSIX compatible system is required, as well as the boost and libpcap
+libraries. We have tested on Linux and Mac OS X.
+
+Compilation
+-----------
+Simply run `make` in the top-level directory, and an executable named
+"btfinder" will be created.
+
 Usage: ./btfinder [options] <input files>
   The input files can be any number of pcap files and possibly the accompanying
   torrent files.  If torrent files are specified they are attempted to be
