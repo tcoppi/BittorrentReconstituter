@@ -15,13 +15,17 @@ void Reconstructor::run() {
     Session s;
     while (true) {
         try {
-            std::cout << "Waiting on input" << std::endl;
             this->m_inpipe >> s;
-            std::cout << "Got input" << std::endl;
+
             this->reconstructSession(&s);
+
         }
         catch (boost::archive::archive_exception &e) {
-            std::cout << "Catching archive exception" << std::endl;
+            break;
+        }
+        catch (std::length_error &e) {
+            //XXX TODO FIXME
+            //Should fix length error here instead of catching
             break;
         }
     }
@@ -48,7 +52,7 @@ void Reconstructor::reconstructSession(Session *s) {
     *(this->ohandle) << "Peers: " << std::endl;
 
     //ohandle ip:port for each peer
-    for(it = peers.begin(); it == peers.end(); it++) {
+    for(it = peers.begin(); it != peers.end(); it++) {
         *(this->ohandle) << "\t" << (*it).second.ip << std::endl << "\t" << (*it).second.port << std::endl;
     }
 
@@ -73,6 +77,8 @@ unsigned int File::writeFile(void) {
 
     std::map<unsigned int, std::string>::iterator s, e;
 
+    int index = 0;
+
     //FIXME Here is where we should probably check the hashes of the individual
     //pieces, if we have the torrent file.
     for(s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
@@ -80,14 +86,19 @@ unsigned int File::writeFile(void) {
         SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
         //TODO verify the hash. if it doesn't match, throw an error and die
 
+        this->m_data.insert(index, s->second);
+        index += s->second.size();
+        
         //insert the data into its correct place in the buffer
-        this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
+        
+        
+//         this->m_data.insert((*s).second.length() * ((*s).first - 1), (*s).second);
     }
 
     //write to the file
-    outfile.open(this->m_name.c_str());
-    outfile << this->m_data;
-    outfile.close();
+//     outfile.open(this->m_name.c_str());
+    std::cout << this->m_data;
+//     outfile.close();
 
     return this->m_data.length();
 }

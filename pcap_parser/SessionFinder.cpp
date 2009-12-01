@@ -73,7 +73,6 @@ void SessionFinder::run() {
             break;
         }
     }
-    std::cout << "Closing pipes." << std::endl;
     input_pipe.close();
     output_pipe.close();
 }
@@ -127,7 +126,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             sessions[info_hash] = session;
         }
         else if(pkt.payload.find("completed") != std::string::npos) {
-            std::cout << "at completed" << std::endl;
             //Get session
             //Extract out the content of each field
             //info_hash is unique for every transfer so it goes in the class
@@ -224,7 +222,6 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
-        std::cout << "Activated peer " << pkt.src_ip << ":" << pkt.src_port << std::endl;
     }
     //Move on to decoding bittorrent packets. We need to have at least found a
     //tracker response for this to happen.
@@ -268,7 +265,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             return;
         }
 
-        std::cout << "created a Piece!" << std::endl;
         //Add piece to session
         session->addPiece(piece);
 	}
