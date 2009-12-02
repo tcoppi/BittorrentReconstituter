@@ -78,7 +78,7 @@ void Reconstructor::reconstructSession(Session *s) {
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
-    std::cout << "Reconstructed file size: " << file.writeFile(this->piece_hashes) << " bytes." << std::endl;
+    std::cout << "Reconstructed file size: " << file.writeFile(this->piece_hashes, s->getHash().data()) << " bytes." << std::endl;
 }
 
 File::File(std::string name) {
@@ -101,7 +101,7 @@ bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     return true;
 }
 
-unsigned int File::writeFile(hash_map_t hashes){
+unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
     // Take every macropiece and add them all to the final buffer
     // and write it to disk
     std::ofstream outfile;
@@ -110,21 +110,21 @@ unsigned int File::writeFile(hash_map_t hashes){
 
     std::map<unsigned int, std::string>::iterator s, e;
 
-    if (hashes.find(this->m_name) == hashes.end()) {
+    if (hashes.find(raw_info_hash) == hashes.end()) {
         std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
     }
     else {
             havetorrent = 1;
             std::cout << "Found a torrent file with the same SHA-1 Info hash, verifying the piece(s) SHA-1(s)" << std::endl;
     }
-    //FIXME Here is where we should probably check the hashes of the individual
-    //pieces, if we have the torrent file.
+
+    unsigned int index = 0;
     for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
         //compute the hash
         SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
 
         //Verify the hash. if it doesn't match, throw an error and die
-        if (havetorrent and (not compare_sha1s((unsigned char *)hashes[this->m_name][(*s).first].data(), hash))) {
+        if (havetorrent and (not compare_sha1s((unsigned char *)hashes[raw_info_hash][(*s).first].data(), hash))) {
             std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
         }
@@ -135,7 +135,8 @@ unsigned int File::writeFile(hash_map_t hashes){
         std::cout << "Added piece " << (*s).first << std::endl;
 
         //insert the data into its correct place in the buffer
-        this->m_data.insert((*s).second.length() * ((*s).first), (*s).second);
+        this->m_data.insert(index, s->second);
+        index += s->second.size();
     }
 
     //write to the file
