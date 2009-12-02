@@ -190,8 +190,8 @@ void SessionFinder::handlePacket(Packet pkt) {
                     throw "Out of memory";
 
             //decode ip and port
-            snprintf(inet_tmp, 15, "%d.%d.%d.%d", raw_data[0], raw_data[1],
-                                                  raw_data[2], raw_data[3]);
+            snprintf(inet_tmp, 15, "%d.%d.%d.%d", (u_char)raw_data[0], (u_char)raw_data[1],
+                     (u_char) raw_data[2], (u_char)raw_data[3]);
             raw_data = pkt.payload.c_str()+offset+4;
             unsigned short port = 0;
             port = (raw_data[0] << 8) | raw_data[1];
