@@ -21,7 +21,7 @@ namespace boost {
     namespace serialization {
 
         template<class Archive>
-                void serialize(Archive & ar, Peer & p, const unsigned int version)
+        void serialize(Archive & ar, Peer & p, const unsigned int version)
         {
             ar & p.ip;
             ar & p.port;

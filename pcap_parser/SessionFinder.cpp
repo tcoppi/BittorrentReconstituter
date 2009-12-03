@@ -251,11 +251,11 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Continue a piece in flight
-        if (session->getLastPiece() != NULL) {
-            if (not session->getLastPiece()->isCompleted()) {
+        if (session->getLastPiece(pkt.src_ip) != NULL) {
+            if (not session->getLastPiece(pkt.src_ip)->isCompleted()) {
                 //Update last piece and get any leftover data
                 std::string leftover_payload;
-                leftover_payload = session->getLastPiece()->addPayload(pkt.payload);
+                leftover_payload = session->getLastPiece(pkt.src_ip)->addPayload(pkt.payload);
                 if(leftover_payload.size() == 0) {
                     return;
                 }
@@ -282,7 +282,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Add piece to session
-        session->addPiece(piece);
+        session->addPiece(pkt.src_ip,piece);
 	}
 }
 

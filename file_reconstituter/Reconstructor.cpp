@@ -4,6 +4,8 @@
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
+typedef std::map<std::string,std::vector<Piece*> > ip_piece_map_t;
+
 
 Reconstructor::Reconstructor(const char *input, std::ofstream &o, hash_map_t phashes)
     : m_input(input), m_inpipe(m_input) {
@@ -16,9 +18,7 @@ void Reconstructor::run() {
     while (true) {
         try {
             this->m_inpipe >> s;
-
             this->reconstructSession(&s);
-
         }
         catch (boost::archive::archive_exception &e) {
             break;
@@ -32,7 +32,7 @@ void Reconstructor::run() {
 }
 
 void Reconstructor::reconstructSession(Session *s) {
-    std::vector<Piece*> pieces = s->getPieces();
+    ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
     char hash_string[42];
@@ -60,25 +60,30 @@ void Reconstructor::reconstructSession(Session *s) {
                     (unsigned char)h[16], (unsigned char)h[17],
                     (unsigned char)h[18], (unsigned char)h[19]);
     File file(hash_string);
-    std::vector<Piece*>::iterator p, e;
-    for (p = pieces.begin(), e = pieces.end(); p != e; ++p) {
-        if (not (*p)->isValid()) {
-                std::cerr << "Invalid piece" << std::endl;
-//                return;
-        }
 
-        file.addPiece(*p);
+    ip_piece_map_t::iterator m, me;
+    std::vector<Piece*>::iterator p, pe;
+    for (m = pieces.begin(), me = pieces.end(); m != me; ++m) {
+        for (p = (*m).second.begin(), pe = (*m).second.end(); p != pe; ++p) {
+            if (not (*p)->isValid()) {
+                std::cerr << "Invalid piece" << std::endl;
+                // return;
+            }
+            file.addPiece(*p);
+        }
     }
 
     std::cout << "Peers: " << std::endl;
-
     //output ip:port for each peer
     for (it = peers.begin(); it != peers.end(); it++) {
-        std::cout << "\t" << (*it).second.ip << ":" << (*it).second.port << std::endl;
+        std::cout << "\t" << (*it).second.ip << ":"
+                  << (*it).second.port << std::endl;
     }
 
     // We get file.  How are you gentlemen?  Output me to your base.
-    std::cout << "Reconstructed file size: " << file.writeFile(this->piece_hashes, s->getHash().data()) << " bytes." << std::endl;
+    std::cout << "Reconstructed file size: "
+              << file.writeFile(this->piece_hashes, s->getHash().data())
+              << " bytes." << std::endl;
 }
 
 File::File(std::string name) {

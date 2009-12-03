@@ -3,7 +3,6 @@
  *
  * Original Authors: Aaron A. Lovato and Thomas Coppi
  */
-
 #include <vector>
 #include <string>
 #include <map>
@@ -11,8 +10,8 @@
 
 Session::Session() {}
 
-Session::Session(std::string host_ip, u_short port, std::string tracker_ip, std::string info_hash) {
-
+Session::Session(std::string host_ip, u_short port, 
+                 std::string tracker_ip, std::string info_hash) {
     //Set completed flag
     completed = false;
 
@@ -52,7 +51,7 @@ bool Session::hasTracker(std::string tracker_ip) {
     //Find out if the given IP address is a known tracker
     std::vector<std::string>::iterator it;
 
-    for ( it=trackers.begin(); it < trackers.end(); it++ ) {
+    for (it=trackers.begin(); it < trackers.end(); ++it) {
         if(*it == tracker_ip) {
             //This tracker is already in the list
             return true;
@@ -112,15 +111,15 @@ void Session::activatePeer(std::string peer_ip) {
     }
 }
 
-Piece * Session::getLastPiece() {
-    if(pieces.size() != 0) {
-        return pieces.back();
+Piece *Session::getLastPiece(std::string ip) {
+    if (this->pieces[ip].size() > 0) {
+        return this->pieces[ip].back();
     }
     return NULL;
 }
 
-void Session::addPiece(Piece *newPiece) {
-    pieces.push_back(newPiece);
+void Session::addPiece(std::string ip, Piece *newPiece) {
+    pieces[ip].push_back(newPiece);
 }
 
 u_short Session::getHostPort() {
