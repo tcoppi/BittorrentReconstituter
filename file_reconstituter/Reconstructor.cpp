@@ -96,7 +96,7 @@ void File::addPiece(Piece *piece) {
     // We can't assume the pieces are in order so we have to check if we need
     // to allocate space in the string
     unsigned int offset = piece->getOffset();
-    if(offset > this->macropieces[piece->getIndex()].size()) {
+    if(offset >= this->macropieces[piece->getIndex()].size()) {
         this->macropieces[piece->getIndex()].resize(offset, ' ');
     }
 
