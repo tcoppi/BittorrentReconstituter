@@ -220,6 +220,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
+//         std::cerr << "activating peer " << pkt.src_ip << std::endl;
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
@@ -252,14 +253,29 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Continue a piece in flight
         if (session->getLastPiece() != NULL) {
             if (not session->getLastPiece()->isCompleted()) {
-                //Update last piece
-                session->getLastPiece()->addPayload(pkt.payload);
+                //Update last piece and get any leftover data
+                std::string leftover_payload;
+                leftover_payload = session->getLastPiece()->addPayload(pkt.payload);
+                if(leftover_payload.size() == 0) {
+                    return;
+                }
+                //Create a Packet to hold leftover data
+                Packet leftover_pkt;
+                leftover_pkt.src_ip = pkt.src_ip;
+                leftover_pkt.src_port = pkt.src_port;
+                leftover_pkt.dst_ip = pkt.dst_ip;
+                leftover_pkt.dst_port = pkt.dst_port;
+                leftover_pkt.payload = leftover_payload;
+                handlePacket(leftover_pkt);
+
                 return;
             }
         }
 
         //This packet should correspond to session
         //Attempt to decode it as a Piece message
+//         std::cerr << "sending packet from " << pkt.src_ip << " -> " << pkt.dst_ip;
+//         std::cerr << " to piece decoding\n";
         Piece *piece = new Piece(pkt.payload);
         if (not piece->isValid()) {
             return;
