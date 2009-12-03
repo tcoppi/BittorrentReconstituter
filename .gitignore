@@ -4,6 +4,8 @@
 *.log
 *.pdf
 *.toc
+*.bbl
+*.blg
 
 # Object files
 *.o
@@ -19,3 +21,6 @@ a.out
 # misc
 tags
 TAGS
+
+#
+btfinder
