@@ -174,7 +174,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = pkt.payload.find("5:peers");
         offset += strlen("5:peers");
 
-        endoff = pkt.payload.find(":", offset); //get the next ':
+        endoff = pkt.payload.find(":", offset); //get the next ':'
 
         //divide by 6 because each peer is 4 bytes for ip + 2 for port
         unsigned int peers_to_add = atoi(pkt.payload.substr(offset, endoff-offset).c_str());
@@ -251,6 +251,11 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Continue a piece in flight
+        //XXX I think this may be the problem. This only checks if the *last*
+        //piece is incomplete. It is possible that we are downloading more than
+        //one piece at a time, in which case multiple pieces could be
+        //incomplete. I think the fix is to instead iterate over all pieces and
+        //check if they are complete.
         if (session->getLastPiece(pkt.src_ip) != NULL) {
             if (not session->getLastPiece(pkt.src_ip)->isCompleted()) {
                 //Update last piece and get any leftover data
