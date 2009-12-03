@@ -16,7 +16,16 @@
 #include <sys/wait.h>
 #include <vector>
 #include <openssl/sha.h>
+#include <signal.h>
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
+
+// Attempt to not completely rudely stop when Ctrl-c'd
+void graceful_close(int signal) {
+    std::cerr << "Exiting..." << std::endl;
+    // Maybe fix these names later
+    remove("intoFinder");
+    remove("outofFinder");
+}
 
 // Does the work of spawning processes and running pipes between them
 void handle_pcap_file(pcap_t *input_handle, int i,
@@ -79,6 +88,7 @@ void handle_pcap_file(pcap_t *input_handle, int i,
             remove(out_pipe);
         }
     }
+
     return;
 }
 
@@ -95,6 +105,8 @@ int main(int argc, char **argv) {
     std::vector<std::string> pcap_files;
     std::vector<std::string> torrent_files;
     hash_map_t hashes; // Map of info hashes to list of piece hashes
+
+    signal(SIGINT, graceful_close);
 
     // Yay, option parsing. XD  Add any new options to desc, directly below
     po::options_description desc("BitTorrent Reconstitutor Options");
