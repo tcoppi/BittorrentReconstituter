@@ -112,8 +112,11 @@ void Session::activatePeer(std::string peer_ip) {
 }
 
 Piece *Session::getLastPiece(std::string ip) {
-    if (this->pieces[ip].size() > 0) {
-        return this->pieces[ip].back();
+    if(this->pieces.find(ip) == this->pieces.end()) {
+        return NULL;
+    }
+    if (this->pieces.find(ip)->second.size() > 0) {
+        return this->pieces.find(ip)->second.back();
     }
     return NULL;
 }
