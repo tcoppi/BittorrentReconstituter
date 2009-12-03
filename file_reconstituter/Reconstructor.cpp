@@ -92,7 +92,18 @@ File::File(std::string name) {
 
 void File::addPiece(Piece *piece) {
     // Insert the piece's data into the correct macropiece position and offset.
+    
+    // We can't assume the pieces are in order so we have to check if we need
+    // to allocate space in the string
+    unsigned int offset = piece->getOffset();
+    if(offset > this->macropieces[piece->getIndex()].size()) {
+        this->macropieces[piece->getIndex()].resize(offset, ' ');
+    }
+    
+//     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
     this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
+//     std::cerr << " fuck" << std::endl;
+
 }
 
 /**
