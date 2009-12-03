@@ -91,6 +91,6 @@ void PacketHandler::handlePacket(const u_char *packet,
     //Serialize packet to output pipe
     output_archive << pkt;
     output_pipe.flush();
-// 
+//
 }
 // vim: tabstop=4:expandtab
