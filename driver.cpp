@@ -25,6 +25,7 @@ void graceful_close(int signal) {
     // Maybe fix these names later
     remove("intoFinder");
     remove("outofFinder");
+    exit(0);
 }
 
 // Does the work of spawning processes and running pipes between them
@@ -289,10 +290,13 @@ int main(int argc, char **argv) {
         std::cerr << "Error with arg parsing" << std::endl;
         return -1;
     }
+    catch (boost::archive::archive_exception &e) {
+        std::cerr << "Error reading / writing / closing a pipe." << std::endl;
+        return -2;
+    }
     catch (...) { // Something bad happened -- we should have caught this
         assert(0 && "Failing badly.");
     }
-
     return 0;
 }
 
