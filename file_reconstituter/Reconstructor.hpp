@@ -45,14 +45,14 @@ public:
      * Reconstructs the file(s) and verifies the SHA-1 hashes of the pieces, if
      * the torrent file is available.
      */
-    void reconstructFile(std::vector<Torrent*>, const char *);
+    void reconstructFile(Torrent*);
 
     /**
      * Outputs the current contents of the buffer buffer to the file.
      *
      * Returns the number of bytes written.
      */
-    unsigned int writeFile(void);
+    unsigned int writeFile(unsigned int begin, unsigned int length);
 
 private:
     std::string m_name;

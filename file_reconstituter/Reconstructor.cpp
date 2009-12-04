@@ -38,6 +38,7 @@ void Reconstructor::reconstructSession(Session *s) {
     // we can break it up, otherwise the user will have to do it manually, as we
     // don't have that information.
     File file;
+    Torrent *torrent = NULL; // Hold the torrent for this session if we have it
 
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
@@ -72,33 +73,76 @@ void Reconstructor::reconstructSession(Session *s) {
                   << it->second.port << std::endl;
     }
 
-    // Do possible file breakup here if we have the torrent
+    std::vector<Torrent*>::iterator i, ie;
+    for (i = this->m_torrents.begin(), ie = this->m_torrents.end(); i != ie; ++i) {
+        if ((*i)->info_hash() == s->getHash().data()) {
+            torrent = *i;
+        }
+    }
+    file.reconstructFile(torrent);
 
-    file.reconstructFile(this->m_torrents, s->getHash().data());
+    if (torrent == NULL) {
+        // We still want to output, just no verification.  Refactor this ASAP
+        // Name the file after its checksum
+        const unsigned char *data = (const unsigned char*) file.contents().data();
+        SHA1(data, file.contents().length(), temp_hash);
+        //FIXME This is disgusting
+        snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+                 (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
+                 (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
+                 (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
+                 (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
+                 (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
+                 (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
+                 (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
+                 (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
+                 (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
+                 (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
+        file.name(hash_string);
 
-    // Name the file after its checksum
-    const unsigned char *data = (const unsigned char*) file.contents().data();
-    SHA1(data, file.contents().length(), temp_hash);
-    //FIXME This is disgusting
-    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
-             (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
-             (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
-             (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
-             (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
-             (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
-             (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
-             (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
-             (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
-             (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
-             (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
-    file.name(hash_string);
+        std::cout << "Output filename: " << hash_string << std::endl;
 
-    std::cout << "Output filename: " << hash_string << std::endl;
+        // We get file.  How are you gentlemen?  Output me to your base.
+        std::cout << "Reconstructed file size: "
+                  << file.writeFile(0, std::string::npos)
+                  << " bytes." << std::endl;
+        return;
+    }
 
-    // We get file.  How are you gentlemen?  Output me to your base.
-    std::cout << "Reconstructed file size: "
-              << file.writeFile()
-              << " bytes." << std::endl;
+    // Break up files here
+    unsigned int file_offset = 0;
+    std::vector<unsigned int> v = torrent->file_lengths();
+    for (unsigned int i=0; i < v.size(); ++i) {
+        std::cerr << "i: " << i << " file_offset: " << file_offset << "\n";
+        std::cerr << "v.at(i): " << v.at(i) << std::endl;
+
+        std::string curr_file = file.contents().substr(file_offset, v.at(i));
+        // Name the file after its checksum
+        const unsigned char *data = (const unsigned char*) curr_file.data();
+        SHA1(data, curr_file.length(), temp_hash);
+        //FIXME This is disgusting
+        snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+                 (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
+                 (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
+                 (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
+                 (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
+                 (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
+                 (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
+                 (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
+                 (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
+                 (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
+                 (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
+        file.name(hash_string);
+
+        std::cout << "Output filename: " << hash_string << std::endl;
+
+        // We get file.  How are you gentlemen?  Output me to your base.
+        std::cout << "Reconstructed file size: "
+                  << file.writeFile(file_offset, v.at(i))
+                  << " bytes." << std::endl;
+
+        file_offset += v.at(i);
+    }
 }
 
 // File::File(std::string name) : m_name(name) {}
@@ -130,22 +174,11 @@ bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     return true;
 }
 
-void File::reconstructFile(std::vector<Torrent*> torrents, const char *raw_info_hash) {
+void File::reconstructFile(Torrent *torrent) {
     // Take every macropiece and add them all to the final buffer
     unsigned char hash[20];
     bool havetorrent = false;
-    Torrent *torrent = NULL; // hold torrent for this file if found
-
-    std::vector<Torrent*>::iterator i, ie;
-    for (i = torrents.begin(), ie = torrents.end(); i != ie; ++i) {
-        if ((*i)->info_hash() == raw_info_hash) {
-            havetorrent = true;
-            torrent = *i;
-            // UI Point - Test if we can singularize this string (piece's SHA1)
-            std::cout << "Found a torrent file with the same SHA-1 info hash,"
-                      << " verifying the pieces' SHA-1s" << std::endl;
-        }
-    }
+    if (torrent != NULL) havetorrent = true;
 
     if (not havetorrent)
         std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
@@ -156,18 +189,20 @@ void File::reconstructFile(std::vector<Torrent*> torrents, const char *raw_info_
         // Compute the hash
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
-        // Verify the hash. if it doesn't match, throw an error and die
-        std::cerr << "Checking piece number " << s->first << ".  Has hash ";
-        for (int i=0; i < 20; i++)
-            fprintf(stderr, "%x", (u_char)(torrent->piece_hashes().at(s->first).data())[i]);
-        std::cerr << std::endl << "Expecting hash ";
-        for (int i=0; i < 20; i++)
-            fprintf(stderr, "%x", (u_char)hash[i]);
-        std::cerr << std::endl;
+        // DEBUG
+        if (havetorrent) {
+            std::cerr << "Checking piece number " << s->first << ".  Has hash ";
+            for (int i=0; i < 20; i++)
+                fprintf(stderr, "%x", (u_char)(torrent->piece_hashes().at(s->first).data())[i]);
+            std::cerr << std::endl << "Expecting hash ";
+            for (int i=0; i < 20; i++)
+                fprintf(stderr, "%x", (u_char)hash[i]);
+            std::cerr << std::endl;
+        }
 
+        // Verify the hash. if it doesn't match, throw an error and die
         if (havetorrent and
             (not compare_sha1s((u_char *)torrent->piece_hashes().at(s->first).data(), hash))) {
-            std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
         }
 
@@ -180,17 +215,14 @@ void File::reconstructFile(std::vector<Torrent*> torrents, const char *raw_info_
         this->m_contents.insert(index, s->second);
         index += s->second.size();
     }
-
 }
 
-unsigned int File::writeFile(void) {
+unsigned int File::writeFile(unsigned int begin, unsigned int length) {
     std::ofstream outfile;
 
-    //write to the file
-     outfile.open(this->m_name.c_str());
-//    std::cout << this->m_contents;
-     outfile << this->m_contents;
-     outfile.close();
+    outfile.open(this->m_name.c_str());
+    outfile << this->m_contents.substr(begin, length);
+    outfile.close();
 
     return this->m_contents.length();
 }
