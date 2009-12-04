@@ -1,6 +1,8 @@
 #include "Torrent.hpp"
 #include <fstream>
 #include <openssl/sha.h>
+#include <stdlib.h>
+#include <iostream>
 
 Torrent::Torrent(std::string file) : filename(file) {}
 
@@ -31,9 +33,9 @@ bool Torrent::init() {
     }
 
     //Find the first if any field after the info dictionary
-//     if(info_dict.find("8:url-list") != std::string::npos) {
-//         info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
-//     }
+    if(info_dict.find("8:url-list") != std::string::npos) {
+        info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
+    }
     if(info_dict.find("13:creation date") != std::string::npos) {
         info_dict = info_dict.substr(0, info_dict.find("13:creation date"));
     }
@@ -46,14 +48,22 @@ bool Torrent::init() {
     if(info_dict.find("8:encoding") != std::string::npos) {
         info_dict = info_dict.substr(0, info_dict.find("8:encoding"));
     }
-
+    
+    //These two are added by mininova
+    if(info_dict.find("6:locale") != std::string::npos) {
+        info_dict = info_dict.substr(0, info_dict.find("6:locale"));
+    }
+    if(info_dict.find("5:title") != std::string::npos) {
+        info_dict = info_dict.substr(0, info_dict.find("5:title"));
+    }
+    
     // etc, etc
     //Get the info hash
     const unsigned char* raw_info_dict = (const unsigned char*) info_dict.data();
     unsigned char raw_info_hash[20];
     SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
-    std::string info_hash = std::string((const char*) raw_info_hash, 20);
-
+    this->m_info_hash = std::string((const char*) raw_info_hash, 20);
+    std::cout << "info data: " << info_dict << std::endl;
     //Get length of pieces
     size_t pieces_off = info_dict.find("6:pieces") + 8;
     size_t endoff = info_dict.find(":", pieces_off);
