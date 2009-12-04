@@ -1,5 +1,13 @@
-BitTorrent-Reconstituter is the work of Charlie Moore, Aaron Lovato, and Thomas Coppi for
-the CS 489 Network Forensics class.
+BitTorrent-Reconstituter is the work of Charlie Moore, Aaron Lovato, and Thomas
+Coppi for the CS 489 Network Forensics class.
+
+This program can be run on live input or a .pcap file.  It will parse out the
+BitTorrent files that were transferred and reconstruct them.  If a torrent file
+is specified, it will break the files up appropriately and give them the correct
+filenames.  Otherwise it'll output one big file whose filename is the checksum
+of its contents.  This big file will be all the other files concatenated
+together.  They must be cut up manually if we don't have the torrent file,
+because there is no way for us to know the file boundries without it.
 
 ===--------------------------------------------------------------------------===
 
@@ -20,8 +28,8 @@ available:
 
 Usage: ./btfinder [options] <input files>
   The input files can be any number of pcap files and possibly the accompanying
-  torrent files.  If torrent files are specified they are attempted to be
-  matched with one of the pcap files if possible for verification.
+  torrent files.  If torrent files are specified, the program will attempt to
+  match them with the pcap files for verification and file splitting.
 
 Example usage:
 ./btfinder ./sample_pcaps/mippo.pcap ./sample_pcaps/mippo-creative_v92.mp3.torrent
@@ -44,6 +52,3 @@ Options:
     Specify filenames for offline processing.  Any non-pcap/torrent files will
     be ignored.  This option doesn't work if -i was specified as well.  Any
     extra arguments at the end will be added as an input file as well
-
-===--------------------------------------------------------------------------===
-
