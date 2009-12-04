@@ -4,6 +4,7 @@
 #ifndef __RECONSTRUCTOR_H
 #define __RECONSTRUCTOR_H
 #include "../pcap_parser/Session.hpp"
+#include "Torrent.hpp"
 #include <boost/archive/text_iarchive.hpp>
 #include <ostream>
 #include <fstream>
@@ -12,7 +13,8 @@ typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 class Reconstructor {
 public:
-    Reconstructor(const char *input_pipe, std::ofstream &o, hash_map_t hashes);
+    Reconstructor(const char *input_pipe, std::ofstream &o,
+                  std::vector<Torrent*> torrents);
     void reconstructSession(Session *session);
     void run();
 private:
@@ -20,7 +22,7 @@ private:
     Session *m_curr_session;
     boost::archive::text_iarchive m_inpipe;
     std::ofstream *ohandle;
-    hash_map_t piece_hashes;
+    std::vector<Torrent*> m_torrents;
 };
 
 class File {
@@ -43,7 +45,7 @@ public:
      * Reconstructs the file(s) and verifies the SHA-1 hashes of the pieces, if
      * the torrent file is available.
      */
-    void reconstructFile(hash_map_t, const char *);
+    void reconstructFile(std::vector<Torrent*>, const char *);
 
     /**
      * Outputs the current contents of the buffer buffer to the file.

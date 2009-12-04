@@ -31,7 +31,7 @@ void graceful_close(int signal) {
 
 // Does the work of spawning processes and running pipes between them
 void handle_pcap_file(pcap_t *input_handle, int i,
-                      hash_map_t hashes, std::ofstream &output) {
+                      std::vector<Torrent*> torrents, std::ofstream &output) {
     std::string in_pipe_str("intoFinder" + i);
     const char *in_pipe = in_pipe_str.c_str();
     std::string out_pipe_str("outofFinder" + i);
@@ -74,7 +74,7 @@ void handle_pcap_file(pcap_t *input_handle, int i,
         //Parent
         pid_t newpid = fork();
         if (newpid == 0) {
-            Reconstructor *recon = new Reconstructor(out_pipe, output, hashes);
+            Reconstructor *recon = new Reconstructor(out_pipe, output, torrents);
             recon->run();
         }
         else if (pid < 0) {
@@ -196,11 +196,11 @@ int main(int argc, char **argv) {
                       << errbuf << std::endl;
             return -1;
         }
-        handle_pcap_file(input_handle, 0, hashes, outfile);
+        handle_pcap_file(input_handle, 0, torrents, outfile);
     }
     else {
-        std::vector<std::string>::iterator i, e;
         int num;
+        std::vector<std::string>::iterator i, e;
         for (i = pcap_files.begin(), e = pcap_files.end(), num = 0; i != e; ++i, ++num) {
             std::string input_name = *i;
 
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
                           << errbuf << std::endl;
                 return -1;
             }
-            handle_pcap_file(input_handle, num, hashes, outfile);
+            handle_pcap_file(input_handle, num, torrents, outfile);
         }
     }
     } // end intentional malformed indentation

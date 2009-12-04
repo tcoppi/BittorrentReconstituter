@@ -1,13 +1,15 @@
 #include <openssl/sha.h>
 #include "Reconstructor.hpp"
+#include "Torrent.hpp"
 #include "../pcap_parser/Session.hpp"
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 typedef std::map<std::string, std::vector<Piece*> > ip_piece_map_t;
 
-Reconstructor::Reconstructor(const char *input, std::ofstream &o, hash_map_t phashes)
-    : m_input(input), m_inpipe(m_input), ohandle(&o), piece_hashes(phashes) {
+Reconstructor::Reconstructor(const char *input, std::ofstream &o,
+                             std::vector<Torrent*> torrents)
+    : m_input(input), m_inpipe(m_input), ohandle(&o), m_torrents(torrents) {
 }
 
 void Reconstructor::run() {
@@ -72,7 +74,7 @@ void Reconstructor::reconstructSession(Session *s) {
 
     // Do possible file breakup here if we have the torrent
 
-    file.reconstructFile(this->piece_hashes, s->getHash().data());
+    file.reconstructFile(this->m_torrents, s->getHash().data());
 
     // Name the file after its checksum
     const unsigned char *data = (const unsigned char*) file.contents().data();
@@ -128,31 +130,35 @@ bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     return true;
 }
 
-void File::reconstructFile(hash_map_t hashes, const char *raw_info_hash) {
+void File::reconstructFile(std::vector<Torrent*> torrents, const char *raw_info_hash) {
     // Take every macropiece and add them all to the final buffer
     unsigned char hash[20];
     bool havetorrent = false;
+    Torrent *torrent = NULL; // hold torrent for this file if found
 
-    std::map<unsigned int, std::string>::iterator s, e;
-
-    if (hashes.find(raw_info_hash) == hashes.end()) {
-        std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
+    std::vector<Torrent*>::iterator i, ie;
+    for (i = torrents.begin(), ie = torrents.end(); i != ie; ++i) {
+        if ((*i)->info_hash() == raw_info_hash) {
+            havetorrent = true;
+            torrent = *i;
+            // UI Point - Test if we can singularize this string (piece's SHA1)
+            std::cout << "Found a torrent file with the same SHA-1 info hash,"
+                      << " verifying the pieces' SHA-1s" << std::endl;
+        }
     }
-    else {
-        havetorrent = 1;
-        // UI Point - Test if we can singularize this string (piece's SHA1)
-        std::cout << "Found a torrent file with the same SHA-1 info hash,"
-                  << "verifying the pieces' SHA-1s" << std::endl;
+    if (not havetorrent) {
+        std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
     }
 
     unsigned int index = 0;
-    for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; ++s) {
+    std::map<unsigned int, std::string>::iterator s, se;
+    for (s = this->macropieces.begin(), se = this->macropieces.end(); s != se; ++s) {
         //compute the hash
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
         //Verify the hash. if it doesn't match, throw an error and die
         if (havetorrent and
-            (not compare_sha1s((u_char *)hashes[raw_info_hash][s->first].data(), hash))) {
+            (not compare_sha1s((u_char *)torrent->piece_hashes().at(s->first).data(), hash))) {
             std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
         }

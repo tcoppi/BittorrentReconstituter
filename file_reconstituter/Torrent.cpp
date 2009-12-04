@@ -66,11 +66,11 @@ bool Torrent::init() {
     size_t num_pieces = pieces_len / 20;
     for(size_t i = 0; i < num_pieces; i++) {
         //Add to map
-        this->piece_hashes[info_hash].push_back(pieces.substr(i*20, 20));
+        this->m_piece_hashes.push_back(pieces.substr(i*20, 20));
     }
 
     // Get announce_url
-    
+
     in_file.close();
     return true;
 }
