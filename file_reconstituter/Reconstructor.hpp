@@ -28,7 +28,7 @@ public:
     File() {}
     File(std::string);
     std::string name() { return this->m_name; }
-    void name(std::string x) { this->m_name = x; }
+    void name(std::string x) { this->m_name = x;}
     std::string contents() { return this->m_contents; }
 
     /**
@@ -40,11 +40,17 @@ public:
     void addPiece(Piece *);
 
     /**
+     * Reconstructs the file(s) and verifies the SHA-1 hashes of the pieces, if
+     * the torrent file is available.
+     */
+    void reconstructFile(hash_map_t, const char *);
+
+    /**
      * Outputs the current contents of the buffer buffer to the file.
      *
      * Returns the number of bytes written.
      */
-    unsigned int writeFile(hash_map_t, const char *);
+    unsigned int writeFile(void);
 
 private:
     std::string m_name;

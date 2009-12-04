@@ -32,13 +32,13 @@ void Reconstructor::reconstructSession(Session *s) {
     // We get one monolithic file from a session.  If we have the torrent file
     // we can break it up, otherwise the user will have to do it manually, as we
     // don't have that information.
-    File file; 
+    File file;
 
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
     char hash_string[42];
-    unsigned char *temp_hash;
+    unsigned char temp_hash[20];
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
     // Output statistics
@@ -59,7 +59,7 @@ void Reconstructor::reconstructSession(Session *s) {
             file.addPiece(*p);
         }
     }
-    
+
     std::cout << "Peers: " << std::endl;
     //output ip:port for each peer
     for (it = peers.begin(); it != peers.end(); it++) {
@@ -68,6 +68,8 @@ void Reconstructor::reconstructSession(Session *s) {
     }
 
     // Do possible file breakup here if we have the torrent
+
+    file.reconstructFile(this->piece_hashes, s->getHash().data());
 
     // Name the file after its checksum
     const unsigned char *data = (const unsigned char*) file.contents().data();
@@ -86,13 +88,15 @@ void Reconstructor::reconstructSession(Session *s) {
              (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
     file.name(hash_string);
 
+    std::cout << "Output filename: " << hash_string << std::endl;
+
     // We get file.  How are you gentlemen?  Output me to your base.
     std::cout << "Reconstructed file size: "
-              << file.writeFile(this->piece_hashes, s->getHash().data())
+              << file.writeFile()
               << " bytes." << std::endl;
 }
 
-File::File(std::string name) : m_name(name) {}
+// File::File(std::string name) : m_name(name) {}
 
 void File::addPiece(Piece *piece) {
     // Insert the piece's data into the correct macropiece position and offset.
@@ -106,8 +110,6 @@ void File::addPiece(Piece *piece) {
 
 //     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
     this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
-//     std::cerr << " fuck" << std::endl;
-
 }
 
 /**
@@ -121,17 +123,15 @@ bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     return true;
 }
 
-unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
+void File::reconstructFile(hash_map_t hashes, const char *raw_info_hash) {
     // Take every macropiece and add them all to the final buffer
-    // and write it to disk
-    std::ofstream outfile;
     unsigned char hash[20];
     bool havetorrent = false;
 
     std::map<unsigned int, std::string>::iterator s, e;
 
     if (hashes.find(raw_info_hash) == hashes.end()) {
-        std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
+        std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
     }
     else {
         havetorrent = 1;
@@ -146,7 +146,7 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
         //Verify the hash. if it doesn't match, throw an error and die
-        if (havetorrent and 
+        if (havetorrent and
             (not compare_sha1s((u_char *)hashes[raw_info_hash][s->first].data(), hash))) {
             std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
@@ -161,6 +161,11 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         this->m_contents.insert(index, s->second);
         index += s->second.size();
     }
+
+}
+
+unsigned int File::writeFile(void) {
+    std::ofstream outfile;
 
     //write to the file
      outfile.open(this->m_name.c_str());
