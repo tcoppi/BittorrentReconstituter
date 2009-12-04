@@ -72,7 +72,7 @@ bool Torrent::init() {
             // We don't need the original file string anymore so it's 
             // okay to change it
             files_dict = files_dict.substr(length_off);
-           
+
             // Get the value associated with the length
             size_t length_end = files_dict.find("e");
             int curr_len = (int) atoi(files_dict.substr(0, length_end).c_str());
@@ -81,6 +81,9 @@ bool Torrent::init() {
             //Get the next start of a length value
             length_off = files_dict.find("6:lengthi");
         }
+    }
+    else {
+        m_file_lengths.push_back(std::string::npos);
     }
 
     in_file.close();
