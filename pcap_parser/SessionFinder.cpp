@@ -288,9 +288,8 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Make sure the peer corresponding to the source is active
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
         if (!source->active) {
-            //The peer isn't active, drop this packet
-            std::cout << "Dropping a piece" << std::endl;
-            return;
+            //XXX nasty hack, but seems to get more pieces added
+            source->active = true;
         }
 
         //Continue a piece in flight
