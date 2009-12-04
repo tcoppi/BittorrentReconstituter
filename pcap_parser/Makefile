@@ -7,7 +7,8 @@ all: $(OBJS)
 
 PacketHandler.o: PacketHandler.cpp PacketHandler.hpp headers.hpp \
   Packet.hpp Piece.hpp
-Piece.o: Piece.cpp Piece.hpp
+Piece.o: Piece.cpp Piece.hpp SessionFinder.hpp Packet.hpp Session.hpp \
+  Peer.hpp
 Session.o: Session.cpp Session.hpp Piece.hpp Peer.hpp
 SessionFinder.o: SessionFinder.cpp SessionFinder.hpp Packet.hpp Piece.hpp \
   Session.hpp Peer.hpp headers.hpp
