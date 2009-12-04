@@ -61,12 +61,26 @@ bool Torrent::init() {
     // Decode the info dictionary to get the file information
     // For now, only care about multi file mode
     size_t files_off = info_dict.find("5:files");
-    if(files_off != std::string::npos) {
+    if (files_off != std::string::npos) {
         //We have multiple files
         files_off += 7;
         std::string files_dict = info_dict.substr(files_off);
         this->stripInfo(files_dict);
-        std::cout << "files: " << files_dict << std::endl;
+        size_t length_off = files_dict.find("6:lengthi");
+        while (length_off != std::string::npos) {
+            length_off += 9;
+            // We don't need the original file string anymore so it's 
+            // okay to change it
+            files_dict = files_dict.substr(length_off);
+           
+            // Get the value associated with the length
+            size_t length_end = files_dict.find("e");
+            int curr_len = (int) atoi(files_dict.substr(0, length_end).c_str());
+            m_file_lengths.push_back(curr_len);
+
+            //Get the next start of a length value
+            length_off = files_dict.find("6:lengthi");
+        }
     }
     
     
