@@ -75,7 +75,7 @@ bool Torrent::init() {
 
             // Get the value associated with the length
             size_t length_end = files_dict.find("e");
-            int curr_len = (int) atoi(files_dict.substr(0, length_end).c_str());
+            unsigned int curr_len = (unsigned int) atoi(files_dict.substr(0, length_end).c_str());
             m_file_lengths.push_back(curr_len);
 
             //Get the next start of a length value

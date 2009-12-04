@@ -12,14 +12,14 @@ public:
     std::string info_hash() { return this->m_info_hash; }
     std::vector<std::string> piece_hashes() { return this->m_piece_hashes; }
     size_t num_pieces() { return this->m_num_pieces; }
-    std::vector<int> file_lengths() { return this->m_file_lengths; }
+    std::vector<unsigned int> file_lengths() { return this->m_file_lengths; }
     
 private:
     void stripExtraFields(std::string&);
     void stripInfo(std::string&);
 
     //The length of the files, in sequential order
-    std::vector<int> m_file_lengths;
+    std::vector<unsigned int> m_file_lengths;
     
     std::string filename;
     //std::map<> info;
