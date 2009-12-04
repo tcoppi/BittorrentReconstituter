@@ -35,11 +35,13 @@ void Reconstructor::reconstructSession(Session *s) {
     // We get one monolithic file from a session.  If we have the torrent file
     // we can break it up, otherwise the user will have to do it manually, as we
     // don't have that information.
-    File file; 
+    File file;
 
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
+    char hash_string[42];
+    unsigned char temp_hash[20];
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
     // Output statistics
@@ -60,7 +62,7 @@ void Reconstructor::reconstructSession(Session *s) {
             file.addPiece(*p);
         }
     }
-    
+
     std::cout << "Peers: " << std::endl;
     //output ip:port for each peer
     for (it = peers.begin(); it != peers.end(); it++) {
@@ -70,9 +72,30 @@ void Reconstructor::reconstructSession(Session *s) {
 
     // Do possible file breakup here if we have the torrent
 
+    file.reconstructFile(this->piece_hashes, s->getHash().data());
+
+    // Name the file after its checksum
+    const unsigned char *data = (const unsigned char*) file.contents().data();
+    SHA1(data, file.contents().length(), temp_hash);
+    //FIXME This is disgusting
+    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+             (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
+             (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
+             (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
+             (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
+             (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
+             (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
+             (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
+             (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
+             (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
+             (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
+    file.name(hash_string);
+
+    std::cout << "Output filename: " << hash_string << std::endl;
+
     // We get file.  How are you gentlemen?  Output me to your base.
     std::cout << "Reconstructed file size: "
-              << file.writeFile(this->piece_hashes, s->getHash().data())
+              << file.writeFile()
               << " bytes." << std::endl;
 }
 
@@ -105,10 +128,8 @@ bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     return true;
 }
 
-unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
+void File::reconstructFile(hash_map_t hashes, const char *raw_info_hash) {
     // Take every macropiece and add them all to the final buffer
-    // and write it to disk
-    std::ofstream outfile;
     unsigned char hash[20];
     bool havetorrent = false;
 
@@ -130,7 +151,7 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
         //Verify the hash. if it doesn't match, throw an error and die
-        if (havetorrent and 
+        if (havetorrent and
             (not compare_sha1s((u_char *)hashes[raw_info_hash][s->first].data(), hash))) {
             std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
@@ -146,28 +167,14 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         index += s->second.size();
     }
 
-    // Name the file after its checksum
-    unsigned char temp_hash[20];
-    char hash_string[42];
-    const unsigned char *data = (const unsigned char*) this->m_contents.c_str();
-    SHA1(data, this->m_contents.length(), temp_hash);
+}
 
-    //FIXME This is disgusting
-    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
-             (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
-             (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
-             (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
-             (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
-             (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
-             (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
-             (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
-             (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
-             (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
-             (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
+unsigned int File::writeFile(void) {
+    std::ofstream outfile;
 
-
-    //write to the file - use SHA1 hash as file name
-     outfile.open(hash_string);
+    //write to the file
+     outfile.open(this->m_name.c_str());
+//    std::cout << this->m_contents;
      outfile << this->m_contents;
      outfile.close();
 

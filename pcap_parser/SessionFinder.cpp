@@ -127,9 +127,9 @@ void SessionFinder::handlePacket(Packet pkt) {
             offset = pkt.payload.find("port=");
             offset += strlen("port=");
             //trace statements
-//             std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
-//             std::cout << "SF: Info hash: " << info_hash << std::endl;
-//             std::cout << "SF: Payload: " << pkt.payload << std::endl;
+            // std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
+            // std::cout << "SF: Info hash: " << info_hash << std::endl;
+            // std::cout << "SF: Payload: " << pkt.payload << std::endl;
 
             // Add the session
             sessions[info_hash] = session;
@@ -164,8 +164,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             sessions.erase(session->getHash());
 
             //Write to output
-            std::cout << "session completed" << std::endl;
-
             output_archive << (*session);
             output_pipe << std::endl;
             
@@ -173,7 +171,7 @@ void SessionFinder::handlePacket(Packet pkt) {
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
-            (pkt.payload.find("d8:complete"))) {
+            (pkt.payload.find("d8:complete") != std::string::npos)) {
         //Find the corresponding session
         Session *session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
         if (session == NULL) {
@@ -232,7 +230,11 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
+<<<<<<< HEAD:pcap_parser/SessionFinder.cpp
         std::cerr << "activating peer " << pkt.src_ip << std::endl;
+=======
+        std::cout << "activating peer " << pkt.src_ip << std::endl;
+>>>>>>> febe1b8bddb216727826ea3ad5c86637f33baf70:pcap_parser/SessionFinder.cpp
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
@@ -259,6 +261,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
         if (!source->active) {
             //The peer isn't active, drop this packet
+            std::cout << "Dropping a piece" << std::endl;
             return;
         }
 
@@ -274,7 +277,7 @@ void SessionFinder::handlePacket(Packet pkt) {
                 std::string leftover_payload;
                 leftover_payload = session->getLastPiece(pkt.src_ip)->addPayload(pkt.payload);
                 if(leftover_payload.size() == 0) {
-                    return;
+                   return;
                 }
 //                 std::cerr << "handling stale pizza" << std::endl;
                 //Create a Packet to hold leftover data
@@ -300,6 +303,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Add piece to session
+        std::cout << "Added a piece w/ index " << piece->getIndex() << " from " << pkt.src_ip << std::endl;
         session->addPiece(pkt.src_ip,piece);
 	}
 }

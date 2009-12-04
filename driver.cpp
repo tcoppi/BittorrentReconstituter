@@ -1,13 +1,16 @@
 #include "pcap_parser/SessionFinder.hpp"
 #include "pcap_parser/PacketHandler.hpp"
 #include "file_reconstituter/Reconstructor.hpp"
+#include "file_reconstituter/Torrent.hpp"
 #include <boost/exception/get_error_info.hpp>
 #include <boost/program_options.hpp>
 #include <cassert>
 #include <cerrno>
 #include <fstream>
 #include <iostream>
+#include <openssl/sha.h>
 #include <pcap.h>
+#include <signal.h>
 #include <streambuf>
 #include <string>
 #include <sys/stat.h>
@@ -15,8 +18,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <vector>
-#include <openssl/sha.h>
-#include <signal.h>
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 
 // Attempt to not completely rudely stop when Ctrl-c'd
@@ -89,7 +90,6 @@ void handle_pcap_file(pcap_t *input_handle, int i,
             remove(out_pipe);
         }
     }
-
     return;
 }
 
@@ -177,73 +177,14 @@ int main(int argc, char **argv) {
         return 1;
     }
 
+    std::vector<Torrent*> torrents;
     //Create map of hashes
     std::vector<std::string>::iterator torrent_file;
     for (torrent_file = torrent_files.begin();
          torrent_file != torrent_files.end(); ++torrent_file) {
-
-        std::string data;
-        char current;
-        std::ifstream input_file((*torrent_file).c_str());
-
-        //Read all data from file;
-        while (input_file.good()) {
-            current = input_file.get();
-
-            if (input_file.good())
-                data.push_back(current);
-        }
-
-        //Find info dictionary
-        size_t offset = data.find("4:info") + 6;
-        std::string info_dict = data.substr(offset);
-
-        //Get end of info dictionary
-        size_t announce_off = data.find("8:announce");
-        if (announce_off == std::string::npos) {
-            continue; // Invalid torrent file
-        }
-        if (announce_off > offset) {
-            info_dict = info_dict.substr(0, announce_off);
-        }
-
-        //Find the first if any field after the info dictionary
-        if(info_dict.find("8:url-list") != std::string::npos) {
-            info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
-        }
-        if(info_dict.find("13:creation date") != std::string::npos) {
-            info_dict = info_dict.substr(0, info_dict.find("13:creation date"));
-        }
-        if(info_dict.find("7:comment") != std::string::npos) {
-            info_dict = info_dict.substr(0, info_dict.find("7:comment"));
-        }
-        if(info_dict.find("10:created by") != std::string::npos) {
-            info_dict = info_dict.substr(0, info_dict.find("10:created by"));
-        }
-        if(info_dict.find("8:encoding") != std::string::npos) {
-            info_dict = info_dict.substr(0, info_dict.find("8:encoding"));
-        }
-
-        //Get the info hash
-        const unsigned char* raw_info_dict = (const unsigned char*) info_dict.data();
-        unsigned char raw_info_hash[20];
-        SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
-        std::string info_hash = std::string((const char*) raw_info_hash, 20);
-
-        //Get length of pieces
-        size_t pieces_off = info_dict.find("6:pieces") + 8;
-        size_t endoff = info_dict.find(":", pieces_off);
-        size_t pieces_len = (int) atoi(info_dict.substr(pieces_off, endoff-pieces_off).c_str());
-
-        //Get the pieces string
-        std::string pieces = info_dict.substr(endoff+1, pieces_len);
-
-        //Get the piece hashes themselves
-        size_t num_pieces = pieces_len / 20;
-        for(size_t i = 0; i < num_pieces; i++) {
-            //Add to map
-            hashes[info_hash].push_back(pieces.substr(i*20, 20));
-        }
+        Torrent t = new Torrent(torrent_file);
+        t.init();
+        torrents.push_back(t);
     }
 
     // Just use the last name specified for now, fix later
