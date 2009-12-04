@@ -25,9 +25,11 @@ private:
 
 class File {
 public:
+    File() {}
     File(std::string);
     std::string name() { return this->m_name; }
-    std::string data() { return this->m_data; }
+    void name(std::string x) { this->m_name = x; }
+    std::string contents() { return this->m_contents; }
 
     /**
      * Add a piece to the file.
@@ -46,7 +48,7 @@ public:
 
 private:
     std::string m_name;
-    std::string m_data;
+    std::string m_contents;
 
     /**
      * Map of all the large pieces, indexed by the piece's index.

@@ -10,7 +10,6 @@
  */
 #ifndef PCAP_PARSER_PACKET_H
 #define PCAP_PARSER_PACKET_H
-
 #include <pcap.h>
 #include <string>
 #include <boost/archive/text_oarchive.hpp>

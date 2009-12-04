@@ -29,26 +29,24 @@ void Reconstructor::run() {
 }
 
 void Reconstructor::reconstructSession(Session *s) {
+    // We get one monolithic file from a session.  If we have the torrent file
+    // we can break it up, otherwise the user will have to do it manually, as we
+    // don't have that information.
+    File file; 
+
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
-    u_char hash_string[42];
-
+    char hash_string[42];
+    unsigned char *temp_hash;
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
-    //Output statistics
+    // Output statistics
     std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
     const char *h = s->getHash().data();
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 20; i++)
         printf("%x", (unsigned char)h[i]);
-    }
     std::cout << std::endl;
-
-    // Maybe do some sanity checks on this string
-    for (int i = 0; i < 20; i++) {
-        sprintf(hash_string, "%x", (u_char)h[i]);
-    }
-    File file(hash_string);
 
     // Build up our file from the session pieces
     ip_piece_map_t::iterator m, me;
@@ -56,19 +54,37 @@ void Reconstructor::reconstructSession(Session *s) {
     for (m = pieces.begin(), me = pieces.end(); m != me; ++m) {
         for (p = m->second.begin(), pe = m->second.end(); p != pe; ++p) {
             if (not (*p)->isValid()) {
-                std::cerr << "Invalid piece" << std::endl;
-                // return;
+                assert(0 && "Should never have an invalid piece here");
             }
             file.addPiece(*p);
         }
     }
-
+    
     std::cout << "Peers: " << std::endl;
     //output ip:port for each peer
     for (it = peers.begin(); it != peers.end(); it++) {
-        std::cout << "\t" << (*it).second.ip << ":"
-                  << (*it).second.port << std::endl;
+        std::cout << "\t" << it->second.ip << ":"
+                  << it->second.port << std::endl;
     }
+
+    // Do possible file breakup here if we have the torrent
+
+    // Name the file after its checksum
+    const unsigned char *data = (const unsigned char*) file.contents().data();
+    SHA1(data, file.contents().length(), temp_hash);
+    //FIXME This is disgusting
+    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
+             (unsigned char)temp_hash[0], (unsigned char)temp_hash[1],
+             (unsigned char)temp_hash[2], (unsigned char)temp_hash[3],
+             (unsigned char)temp_hash[4], (unsigned char)temp_hash[5],
+             (unsigned char)temp_hash[6], (unsigned char)temp_hash[7],
+             (unsigned char)temp_hash[8], (unsigned char)temp_hash[9],
+             (unsigned char)temp_hash[10], (unsigned char)temp_hash[11],
+             (unsigned char)temp_hash[12], (unsigned char)temp_hash[13],
+             (unsigned char)temp_hash[14], (unsigned char)temp_hash[15],
+             (unsigned char)temp_hash[16], (unsigned char)temp_hash[17],
+             (unsigned char)temp_hash[18], (unsigned char)temp_hash[19]);
+    file.name(hash_string);
 
     // We get file.  How are you gentlemen?  Output me to your base.
     std::cout << "Reconstructed file size: "
@@ -76,9 +92,7 @@ void Reconstructor::reconstructSession(Session *s) {
               << " bytes." << std::endl;
 }
 
-File::File(std::string name) {
-    this->m_name = name;
-}
+File::File(std::string name) : m_name(name) {}
 
 void File::addPiece(Piece *piece) {
     // Insert the piece's data into the correct macropiece position and offset.
@@ -144,17 +158,17 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         std::cout << "Added piece " << s->first << std::endl;
 
         //insert the data into its correct place in the buffer
-        this->m_data.insert(index, s->second);
+        this->m_contents.insert(index, s->second);
         index += s->second.size();
     }
 
     //write to the file
      outfile.open(this->m_name.c_str());
-//    std::cout << this->m_data;
-     outfile << this->m_data;
+//    std::cout << this->m_contents;
+     outfile << this->m_contents;
      outfile.close();
 
-    return this->m_data.length();
+    return this->m_contents.length();
 }
 
 // vim: tabstop=4:expandtab
