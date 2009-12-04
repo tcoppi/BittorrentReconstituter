@@ -146,17 +146,25 @@ void File::reconstructFile(std::vector<Torrent*> torrents, const char *raw_info_
                       << " verifying the pieces' SHA-1s" << std::endl;
         }
     }
-    if (not havetorrent) {
+
+    if (not havetorrent)
         std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
-    }
 
     unsigned int index = 0;
     std::map<unsigned int, std::string>::iterator s, se;
     for (s = this->macropieces.begin(), se = this->macropieces.end(); s != se; ++s) {
-        //compute the hash
+        // Compute the hash
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
-        //Verify the hash. if it doesn't match, throw an error and die
+        // Verify the hash. if it doesn't match, throw an error and die
+        std::cerr << "Checking piece number " << s->first << ".  Has hash ";
+        for (int i=0; i < 20; i++)
+            fprintf(stderr, "%x", (u_char)(torrent->piece_hashes().at(s->first).data())[i]);
+        std::cerr << std::endl << "Expecting hash ";
+        for (int i=0; i < 20; i++)
+            fprintf(stderr, "%x", (u_char)hash[i]);
+        std::cerr << std::endl;
+
         if (havetorrent and
             (not compare_sha1s((u_char *)torrent->piece_hashes().at(s->first).data(), hash))) {
             std::cout << "error" << std::endl;
