@@ -85,6 +85,7 @@ void SessionFinder::run() {
 void SessionFinder::handlePacket(Packet pkt) {
 
     unsigned int offset, endoff; // Temps
+    static Session *need_response = NULL;
 
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
@@ -159,14 +160,45 @@ void SessionFinder::handlePacket(Packet pkt) {
             output_archive << (*session);
             output_pipe.flush();
         }
+        // this is a regular tracker request used to get peers
+        else {
+            //Get session
+            //Extract out the content of each field
+            //info_hash is unique for every transfer so it goes in the class
+            offset = pkt.payload.find("info_hash=");
+            offset += strlen("info_hash=");
+
+            //find the next field after info_hash
+            int hash_size = pkt.payload.find("&") - offset;
+
+            // The string is URL encoded, so we need to take out all the percents
+            // and possibly ampersands.  info_hash is 20 bytes long.
+            std::string info_hash = decode_percents(
+                    std::string(pkt.payload.c_str()+offset, hash_size));
+
+            std::map<std::string, Session*>::iterator it =
+                    sessions.find(info_hash);
+            if(it == sessions.end()) {
+                //Didn't find a session with this info hash, discard packet
+                return;
+            }
+            need_response = it->second;
+        }
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
-            (pkt.payload.find("d8:complete") != std::string::npos)) {
+            (pkt.payload.find("5:peers") != std::string::npos)) {
         //Find the corresponding session
-        Session *session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
-        if (session == NULL) {
-            return;
+        Session *session;
+        if (need_response != NULL) {
+            std::cout << "continuing" << std::endl;
+            session = need_response;
+        }
+        else {
+            session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
+            if (session == NULL) {
+                return;
+            }
         }
 
         //next thing we care about is the peer response. we will assume a
@@ -253,11 +285,6 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Continue a piece in flight
-        //XXX I think this may be the problem. This only checks if the *last*
-        //piece is incomplete. It is possible that we are downloading more than
-        //one piece at a time, in which case multiple pieces could be
-        //incomplete. I think the fix is to instead iterate over all pieces and
-        //check if they are complete.
         if (session->getLastPiece(pkt.src_ip) != NULL) {
             if (not session->getLastPiece(pkt.src_ip)->isCompleted()) {
                 //Update last piece and get any leftover data
