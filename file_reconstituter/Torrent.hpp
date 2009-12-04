@@ -11,6 +11,7 @@ public:
     bool init(); // Parse the torrent file
     std::string info_hash() { return this->m_info_hash; }
     std::vector<std::string> piece_hashes() { return this->m_piece_hashes; }
+    int num_pieces() { return this->m_num_pieces; }
 
 private:
     std::string filename;
@@ -21,6 +22,7 @@ private:
     int piece_length;
     std::vector<std::string> m_piece_hashes;
     std::string m_info_hash;
+    int m_num_pieces;
 
     // Mode specific attributes
     bool single_mode;

@@ -63,8 +63,8 @@ bool Torrent::init() {
     unsigned char raw_info_hash[20];
     SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
     this->m_info_hash = std::string((const char*) raw_info_hash, 20);
-    std::cout << "info data: " << info_dict << std::endl;
-    //Get length of pieces
+    
+    //Get length and number of pieces
     size_t pieces_off = info_dict.find("6:pieces") + 8;
     size_t endoff = info_dict.find(":", pieces_off);
     size_t pieces_len = (int) atoi(info_dict.substr(pieces_off, endoff-pieces_off).c_str());
@@ -73,14 +73,16 @@ bool Torrent::init() {
     std::string pieces = info_dict.substr(endoff+1, pieces_len);
 
     //Get the piece hashes themselves
-    size_t num_pieces = pieces_len / 20;
-    for(size_t i = 0; i < num_pieces; i++) {
+    m_num_pieces = pieces_len / 20;
+    for(size_t i = 0; i < m_num_pieces; i++) {
         //Add to map
         this->m_piece_hashes.push_back(pieces.substr(i*20, 20));
     }
 
-    // Get announce_url
-
+    // Decode the info dictionary to get the file information
+    // 
+    
+    
     in_file.close();
     return true;
 }
