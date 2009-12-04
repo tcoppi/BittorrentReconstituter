@@ -1,5 +1,6 @@
-// Take a complete session and reconstruct the files in it from the pieces.
-
+/* Take a complete session and reconstruct the files in it from the pieces that
+ * have been gathered by SessionFinder.
+ */
 #ifndef __RECONSTRUCTOR_H
 #define __RECONSTRUCTOR_H
 #include "../pcap_parser/Session.hpp"

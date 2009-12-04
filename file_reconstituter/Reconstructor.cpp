@@ -4,13 +4,10 @@
 #include "../pcap_parser/Piece.hpp"
 #include "../pcap_parser/Peer.hpp"
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
-typedef std::map<std::string,std::vector<Piece*> > ip_piece_map_t;
-
+typedef std::map<std::string, std::vector<Piece*> > ip_piece_map_t;
 
 Reconstructor::Reconstructor(const char *input, std::ofstream &o, hash_map_t phashes)
-    : m_input(input), m_inpipe(m_input) {
-    this->ohandle = &o;
-    this->piece_hashes = phashes;
+    : m_input(input), m_inpipe(m_input), ohandle(&o), piece_hashes(phashes) {
 }
 
 void Reconstructor::run() {
@@ -35,7 +32,7 @@ void Reconstructor::reconstructSession(Session *s) {
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
-    char hash_string[42];
+    u_char hash_string[42];
 
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
@@ -43,28 +40,21 @@ void Reconstructor::reconstructSession(Session *s) {
     std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
     const char *h = s->getHash().data();
     for (int i = 0; i < 20; i++) {
-            printf("%x", (unsigned char)h[i]);
+        printf("%x", (unsigned char)h[i]);
     }
     std::cout << std::endl;
 
-    //XXX FIXME this is disgusting
-    snprintf(hash_string, 42, "%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x%x",
-                    (unsigned char)h[0], (unsigned char)h[1],
-                    (unsigned char)h[2], (unsigned char)h[3],
-                    (unsigned char)h[4], (unsigned char)h[5],
-                    (unsigned char)h[6], (unsigned char)h[7],
-                    (unsigned char)h[8], (unsigned char)h[9],
-                    (unsigned char)h[10], (unsigned char)h[11],
-                    (unsigned char)h[12], (unsigned char)h[13],
-                    (unsigned char)h[14], (unsigned char)h[15],
-                    (unsigned char)h[16], (unsigned char)h[17],
-                    (unsigned char)h[18], (unsigned char)h[19]);
+    // Maybe do some sanity checks on this string
+    for (int i = 0; i < 20; i++) {
+        sprintf(hash_string, "%x", (u_char)h[i]);
+    }
     File file(hash_string);
 
+    // Build up our file from the session pieces
     ip_piece_map_t::iterator m, me;
     std::vector<Piece*>::iterator p, pe;
     for (m = pieces.begin(), me = pieces.end(); m != me; ++m) {
-        for (p = (*m).second.begin(), pe = (*m).second.end(); p != pe; ++p) {
+        for (p = m->second.begin(), pe = m->second.end(); p != pe; ++p) {
             if (not (*p)->isValid()) {
                 std::cerr << "Invalid piece" << std::endl;
                 // return;
@@ -107,7 +97,7 @@ void File::addPiece(Piece *piece) {
 }
 
 /**
- * Compare the two SHA-1 hashes byte-byte byte and return true if they are the
+ * Compare the two SHA-1 hashes byte for byte and return true if they are the
  * same, false otherwise.
  */
 bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
@@ -130,17 +120,20 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
     }
     else {
-            havetorrent = 1;
-            std::cout << "Found a torrent file with the same SHA-1 Info hash, verifying the piece(s) SHA-1(s)" << std::endl;
+        havetorrent = 1;
+        // UI Point - Test if we can singularize this string (piece's SHA1)
+        std::cout << "Found a torrent file with the same SHA-1 info hash,"
+                  << "verifying the pieces' SHA-1s" << std::endl;
     }
 
     unsigned int index = 0;
-    for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; s++) {
+    for (s = this->macropieces.begin(), e = this->macropieces.end(); s != e; ++s) {
         //compute the hash
-        SHA1((const unsigned char*)(*s).second.data(), (*s).second.length(), hash);
+        SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
         //Verify the hash. if it doesn't match, throw an error and die
-        if (havetorrent and (not compare_sha1s((unsigned char *)hashes[raw_info_hash][(*s).first].data(), hash))) {
+        if (havetorrent and 
+            (not compare_sha1s((u_char *)hashes[raw_info_hash][s->first].data(), hash))) {
             std::cout << "error" << std::endl;
             throw "Invalid SHA-1 hash for piece";
         }
@@ -148,7 +141,7 @@ unsigned int File::writeFile(hash_map_t hashes, const char *raw_info_hash){
         if (havetorrent)
             std::cout << "SHA-1 verified successfully for piece " << s->first << std::endl;
 
-        std::cout << "Added piece " << (*s).first << std::endl;
+        std::cout << "Added piece " << s->first << std::endl;
 
         //insert the data into its correct place in the buffer
         this->m_data.insert(index, s->second);

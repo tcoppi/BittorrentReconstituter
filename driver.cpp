@@ -184,17 +184,14 @@ int main(int argc, char **argv) {
 
         std::string data;
         char current;
-
-        //Open input file
         std::ifstream input_file((*torrent_file).c_str());
 
         //Read all data from file;
         while (input_file.good()) {
             current = input_file.get();
-            if (input_file.good()) {
-                data.push_back(current);
-            }
 
+            if (input_file.good())
+                data.push_back(current);
         }
 
         //Find info dictionary
@@ -203,11 +200,10 @@ int main(int argc, char **argv) {
 
         //Get end of info dictionary
         size_t announce_off = data.find("8:announce");
-        if(announce_off == std::string::npos) {
-            //Invalid torrent file
-            continue;
+        if (announce_off == std::string::npos) {
+            continue; // Invalid torrent file
         }
-        if(announce_off > offset) {
+        if (announce_off > offset) {
             info_dict = info_dict.substr(0, announce_off);
         }
 
@@ -253,9 +249,6 @@ int main(int argc, char **argv) {
     // Just use the last name specified for now, fix later
     char errbuf[PCAP_ERRBUF_SIZE];
     if (live) {
-        // Automatically detect the routing interface
-        // with: netstat -nr | grep -e 'default|0.0.0.0' | awk '{ print $NF; }'
-        // ^ We don't need that, use the -i option instead
         input_handle = pcap_open_live(interface_name.c_str(), 65535, 1, 1000, errbuf);
         if (input_handle == NULL) {
             std::cerr << "Unable to open device " << interface_name << ": "
@@ -284,9 +277,7 @@ int main(int argc, char **argv) {
         std::cerr << "Error: " << c << std::endl;
         return -1;
     }
-    catch (boost::exception& e) { // If we have a failed arg parse
-        //        std::cerr << "Error: " << boost::get_error_info(e) << std::endl;
-        // Just error out generically for now, I guess.  The boost exception stuff is acting up
+    catch (boost::exception &e) { // If we have a failed arg parse
         std::cerr << "Error with arg parsing" << std::endl;
         return -1;
     }
@@ -299,4 +290,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-

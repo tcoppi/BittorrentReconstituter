@@ -30,7 +30,7 @@ $(SUBDIRS):
 tags:
 	ctags `find . -iname '*.[c,h]pp'`
 goodtags:
-	etags $(find . -name "*.[c,h]pp")
+	etags $(shell find . -name "*.[c,h]pp")
 apidocs:
 	doxygen
 clean:
