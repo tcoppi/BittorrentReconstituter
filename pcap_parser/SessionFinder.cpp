@@ -109,8 +109,6 @@ void SessionFinder::handlePacket(Packet pkt) {
        (pkt.payload.find("left") != std::string::npos)) {
         //Found a tracker request
 
-        std::cout << "session started" << std::endl;
-
         //Extract out the content of each field
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
@@ -123,6 +121,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
         if(pkt.payload.find("started") != std::string::npos) {
+            std::cout << "session started" << std::endl;
             Session *session = new Session(pkt.src_ip, pkt.src_port, pkt.dst_ip, info_hash);
 
             offset = pkt.payload.find("port=");
@@ -135,7 +134,8 @@ void SessionFinder::handlePacket(Packet pkt) {
             // Add the session
             sessions[info_hash] = session;
         }
-        else if(pkt.payload.find("completed") != std::string::npos) {
+        else if((pkt.payload.find("completed") != std::string::npos) or
+                (pkt.payload.find("stopped") != std::string::npos)) {
             //Get session
             //Extract out the content of each field
             //info_hash is unique for every transfer so it goes in the class
@@ -288,9 +288,8 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Make sure the peer corresponding to the source is active
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
         if (!source->active) {
-            //The peer isn't active, drop this packet
-            std::cout << "Dropping a piece" << std::endl;
-            return;
+            //XXX nasty hack, but seems to get more pieces added
+            source->active = true;
         }
 
         //Continue a piece in flight
