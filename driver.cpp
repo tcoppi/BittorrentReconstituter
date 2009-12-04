@@ -182,8 +182,8 @@ int main(int argc, char **argv) {
     std::vector<std::string>::iterator torrent_file;
     for (torrent_file = torrent_files.begin();
          torrent_file != torrent_files.end(); ++torrent_file) {
-        Torrent t = new Torrent(torrent_file);
-        t.init();
+        Torrent *t = new Torrent(*torrent_file);
+        t->init();
         torrents.push_back(t);
     }
 

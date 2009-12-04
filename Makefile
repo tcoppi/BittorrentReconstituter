@@ -8,7 +8,7 @@ ifeq ($(OSNAME),Darwin)
 endif
 PCAPOBJECTS=./pcap_parser/PacketHandler.o ./pcap_parser/SessionFinder.o \
   ./pcap_parser/Session.o ./pcap_parser/Piece.o
-FILERECONSTOBJECTS=./file_reconstituter/Reconstructor.o
+FILERECONSTOBJECTS=./file_reconstituter/Reconstructor.o ./file_reconstituter/Torrent.o
 SUBDIRS = pcap_parser file_reconstituter
 .PHONY: subdirs $(SUBDIRS) tags goodtags apidocs clean
 
@@ -20,7 +20,8 @@ btfinder: driver.o $(PCAPOBJECTS) $(FILERECONSTOBJECTS)
 driver.o: driver.cpp pcap_parser/SessionFinder.hpp pcap_parser/Packet.hpp \
   pcap_parser/Piece.hpp pcap_parser/Session.hpp pcap_parser/Peer.hpp \
   pcap_parser/PacketHandler.hpp file_reconstituter/Reconstructor.hpp \
-  file_reconstituter/../pcap_parser/Session.hpp
+  file_reconstituter/../pcap_parser/Session.hpp \
+  file_reconstituter/Torrent.hpp
 
 subdirs: $(SUBDIRS)
 $(SUBDIRS):

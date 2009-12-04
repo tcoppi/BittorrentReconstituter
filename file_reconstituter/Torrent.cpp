@@ -1,19 +1,19 @@
 #include "Torrent.hpp"
-#include "bencode.h"
-#include <ifstream>
+#include <fstream>
+#include <openssl/sha.h>
 
 Torrent::Torrent(std::string file) : filename(file) {}
 
-Torrent::init() {
-    std::ifstream in_file(filename);
+bool Torrent::init() {
+    std::ifstream in_file(filename.c_str());
     std::string data;
     char current;
 
     //Read all data from file;
-    while (input_file.good()) {
-        current = input_file.get();
+    while (in_file.good()) {
+        current = in_file.get();
 
-        if (input_file.good())
+        if (in_file.good())
             data.push_back(current);
     }
 
@@ -24,7 +24,7 @@ Torrent::init() {
     //Get end of info dictionary
     size_t announce_off = data.find("8:announce");
     if (announce_off == std::string::npos) {
-        continue; // Invalid torrent file
+        return false;
     }
     if (announce_off > offset) {
         this->announce_url = info_dict.substr(0, announce_off);
@@ -66,11 +66,12 @@ Torrent::init() {
     size_t num_pieces = pieces_len / 20;
     for(size_t i = 0; i < num_pieces; i++) {
         //Add to map
-        hashes[info_hash].push_back(pieces.substr(i*20, 20));
+        this->piece_hashes[info_hash].push_back(pieces.substr(i*20, 20));
     }
 
     // Get announce_url
     
     in_file.close();
+    return true;
 }
 
