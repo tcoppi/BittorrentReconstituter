@@ -96,7 +96,7 @@ void Reconstructor::reconstructSession(Session *s) {
               << " bytes." << std::endl;
 }
 
-File::File(std::string name) : m_name(name) {}
+// File::File(std::string name) : m_name(name) {}
 
 void File::addPiece(Piece *piece) {
     // Insert the piece's data into the correct macropiece position and offset.
@@ -110,8 +110,6 @@ void File::addPiece(Piece *piece) {
 
 //     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
     this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
-//     std::cerr << " fuck" << std::endl;
-
 }
 
 /**
@@ -133,7 +131,7 @@ void File::reconstructFile(hash_map_t hashes, const char *raw_info_hash) {
     std::map<unsigned int, std::string>::iterator s, e;
 
     if (hashes.find(raw_info_hash) == hashes.end()) {
-        std::cout << "No torrent file specified, not verifying piece hashes." << std::endl;
+        std::cout << "No matching torrent file found, not verifying piece hashes." << std::endl;
     }
     else {
         havetorrent = 1;
