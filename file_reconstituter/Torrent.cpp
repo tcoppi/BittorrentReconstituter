@@ -35,14 +35,14 @@ bool Torrent::init() {
     //Strip the info dictionary of extra fields
     this->stripExtraFields(info_dict);
     std::cout << "info dict: " << info_dict << std::endl;
-    
+
     // etc, etc
     //Get the info hash
     const unsigned char* raw_info_dict = (const unsigned char*) info_dict.data();
     unsigned char raw_info_hash[20];
     SHA1(raw_info_dict, info_dict.size(), raw_info_hash);
     this->m_info_hash = std::string((const char*) raw_info_hash, 20);
-    
+
     //Get length and number of pieces
     size_t pieces_off = info_dict.find("6:pieces") + 8;
     size_t endoff = info_dict.find(":", pieces_off);
@@ -68,8 +68,7 @@ bool Torrent::init() {
         this->stripInfo(files_dict);
         std::cout << "files: " << files_dict << std::endl;
     }
-    
-    
+
     in_file.close();
     return true;
 }
@@ -80,7 +79,7 @@ bool Torrent::init() {
  */
 
 void Torrent::stripExtraFields(std::string &field) {
-    
+
     if(field.find("8:url-list") != std::string::npos) {
         field = field.substr(0, field.find("8:url-list"));
     }
@@ -96,7 +95,7 @@ void Torrent::stripExtraFields(std::string &field) {
     if(field.find("8:encoding") != std::string::npos) {
         field = field.substr(0, field.find("8:encoding"));
     }
-    
+
     //These two are added by mininova
     if(field.find("6:locale") != std::string::npos) {
         field = field.substr(0, field.find("6:locale"));
@@ -107,7 +106,7 @@ void Torrent::stripExtraFields(std::string &field) {
 }
 
 void Torrent::stripInfo(std::string &field) {
-    
+
     if(field.find("12:piece length") != std::string::npos) {
         field = field.substr(0, field.find("12:piece length"));
     }
