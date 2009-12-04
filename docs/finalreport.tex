@@ -20,60 +20,63 @@
 \maketitle
 \begin{abstract}
 This paper describes the BitTorrent Reconstitutor project. Specifically, it
-contains an overview of the BitTorrent protocol and how our project improves the
-state of network forensics on this front.
-\end{abstract}
+contains an overview of the BitTorrent protocol and how our project aims to
+improve the state of network forensics on this front.  \end{abstract}
 %\keywords{}
 
 \section{Introduction}
 The BitTorrent Reconstitutor identifies BitTorrent file transfers in network
-traffic and extracts the original file.  We assume that a full and complete
-packet capture has been performed.  We decode the traffic according to the
-official BitTorrent specification~\cite{officialspec} and ignore extensions to
-the protocol for now; they are left for future work.
+traffic and extracts the original file.  We assume that a comprehensive packet
+capture has been performed.  We decode the traffic according to the official
+BitTorrent specification~\cite{officialspec} and ignore any extensions to the
+protocol for now; they are left for future work.
 
 \section{Short overview of the BitTorrent Protocol}
-BitTorrent is a protocol designed for efficient transfer of both large and small
-files over the Internet. The novel technique it uses to achieve this is that it
-breaks the file to be transfered into multiple same sized \emph{pieces}.  These
-\emph{pieces} are then distributed amongst the \emph{peers} (clients downloading
-the file) in such a way that each \emph{peer} chooses the next piece to download
-based on which one it can download fastest from the set of peers, not
-necessarily the next one in sequential order.  One common strategy of
-downloading pieces is rarest first~\cite{availability}.  This is a good strategy
-because the more peers that get rare pieces, the faster other peers will be able
-to get that piece.  The peers discover each other through a centralized
-tracker service that each peer can query to see the status of other peers and
-how to connect to them.  This method of transferring files in pieces gives it
-the property that it is impossible to recover the original file or determine if
-a file was actually downloaded or uploaded in whole just from a straightforward
+BitTorrent is a protocol
+designed for efficient transfer of both large and small files over the
+Internet. In order to achieve this, BitTorrent uses a novel technique in which
+it breaks down the file to be transferred into many uniform \emph{pieces}.
+These \emph{pieces} are then distributed amongst the \emph{peers} (clients
+downloading the file) in such a way that each \emph{peer} chooses the next
+piece to download based on which one it can download fastest from the set of
+peers, not necessarily the next one in sequential order.  One common strategy
+of downloading pieces is rarest first~\cite{availability}.  This strategy is
+optimal because as more peers acquire the rare pieces, the less rare it
+becomes, enabling other peers to download those pieces at a faster rate than
+before.  The peers discover each other through a centralized tracker service
+that each peer can query to see the status of other peers and how to connect to
+them.  This method of transferring files in pieces gives it the property that
+it is impossible to recover the original file or determine if a file was
+actually downloaded or uploaded in whole just from a straightforward
 examination of the network traffic.
 
 \section{Problem Addressed}
-Prior to this project, there was no publicly available tool for network
-forensics analysts to use to extract files transferred over BitTorrent. Such
-tools do exists for other file transfer protocols (such as \texttt{tcpxtract}
-\footnote{\url{http://tcpxtract.sourceforge.net}}) so this tool extends the
-capability to extract files from network traffic to include the BitTorrent
-protocol. This gap in capabilities was deemed to be particularly interesting
-because manually recovering a file transferred over BitTorrent from network
-traffic would be impractical due to the variable number of peers and the
-chunking of files into pieces that are transfered in a random order.
+Prior to this project, there was not a publicly available tool that network
+forensics analysts could use to extract files transferred over BitTorrent.
+However, such tools do exist for other file transfer protocols (such as
+\texttt{tcpxtract} \footnote{\url{http://tcpxtract.sourceforge.net}}). This
+tool extends the capability of the analyst to extract files from network
+traffic to include the BitTorrent protocol. This gap in capabilities was deemed
+to be particularly interesting because manually recovering a file transferred
+over BitTorrent from network traffic would be impractical due to the variable
+number of peers and the fragmentation of files into pieces that are transferred
+out of order.
 
 \section{Threat Model}
-One of the ways of breaking up threats is by inbound and outbound threats.
-Outbound threats consist mostly of data exfiltration problems.  Inbound attacks
-deal with malware and contraband.  Both can also fall under the umbrella of
-policy enforcement.
+One of the ways of breaking up threats is by categorizing them into two groups:
+inbound and outbound threats.  Outbound threats consist primarily of data
+exfiltration problems.  Inbound attacks focus on malware and contraband. Both
+inbound and outbound threats can fall under the umbrella of policy enforcement.
 
 \subsection{Threats}
-Threats this application can be used to mitigate include transfer of contraband
-using BitTorrent, analysis of network traffic from an incident in which
-BitTorrent was used to transfer files to a compromised host, and detection of
-data exfiltration where BitTorrent is used to break the file(s) into smaller
-pieces that may evade detection from file scanning utilities. Note that the last
-case is one in which the application would be run against live traffic while the
-first two would require offline processing of packet capture files.
+Threats that this application can mitigate include, but are not limited to,
+transfer of contraband using BitTorrent, analysis of network traffic from an
+incident in which BitTorrent was used to transfer files to a compromised host,
+and detection of data exfiltration where BitTorrent is used to break the
+file(s) into smaller pieces that may evade detection from file scanning
+utilities. Note that in the case of exfiltration, the application would run
+against live traffic, while the transfer of contraband and files to a
+compromised host would require offline processing of packet capture files.
 
 
 \subsection{Use Cases}
@@ -96,11 +99,11 @@ identifying the peers involved in the download would allow action to be taken to
 prevent them from being used in further attacks. To this end, our tool also
 lists all IP addresses involved in the transfer of each file.
 
-One last obvious use case is to mitigate exfiltration of data.  If the user is
-using the BitTorrent protocol to send data out of the network, we would like to
-know.  This can be accomplished by inspecting the files that we extract, and
-possibly ensuring that the headers don't contain sensitive information, either.
-This will require using a live capture stream.
+One last use case is to mitigate exfiltration of data.  If a user is
+using the BitTorrent protocol to send data out of the network, the network
+adminstrators would like to know.  This can be accomplished by inspecting the
+files that we extract, and possibly ensuring that the headers don't contain
+sensitive information, either.  This would require the use of a live capture stream.
 
 
 
@@ -229,7 +232,7 @@ can be used to initially identify an incident rather than respond to a known
 incident.
 
 \subsection{Future}
-As a possible future extension, DHT (distributed hash table) is close to
+As a possible future extension, distributed hash table(DHT) is close to
 becoming standardized and is currently in use by many big BitTorrent names.  DHT
 allows for every peer to be a tracker, so centralized tracker services are not
 needed to get the peer and metadata information. Torrent files can be
@@ -252,9 +255,9 @@ the Session Finder's packet decoding.
 
 \section{Conclusion}
 In conclusion, this application solves the problem of being unable to extract
-files encapsulated in the BitTorrent protocol from network traffic.  A company
-or analyst would need this program for the use cases described above.  No
-publicly available tool currently provides this functionality, so it fills a
+files encapsulated in the standard BitTorrent protocol from network traffic.  A
+company or analyst would need this program for the use cases described above.
+No publicly available tool currently provides this functionality, so it fills a
 hole in the network forensics analyst's toolkit.
 
 \nocite{*}

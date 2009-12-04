@@ -51,7 +51,7 @@ std::string decode_percents(std::string const& url_path) {
  * mode (live or offline).
  */
 SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
-    : output_pipe(out_pipe), input_pipe(in_pipe), input_archive(input_pipe), 
+    : output_pipe(out_pipe), input_pipe(in_pipe), input_archive(input_pipe),
       output_archive(output_pipe){
     }
 
@@ -59,13 +59,13 @@ SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
  * Runs the input handler.
  */
 void SessionFinder::run() {
-    
+
     // Write a blank session to pipe to open it up
     // Why we need to do this is unclear
 //     Session * s = new Session();
     output_pipe << std::endl;
 //     output_pipe.flush();
-    
+
     // Read each packet from the input pipe
     Packet current;
     while (true) {
@@ -92,6 +92,7 @@ void SessionFinder::run() {
 void SessionFinder::handlePacket(Packet pkt) {
 
     unsigned int offset, endoff; // Temps
+    static Session *need_response = NULL;
 
     //First thing, we need to look at tracker requests and responses
     //Find a GET with the required BitTorrent tracker request parameters
@@ -109,7 +110,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Found a tracker request
 
         std::cout << "session started" << std::endl;
-        
+
         //Extract out the content of each field
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
@@ -166,16 +167,47 @@ void SessionFinder::handlePacket(Packet pkt) {
             //Write to output
             output_archive << (*session);
             output_pipe << std::endl;
-            
+
+        }
+        // this is a regular tracker request used to get peers
+        else {
+            //Get session
+            //Extract out the content of each field
+            //info_hash is unique for every transfer so it goes in the class
+            offset = pkt.payload.find("info_hash=");
+            offset += strlen("info_hash=");
+
+            //find the next field after info_hash
+            int hash_size = pkt.payload.find("&") - offset;
+
+            // The string is URL encoded, so we need to take out all the percents
+            // and possibly ampersands.  info_hash is 20 bytes long.
+            std::string info_hash = decode_percents(
+                    std::string(pkt.payload.c_str()+offset, hash_size));
+
+            std::map<std::string, Session*>::iterator it =
+                    sessions.find(info_hash);
+            if(it == sessions.end()) {
+                //Didn't find a session with this info hash, discard packet
+                return;
+            }
+            need_response = it->second;
         }
     }
     //Decode a tracker response, need to have at least a tracker request first.
     else if((pkt.payload.find("HTTP") != std::string::npos) &&
-            (pkt.payload.find("d8:complete") != std::string::npos)) {
+            (pkt.payload.find("5:peers") != std::string::npos)) {
         //Find the corresponding session
-        Session *session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
-        if (session == NULL) {
-            return;
+        Session *session;
+        if (need_response != NULL) {
+            std::cout << "continuing" << std::endl;
+            session = need_response;
+        }
+        else {
+            session = findSession(pkt.dst_ip, pkt.dst_port, pkt.src_ip);
+            if (session == NULL) {
+                return;
+            }
         }
 
         //next thing we care about is the peer response. we will assume a
@@ -230,11 +262,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
-<<<<<<< HEAD:pcap_parser/SessionFinder.cpp
         std::cerr << "activating peer " << pkt.src_ip << std::endl;
-=======
-        std::cout << "activating peer " << pkt.src_ip << std::endl;
->>>>>>> febe1b8bddb216727826ea3ad5c86637f33baf70:pcap_parser/SessionFinder.cpp
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
@@ -266,11 +294,6 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
 
         //Continue a piece in flight
-        //XXX I think this may be the problem. This only checks if the *last*
-        //piece is incomplete. It is possible that we are downloading more than
-        //one piece at a time, in which case multiple pieces could be
-        //incomplete. I think the fix is to instead iterate over all pieces and
-        //check if they are complete.
         if (session->getLastPiece(pkt.src_ip) != NULL) {
             if (not session->getLastPiece(pkt.src_ip)->isCompleted()) {
                 //Update last piece and get any leftover data
