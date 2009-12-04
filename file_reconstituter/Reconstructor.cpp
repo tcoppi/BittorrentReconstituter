@@ -14,7 +14,10 @@ void Reconstructor::run() {
     Session s;
     while (true) {
         try {
+            std::cout << "waiting for a session to reconstruct" << std::endl;
             this->m_inpipe >> s;
+            std::cout << "got a session to reconstruct" << std::endl;
+
             this->reconstructSession(&s);
         }
         catch (boost::archive::archive_exception &e) {
@@ -83,10 +86,12 @@ void File::addPiece(Piece *piece) {
     unsigned int offset = piece->getOffset();
     if(offset >= this->macropieces[piece->getIndex()].size()) {
         this->macropieces[piece->getIndex()].resize(offset, ' ');
+        this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
     }
 
 //     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
-    this->macropieces[piece->getIndex()].insert(piece->getOffset(), piece->getBlock());
+    this->macropieces[piece->getIndex()].replace(piece->getOffset(), 
+                                      piece->getBlock().size(), piece->getBlock());
 }
 
 /**

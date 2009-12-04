@@ -44,14 +44,16 @@ private:
     //Find a session that has an activated peer on ip:port
     Session *findSession(std::string, u_short);
 
-    //Input file stream
+    //Output file stream
+    std::ofstream output_pipe;
+    
+        //Input file stream
     std::ifstream input_pipe;
-
+    
     //Input archive
     boost::archive::text_iarchive input_archive;
 
-    //Output file stream
-    std::ofstream output_pipe;
+
 
     //Output archive
     boost::archive::text_oarchive output_archive;

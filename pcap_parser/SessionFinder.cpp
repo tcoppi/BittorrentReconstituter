@@ -51,7 +51,7 @@ std::string decode_percents(std::string const& url_path) {
  * mode (live or offline).
  */
 SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
-    : input_pipe(in_pipe), input_archive(input_pipe), output_pipe(out_pipe),
+    : output_pipe(out_pipe), input_pipe(in_pipe), input_archive(input_pipe), 
       output_archive(output_pipe){
     }
 
@@ -59,6 +59,13 @@ SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
  * Runs the input handler.
  */
 void SessionFinder::run() {
+    
+    // Write a blank session to pipe to open it up
+    // Why we need to do this is unclear
+//     Session * s = new Session();
+    output_pipe << std::endl;
+//     output_pipe.flush();
+    
     // Read each packet from the input pipe
     Packet current;
     while (true) {
@@ -101,6 +108,8 @@ void SessionFinder::handlePacket(Packet pkt) {
        (pkt.payload.find("left") != std::string::npos)) {
         //Found a tracker request
 
+        std::cout << "session started" << std::endl;
+        
         //Extract out the content of each field
         //info_hash is unique for every transfer so it goes in the class
         offset = pkt.payload.find("info_hash=");
@@ -155,8 +164,11 @@ void SessionFinder::handlePacket(Packet pkt) {
             sessions.erase(session->getHash());
 
             //Write to output
+            std::cout << "session completed" << std::endl;
+
             output_archive << (*session);
-            output_pipe.flush();
+            output_pipe << std::endl;
+            
         }
     }
     //Decode a tracker response, need to have at least a tracker request first.
@@ -220,7 +232,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
-//         std::cerr << "activating peer " << pkt.src_ip << std::endl;
+        std::cerr << "activating peer " << pkt.src_ip << std::endl;
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
