@@ -113,7 +113,7 @@ void File::addPiece(Piece *piece) {
     }
 
 //     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
-    this->macropieces[piece->getIndex()].replace(piece->getOffset(), 
+    this->macropieces[piece->getIndex()].replace(piece->getOffset(),
                                       piece->getBlock().size(), piece->getBlock());
 }
 
