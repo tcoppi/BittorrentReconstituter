@@ -32,30 +32,9 @@ bool Torrent::init() {
         this->announce_url = info_dict.substr(0, announce_off);
     }
 
-    //Find the first if any field after the info dictionary
-    if(info_dict.find("8:url-list") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("8:url-list"));
-    }
-    if(info_dict.find("13:creation date") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("13:creation date"));
-    }
-    if(info_dict.find("7:comment") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("7:comment"));
-    }
-    if(info_dict.find("10:created by") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("10:created by"));
-    }
-    if(info_dict.find("8:encoding") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("8:encoding"));
-    }
-    
-    //These two are added by mininova
-    if(info_dict.find("6:locale") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("6:locale"));
-    }
-    if(info_dict.find("5:title") != std::string::npos) {
-        info_dict = info_dict.substr(0, info_dict.find("5:title"));
-    }
+    //Strip the info dictionary of extra fields
+    this->stripExtraFields(info_dict);
+    std::cout << "info dict: " << info_dict << std::endl;
     
     // etc, etc
     //Get the info hash
@@ -80,10 +59,62 @@ bool Torrent::init() {
     }
 
     // Decode the info dictionary to get the file information
-    // 
+    // For now, only care about multi file mode
+    size_t files_off = info_dict.find("5:files");
+    if(files_off != std::string::npos) {
+        //We have multiple files
+        files_off += 7;
+        std::string files_dict = info_dict.substr(files_off);
+        this->stripInfo(files_dict);
+        std::cout << "files: " << files_dict << std::endl;
+    }
     
     
     in_file.close();
     return true;
 }
 
+/**
+ * Strip the given field of any extra fields. Use stripInfo to string fields
+ * from the info dictionary.
+ */
+
+void Torrent::stripExtraFields(std::string &field) {
+    
+    if(field.find("8:url-list") != std::string::npos) {
+        field = field.substr(0, field.find("8:url-list"));
+    }
+    if(field.find("13:creation date") != std::string::npos) {
+        field = field.substr(0, field.find("13:creation date"));
+    }
+    if(field.find("7:comment") != std::string::npos) {
+        field = field.substr(0, field.find("7:comment"));
+    }
+    if(field.find("10:created by") != std::string::npos) {
+        field = field.substr(0, field.find("10:created by"));
+    }
+    if(field.find("8:encoding") != std::string::npos) {
+        field = field.substr(0, field.find("8:encoding"));
+    }
+    
+    //These two are added by mininova
+    if(field.find("6:locale") != std::string::npos) {
+        field = field.substr(0, field.find("6:locale"));
+    }
+    if(field.find("5:title") != std::string::npos) {
+        field = field.substr(0, field.find("5:title"));
+    }
+}
+
+void Torrent::stripInfo(std::string &field) {
+    
+    if(field.find("12:piece length") != std::string::npos) {
+        field = field.substr(0, field.find("12:piece length"));
+    }
+    if(field.find("6:pieces") != std::string::npos) {
+        field = field.substr(0, field.find("6:pieces"));
+    }
+    if(field.find("7:private") != std::string::npos) {
+        field = field.substr(0, field.find("7:private"));
+    }
+}
