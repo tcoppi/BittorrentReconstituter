@@ -21,6 +21,12 @@ PacketHandler::PacketHandler(pcap_t* handler, const char* pipe)
     : input_handle(handler), output_pipe(pipe), output_archive(output_pipe) {}
 
 void PacketHandler::run() {
+    
+    //Write an empty instance of Packet to open up pipe
+//     Packet *p = new Packet();
+    output_pipe << std::endl;;
+//     output_pipe.flush();
+    
     //Process the input
     struct pcap_pkthdr header;
     const u_char *packet = pcap_next(input_handle, &header);
