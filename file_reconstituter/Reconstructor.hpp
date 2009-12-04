@@ -27,8 +27,6 @@ class File {
 public:
     File() {}
     File(std::string);
-    std::string name() { return this->m_name; }
-    void name(std::string x) { this->m_name = x; }
     std::string contents() { return this->m_contents; }
 
     /**
@@ -47,7 +45,7 @@ public:
     unsigned int writeFile(hash_map_t, const char *);
 
 private:
-    std::string m_name;
+//     std::string m_name;
     std::string m_contents;
 
     /**
