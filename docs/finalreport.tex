@@ -177,7 +177,10 @@ extensions to the BitTorrent protocol used by various clients. As mentioned
 above, our solution to this problem is to handle traffic according to the
 official specification and design our code in a way that allows future
 improvements to support new extensions to the protocol without redesigning the
-whole project.
+whole project.  In addition, not all clients create \texttt{.torrent} files the
+same way.  Some clients add fields that aren't specified in the spec, such as
+``title'' and ``locale'', which required discovery and additional parsing
+machinery.
 
 The next challenge we faced was discovered while designing the project.
 Initially, we were planning to run each module successively to ensure all parts
@@ -185,6 +188,11 @@ of the input file had been processed by one module before the next module
 started running. However, this design would have made working with a live input
 nearly impossible and thus we worked on an alternate design, which led to the
 concurrent processing used in our implementation.
+
+The last major challenge was discovering things that TCP was doing a lot of
+things that we didn't expect, such as packing BitTorrent PDU's together and not
+just starting on protocol boundaries.  This led to a substantial amount of time
+debugging until we finally figured out what was going on.
 
 \section{Deliverables}
 Our deliverable mainly consists of the source code to our application, a
@@ -210,9 +218,17 @@ necessary for identification and reconstruction of the files. Other applications
 and/or manual analysis will be needed to process the files separately from this
 application.
 
+\subsection{Proposal Deviations}
+A major deviation from the proposal is that we discovered that the
+\texttt{.torrent} file will be required if more than one file is being
+transferred at once.  This is because the files are just just added sequentially
+to pieces, the pieces can be broken up anywhere.  The way BitTorrent gets around
+this is to put the file lengths in the \texttt{.torrent} so the client knows
+where to break up the monolithic file that it receives.  The way we resolve this
+if the \texttt{.torrent} isn't available is to output the monolithic file and
+let the user figure out the boundaries manually.
 
 \section{Team Members}
-
 
 
 \section{Forensics Impact}
