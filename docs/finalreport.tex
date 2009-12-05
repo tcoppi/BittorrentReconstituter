@@ -21,7 +21,8 @@
 \begin{abstract}
 This paper describes the BitTorrent Reconstitutor project. Specifically, it
 contains an overview of the BitTorrent protocol and how our project aims to
-improve the state of network forensics on this front.  \end{abstract}
+improve the state of network forensics on this front.
+\end{abstract}
 %\keywords{}
 
 \section{Introduction}
@@ -53,13 +54,13 @@ network traffic.
 Prior to this project, there was not a publicly available tool that network
 forensics analysts could use to extract files transferred over BitTorrent.
 However, such tools do exist for other file transfer protocols (such as
-\texttt{tcpxtract} \footnote{\url{http://tcpxtract.sourceforge.net}}). This
-tool extends the capability of the analyst to extract files from network
-traffic to include the BitTorrent protocol. This gap in capabilities was deemed
-to be particularly interesting because manually recovering a file transferred
-over BitTorrent from network traffic would be impractical due to the variable
-number of peers and the fragmentation of files into pieces that are transferred
-out of order.
+\texttt{tcpxtract} \footnote{\url{http://tcpxtract.sourceforge.net}}). This tool
+extends the capability of the analyst to extract files from network traffic to
+include the BitTorrent protocol. This gap in capabilities was deemed to be
+particularly interesting because manually recovering a file transferred over
+BitTorrent from network traffic would be impractical due to the variable number
+of peers and the fragmentation of files into pieces that are transferred out of
+order.
 
 \section{Threat Model}
 One of the ways of breaking up threats is by categorizing them into two groups:
@@ -74,11 +75,11 @@ later from a capture file.
 Threats that this application can mitigate include, but are not limited to,
 transfer of contraband using BitTorrent, analysis of network traffic from an
 incident in which BitTorrent was used to transfer files to a compromised host,
-and detection of data exfiltration where BitTorrent is used to break the
-file(s) into smaller pieces that may evade detection from file scanning
-utilities. Note that in the case of exfiltration, the application would run
-against live traffic, while the transfer of contraband and files to a
-compromised host would require offline processing of packet capture files.
+and detection of data exfiltration where BitTorrent is used to break the file(s)
+into smaller pieces that may evade detection from file scanning utilities. Note
+that in the case of exfiltration, the application would run against live
+traffic, while the transfer of contraband and files to a compromised host would
+require offline processing of packet capture files.
 
 \subsection{Use Cases}
 The main motivation for this project is to give an analyst investigating an
@@ -135,54 +136,53 @@ output would allow the rest of the code to operate as it is currently designed
 without consideration of the underlying protocol.
 
 \subsection{Session Finder}
-The Session Finder module reads in the packet data structures from the packet
-handler and parses them to identify BitTorrent sessions. A BitTorrent session is
+The Session Finder module reads in the packet data structures from the Packet
+Handler and parses them to identify BitTorrent sessions. A BitTorrent session is
 defined by a tracker request for one or more files, the response, the pieces in
 the actual file(s), and the tracker request stating that the download has
 completed. This module is implemented by first creating a new Session object
 when a ``starting'' tracker request is found. Afterwards, any packet that is
-decoded to be a tracker response is matched to an existing; if no corresponding
-session is found, the packet is ignored to avoid handling spoofed data.
-Futhermore, since more than one reply can occur after the session is started,
-the response is decoded to determine the IP addresses and ports that are being
-used by the peers in the session. This data is used to match up packets that
-contain a BitTorrent peer handshake. Any peer that handshakes is then considered
-to be active in the session and the Session Finder will attempt to decode
-packets from these peers as BitTorrent Piece messages.
+decoded to be a tracker response is matched to an existing session.  If no
+corresponding session is found, the packet is ignored to avoid handling spoofed
+data.  Futhermore, since more than one reply can occur after the session is
+started, the response is decoded to determine the IP addresses and ports that
+are being used by the peers in the session. This data is used to match up
+packets that contain a BitTorrent peer handshake. Any peer that handshakes is
+then considered to be active in the session and the Session Finder will attempt
+to decode packets from these peers as BitTorrent Piece messages.
 
 When the Session Finder gets a packet that doesn't match any of the previously
 mentioned messages and is from a known active peer, it will attempt to decode it
 as a Piece message. Because TCP breaks up messages over multiple packets, the
 Session Finder keeps the state of the last decoded Piece to determine whether to
-decode the start of a new Piece or to append data to the last Piece. Because 
-multiple peers will be communicating with the host at the same time, the state 
+decode the start of a new Piece or to append data to the last Piece. Because
+multiple peers will be communicating with the host at the same time, the state
 of the Pieces is tied to the IP and port of the peer. If the last Piece matching
-the is peer information is complete, a new Piece wil be started. Otherwise, 
-packets matching the peer information for the last Piece will be added to the 
+the is peer information is complete, a new Piece will be started. Otherwise,
+packets matching the peer information for the last Piece will be added to the
 incomplete Piece.
 
-When a "completed" or "stopped" tracker request is completed, the session is
+When a ``completed'' or ``stopped'' tracker request is completed, the Session is
 considered to be complete and is written to the pipe for processing by the File
 Reconstructor module. It is also removed from the Session Finder's memory to
 reduce the memory footprint of the program when running with a live input.
 
-
 \subsection{File Reconstructor}
 The File Reconstructor module takes in BitTorrent sessions created by the
-Session Finder module and uses the pieces in the session to reconstruct the
-original file. It does this using the information each piece has, such as the
-number of the major piece it is contained within and the offset within this
+Session Finder module and uses the Pieces in the session to reconstruct the
+original file. It does this using the information each Piece has, such as the
+number of the major piece it is contained in and the offset within this
 major piece. With this, the reconstructor can rebuild the major pieces that the
 files were originally broken up into, separate out a transfer that has multiple
-logical files, verify the piece SHA-1 hashes, and use them to piece together
-the original file. Separation of multiple files and verification of the hashes
-both require that the original \texttt{.torrent} file is specified.
+logical files, verify the piece SHA-1 hashes, and use them to piece together the
+original file. Separation of multiple files and verification of the hashes both
+require that the original \texttt{.torrent} file is specified.
 
 \subsection{Putting It All Together}
 We designed the system to run the modules concurrently, using pipes to
 communicate with each other, for several reasons. The main motivation was to be
 able to handle live input because sequential execution of the modules would not
-be possible if the packet handler never exited. Since the packet handler would
+be possible if the Packet Handler never exited. Since the Packet Handler would
 never terminate when run with a live input, all of the modules need to be run in
 parallel. Accordingly, the driver for the application sets up pipes and creates
 3 processes to run each of the modules. Each module will block until its pipes
@@ -241,13 +241,13 @@ application.
 \subsection{Proposal Deviations}
 A major deviation from the proposal is that we discovered that the
 \texttt{.torrent} file will be required if more than one file is being
-transferred at once.  This is because the files are just just added
-sequentially to pieces, the pieces can be broken up anywhere.  The way
-BitTorrent gets around this is to put the file lengths in the \texttt{.torrent}
-so the client knows where to break up the monolithic file that it receives.
-The way we resolve this if the \texttt{.torrent} isn't available is to output
-the monolithic file and let the user figure out the boundaries manually, or use
-a file carving utility such as scalpel\cite{scalpel}.
+transferred at once.  This is because the files are just just added sequentially
+to pieces, the pieces can be broken up anywhere.  The way BitTorrent gets around
+this is to put the file lengths in the \texttt{.torrent} so the client knows
+where to break up the monolithic file that it receives.  The way we resolve this
+if the \texttt{.torrent} isn't available is to output the monolithic file and
+let the user figure out the boundaries manually, or use a file carving utility
+such as scalpel\cite{scalpel}.
 
 \section{Team Members}
 The three team members on this project all contributed to the whole codebase
