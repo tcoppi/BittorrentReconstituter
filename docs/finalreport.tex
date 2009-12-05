@@ -143,7 +143,7 @@ completed. This module is implemented by first creating a new Session object
 when a ``starting'' tracker request is found. Afterwards, any packet that is
 decoded to be a tracker response is matched to an existing; if no corresponding
 session is found, the packet is ignored to avoid handling spoofed data.
-Futhermore, since more than one reply can occur after the session is started,
+Furthermore, since more than one reply can occur after the session is started,
 the response is decoded to determine the IP addresses and ports that are being
 used by the peers in the session. This data is used to match up packets that
 contain a BitTorrent peer handshake. Any peer that handshakes is then considered
@@ -218,7 +218,7 @@ concurrent processing with multiple processes connected using pipes that we
 finally settled on and used in our implementation.
 
 The last major challenge was discovering things that TCP was doing a lot of
-things that we didn't expect, such as packing BitTorrent PDU's together and not
+things that we didn't expect, such as packing BitTorrent PDUs together and not
 just starting on protocol boundaries.  This led to a substantial amount of time
 debugging until we finally figured out what was going on and implemented a fix.
 
@@ -266,7 +266,7 @@ Aaron developed the Packet Handler module, wrote most of the code to decode
 \texttt{.torrent} files, developed the Piece message decoding system, and
 contributed a substantial amount of the data structures used in the system. He
 also performed manual protocol decoding and packet tracing to aid in debugging
-the the Session Finder module. Aside from working on the codebase, Aaron also
+the Session Finder module. Aside from working on the codebase, Aaron also
 handled organizing group meetings and initial assignment of modules to the other
 group members.
 
