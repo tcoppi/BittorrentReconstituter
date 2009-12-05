@@ -106,7 +106,6 @@ files that we extract, and possibly ensuring that the headers don't contain
 sensitive information, either.  This would require the use of a live capture stream.
 
 
-
 \section{Approach}
 We started this project by extensively reviewing the BitTorrent protocol
 specification~\cite{officialspec}.  Based on our own experiences as well as
@@ -153,11 +152,13 @@ have been processed.
 \subsection{File Reconstructor}
 The File Reconstructor module takes in BitTorrent sessions created by the
 Session Finder module and uses the pieces in the session to reconstruct the
-original file.  It does this using the information each piece has, such as the
+original file. It does this using the information each piece has, such as the
 number of the major piece it is contained within and the offset within this
-major piece.  With this, the reconstructor can rebuild the major pieces that the
-file was originally broken up into, verify their hashes if possible, and use
-them to piece together the original file.
+major piece. With this, the reconstructor can rebuild the major pieces that the
+files were originally broken up into, separate out a transfer that has multiple
+logical files, verify the piece SHA-1 hashes, and use them to piece together
+the original file. Separation of multiple files and verification of the hashes
+both require that the original \texttt{.torrent} file is specified.
 
 \subsection{Putting It All Together}
 We designed the system to run the modules concurrently, using pipes to
@@ -196,7 +197,7 @@ debugging until we finally figured out what was going on.
 
 \section{Deliverables}
 Our deliverable mainly consists of the source code to our application, a
-Makefile to build the code, and a readme. It also contains a set of sample data
+Makefile to build the code, and a README. It also contains a set of sample data
 to run the application against to demonstrate its operation.
 
 \subsection{Functionality}
@@ -229,7 +230,29 @@ if the \texttt{.torrent} isn't available is to output the monolithic file and
 let the user figure out the boundaries manually.
 
 \section{Team Members}
+The three team members on this project all contributed to the whole codebase 
+roughly equally. Notable contributions from each team member are listed below.
 
+\subsection{Aaron Lovato}
+Aaron developed the Packet Handler module, wrote most of the code to decode
+\texttt{.torrent} files, developed the Piece message decoding system, and
+contributed a substantial amount of the data structures used in the system. He
+also performed manual protocol decoding and packet tracing to aid in debugging
+the the Session Finder module. Aside from working on the codebase, Aaron also
+handled organizing group meetings and initial assignment of modules to the other
+group members.
+
+\subsection{Charlie Moore}
+Charlie developed the driver for the project, performed a large amount of code
+cleanup, developed the data structure representing \texttt{.torrent} files,
+contributed a substantial amount of work to the File Reconstructor, and updated
+the API used in the project multiple times.
+
+\subsection{Thomas Coppi}
+Thomas contributed most of the Session Finder and a large part of the File
+Reconstructor, developed the data structures used to represent files,
+and implemented SHA1 verification of individual pieces of the file transferred.
+He also set up the test environment and gathered initial test data.
 
 \section{Forensics Impact}
 This application will give analysts the ability to extract files transferred
@@ -257,7 +280,6 @@ we're assuming that the \texttt{.torrent} file has to somehow magically be captu
 separately from the BitTorrent traffic.  If we can incorporate DHT technology
 into our program, we can eliminate this constraint.
 
-\balancecolumns% This goes wherever the first column should end on the last page
 Another extension to the BitTorrent protocol that has become popular is protocol
 encryption.  This encapsulates BitTorrent protocol traffic in relatively weak
 RC-4 encryption as a way to get around some protocol shapers that detect
