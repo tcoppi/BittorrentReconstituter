@@ -153,11 +153,11 @@ When the Session Finder gets a packet that doesn't match any of the previously
 mentioned messages and is from a known active peer, it will attempt to decode it
 as a Piece message. Because TCP breaks up messages over multiple packets, the
 Session Finder keeps the state of the last decoded Piece to determine whether to
-decode the start of a new Piece or to append data to the last Piece. Because 
-multiple peers will be communicating with the host at the same time, the state 
+decode the start of a new Piece or to append data to the last Piece. Because
+multiple peers will be communicating with the host at the same time, the state
 of the Pieces is tied to the IP and port of the peer. If the last Piece matching
-the is peer information is complete, a new Piece wil be started. Otherwise, 
-packets matching the peer information for the last Piece will be added to the 
+the is peer information is complete, a new Piece will be started. Otherwise,
+packets matching the peer information for the last Piece will be added to the
 incomplete Piece.
 
 When a "completed" or "stopped" tracker request is completed, the session is
@@ -171,11 +171,19 @@ The File Reconstructor module takes in BitTorrent sessions created by the
 Session Finder module and uses the pieces in the session to reconstruct the
 original file. It does this using the information each piece has, such as the
 number of the major piece it is contained within and the offset within this
-major piece. With this, the reconstructor can rebuild the major pieces that the
-files were originally broken up into, separate out a transfer that has multiple
-logical files, verify the piece SHA-1 hashes, and use them to piece together
-the original file. Separation of multiple files and verification of the hashes
-both require that the original \texttt{.torrent} file is specified.
+major piece. With this information, it takes the individual pieces and
+collects them into macropieces using offset and size information. After all
+pieces have been added to their respective macropiece, The SHA-1 hash of each
+piece is computed and compared with the value for that piece specified in the
+\texttt{.torrent} file. If any of the SHA-1s fail to match, it reports an error
+and stops reconstruction of the session. If the \texttt{.torrent} file is not
+specified, we reconstruct as if all the SHA-1s matched correctly and report
+that hash verification is not occurring.
+
+After verification, we check if the \texttt{.torrent} specifies multiple files.
+If it does, we split the macropieces accordingly and output multiple files. If
+not, we simply output all the macropieces in order to the output file. Output
+files are named by the SHA-1 hash of the contents of the file.
 
 \subsection{Putting It All Together}
 We designed the system to run the modules concurrently, using pipes to
