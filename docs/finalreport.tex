@@ -138,16 +138,33 @@ The Session Finder module reads in the packet data structures from the packet
 handler and parses them to identify BitTorrent sessions. A BitTorrent session is
 defined by a tracker request for one or more files, the response, the pieces in
 the actual file(s), and the tracker request stating that the download has
-completed. When a "starting" request and corresponding response is found, the
-session finder attempts to parse any non-tracker related packets into BitTorrent
-pieces. If a packet is not a piece message, it will be discarded. Otherwise, the
-session finder will either add a new piece to the corresponding session or add
-the data to an unfinished piece. Once the "completed" tracker request is found,
-the session is considered complete and is then written to a pipe for
-processing. Incomplete sessions will not be processed because we cannot be sure
-that the data in the session is meaningful until it is complete. The session
-finder terminates when the packet handler closes the input pipe and all packets
-have been processed.
+completed. This module is implemented by first creating a new Session object
+when a ``starting'' tracker request is found. Afterwards, any packet that is
+decoded to be a tracker response is matched to an existing; if no corresponding
+session is found, the packet is ignored to avoid handling spoofed data.
+Futhermore, since more than one reply can occur after the session is started,
+the response is decoded to determine the IP addresses and ports that are being
+used by the peers in the session. This data is used to match up packets that
+contain a BitTorrent peer handshake. Any peer that handshakes is then considered
+to be active in the session and the Session Finder will attempt to decode
+packets from these peers as BitTorrent Piece messages.
+
+When the Session Finder gets a packet that doesn't match any of the previously
+mentioned messages and is from a known active peer, it will attempt to decode it
+as a Piece message. Because TCP breaks up messages over multiple packets, the
+Session Finder keeps the state of the last decoded Piece to determine whether to
+decode the start of a new Piece or to append data to the last Piece. Because 
+multiple peers will be communicating with the host at the same time, the state 
+of the Pieces is tied to the IP and port of the peer. If the last Piece matching
+the is peer information is complete, a new Piece wil be started. Otherwise, 
+packets matching the peer information for the last Piece will be added to the 
+incomplete Piece.
+
+When a "completed" or "stopped" tracker request is completed, the session is
+considered to be complete and is written to the pipe for processing by the File
+Reconstructor module. It is also removed from the Session Finder's memory to
+reduce the memory footprint of the program when running with a live input.
+
 
 \subsection{File Reconstructor}
 The File Reconstructor module takes in BitTorrent sessions created by the
