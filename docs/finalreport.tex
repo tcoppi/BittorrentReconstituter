@@ -212,8 +212,29 @@ application.
 
 
 \section{Team Members}
+The three team members on this project all contributed to the whole codebase 
+roughly equally. Notable contributions from each team member are listed below.
 
+\subsection{Aaron Lovato}
+Aaron developed the Packet Handler module, wrote most of the code to decode
+\texttt{.torrent} files, developed the Piece message decoding system, and
+contributed a substantial amount of the data structures used in the system. He
+also performed manual protocol decoding and packet tracing to aid in debugging
+the the Session Finder module. Aside from working on the codebase, Aaron also
+handled organizing group meetings and initial assignment of modules to the other
+group members.
 
+\subsection{Charlie Moore}
+Charlie developed the driver for the project, performed a large amount of code
+cleanup, developed the data structure representing \texttt{.torrent} files,
+contributed a substantial amount of work to the File Reconstructor, and updated
+the API used in the project multiple times.
+
+\subsection{Thomas Coppi}
+Thomas contributed most of the Session Finder and a large part of the File
+Reconstructor, developed the data structures used to represent files,
+and implemented SHA1 verification of individual pieces of the file transferred.
+He also set up the test environment and gathered initial test data.
 
 \section{Forensics Impact}
 This application will give analysts the ability to extract files transferred
@@ -241,7 +262,6 @@ we're assuming that the \texttt{.torrent} file has to somehow magically be captu
 separately from the BitTorrent traffic.  If we can incorporate DHT technology
 into our program, we can eliminate this constraint.
 
-\balancecolumns% This goes wherever the first column should end on the last page
 Another extension to the BitTorrent protocol that has become popular is protocol
 encryption.  This encapsulates BitTorrent protocol traffic in relatively weak
 RC-4 encryption as a way to get around some protocol shapers that detect
