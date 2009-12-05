@@ -271,14 +271,17 @@ can be used to initially identify an incident rather than respond to a known
 incident.
 
 \subsection{Future}
-As a possible future extension, distributed hash table(DHT) is close to
-becoming standardized and is currently in use by many big BitTorrent names.  DHT
-allows for every peer to be a tracker, so centralized tracker services are not
-needed to get the peer and metadata information. Torrent files can be
-distributed through DHT, which has a big impact on our program.  As of now,
-we're assuming that the \texttt{.torrent} file has to somehow magically be captured
-separately from the BitTorrent traffic.  If we can incorporate DHT technology
-into our program, we can eliminate this constraint.
+As a possible future extension, Distributed Hash Table (DHT) is close to
+becoming standardized and is currently in use by many big BitTorrent clients.
+DHT allows for every peer to be a tracker, so centralized tracker services are
+not needed to get the peer and metadata information~\cite{dhtext}. Torrent files
+can be distributed through DHT, which has a big impact on our program.
+Specificially, it would be possible to sniff the \texttt{.torrent} along with
+the other BitTorrent traffic, which means that we could more consistently do
+verification and file separation. As of now, we're assuming that the
+\texttt{.torrent} file has to somehow magically be captured separately from the
+BitTorrent traffic.  If we can incorporate DHT technology into our program, we
+can eliminate this constraint.
 
 Another extension to the BitTorrent protocol that has become popular is protocol
 encryption.  This encapsulates BitTorrent protocol traffic in relatively weak
