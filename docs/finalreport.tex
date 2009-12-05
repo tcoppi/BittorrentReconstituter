@@ -32,23 +32,22 @@ BitTorrent specification~\cite{officialspec} and ignore any extensions to the
 protocol for now; they are left for future work.
 
 \section{Short overview of the BitTorrent Protocol}
-BitTorrent is a protocol
-designed for efficient transfer of both large and small files over the
-Internet. In order to achieve this, BitTorrent uses a novel technique in which
-it breaks down the file to be transferred into many uniform \emph{pieces}.
-These \emph{pieces} are then distributed amongst the \emph{peers} (clients
-downloading the file) in such a way that each \emph{peer} chooses the next
-piece to download based on which one it can download fastest from the set of
-peers, not necessarily the next one in sequential order.  One common strategy
-of downloading pieces is rarest first~\cite{availability}.  This strategy is
-optimal because as more peers acquire the rare pieces, the less rare it
-becomes, enabling other peers to download those pieces at a faster rate than
+BitTorrent is a protocol designed for efficient transfer of both large and small
+files over the Internet. In order to achieve this, BitTorrent uses a novel
+technique in which it breaks down the file to be transferred into many uniform
+\emph{pieces}.  These \emph{pieces} are then distributed amongst the
+\emph{peers} (clients downloading the file) in such a way that each \emph{peer}
+chooses the next piece to download based on which one it can download fastest
+from the set of peers, not necessarily the next one in sequential order.  One
+common strategy of downloading pieces is rarest first~\cite{availability}.  This
+strategy is optimal because as more peers acquire the rare pieces, the less rare
+it becomes, enabling other peers to download those pieces at a faster rate than
 before.  The peers discover each other through a centralized tracker service
 that each peer can query to see the status of other peers and how to connect to
-them.  This method of transferring files in pieces gives it the property that
-it is impossible to recover the original file or determine if a file was
-actually downloaded or uploaded in whole just from a straightforward
-examination of the network traffic.
+them.  This method of transferring files in pieces gives it the property that it
+is impossible to recover the original file or determine if a file was actually
+downloaded or uploaded in whole just from a straightforward examination of the
+network traffic.
 
 \section{Problem Addressed}
 Prior to this project, there was not a publicly available tool that network
@@ -67,6 +66,9 @@ One of the ways of breaking up threats is by categorizing them into two groups:
 inbound and outbound threats.  Outbound threats consist primarily of data
 exfiltration problems.  Inbound attacks focus on malware and contraband. Both
 inbound and outbound threats can fall under the umbrella of policy enforcement.
+Our project deals with both of these threats by allowing an analyst to see in
+real time what's being transferred in or out and allowing a systematic review
+later from a capture file.
 
 \subsection{Threats}
 Threats that this application can mitigate include, but are not limited to,
@@ -77,7 +79,6 @@ file(s) into smaller pieces that may evade detection from file scanning
 utilities. Note that in the case of exfiltration, the application would run
 against live traffic, while the transfer of contraband and files to a
 compromised host would require offline processing of packet capture files.
-
 
 \subsection{Use Cases}
 The main motivation for this project is to give an analyst investigating an
@@ -99,11 +100,11 @@ identifying the peers involved in the download would allow action to be taken to
 prevent them from being used in further attacks. To this end, our tool also
 lists all IP addresses involved in the transfer of each file.
 
-One last use case is to mitigate exfiltration of data.  If a user is
-using the BitTorrent protocol to send data out of the network, the network
-adminstrators would like to know.  This can be accomplished by inspecting the
-files that we extract, and possibly ensuring that the headers don't contain
-sensitive information, either.  This would require the use of a live capture stream.
+One last use case is to mitigate exfiltration of data.  If a user is using the
+BitTorrent protocol to send data out of the network, the network administrators
+would like to know.  This can be accomplished by inspecting the files that we
+extract, and possibly ensuring that the headers don't contain sensitive
+information, either.  This would require the use of a live capture stream.
 
 
 \section{Approach}
@@ -272,8 +273,8 @@ group members.
 \subsection{Charlie Moore}
 Charlie developed the driver for the project, performed a large amount of code
 cleanup, developed the data structure representing \texttt{.torrent} files,
-contributed a substantial amount of work to the File Reconstructor, and updated
-the API used in the project multiple times.
+contributed a substantial amount of work to the File Reconstructor, and
+refactored the API used in the project multiple times.
 
 \subsection{Thomas Coppi}
 Thomas contributed most of the Session Finder and a large part of the Session
