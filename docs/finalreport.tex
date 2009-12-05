@@ -21,7 +21,9 @@
 \begin{abstract}
 This paper describes the BitTorrent Reconstitutor project. Specifically, it
 contains an overview of the BitTorrent protocol and how our project aims to
-improve the state of network forensics on this front.  \end{abstract}
+improve the state of network forensics on this front. A brief overview of our
+approach to this project and the deliverable we produced is included as well.
+\end{abstract}
 %\keywords{}
 
 \section{Introduction}
@@ -315,11 +317,18 @@ traditional host forensics, decrypting the stream would be a simple addition to
 the Session Finder's packet decoding.
 
 \section{Conclusion}
-In conclusion, this application solves the problem of being unable to extract
-files encapsulated in the standard BitTorrent protocol from network traffic.  A
-company or analyst would need this program for the use cases described above.
-No publicly available tool currently provides this functionality, so it fills a
-hole in the network forensics analyst's toolkit.
+In conclusion, this project was formed in response to the lack of a tool that
+allows network forensics analysts to determine what files were transferred using
+BitTorrent. Such an gap in capabilities could allow an attacker to transfer
+contraband or sensitive documents using BitTorrent and force analysts to perform
+the difficult and time-consuming task of reconstructing the files manually. We 
+solved this problem by developing an application that reads network traffic and
+extracts any files transferred using BitTorrent. The application also includes 
+the ability to verify the reconstructed file using the checksums in a matching 
+\texttt{.torrent} file, if provided. The code for the application is modular to
+allow future extension to support variants of the official BitTorrent 
+specification that are used by some BitTorrent clients or are waiting for
+inclusion in the official specification.
 
 \nocite{*}
 \bibliographystyle{plain}
