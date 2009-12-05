@@ -230,7 +230,7 @@ if the \texttt{.torrent} isn't available is to output the monolithic file and
 let the user figure out the boundaries manually.
 
 \section{Team Members}
-The three team members on this project all contributed to the whole codebase 
+The three team members on this project all contributed to the whole codebase
 roughly equally. Notable contributions from each team member are listed below.
 
 \subsection{Aaron Lovato}
@@ -249,10 +249,11 @@ contributed a substantial amount of work to the File Reconstructor, and updated
 the API used in the project multiple times.
 
 \subsection{Thomas Coppi}
-Thomas contributed most of the Session Finder and a large part of the File
-Reconstructor, developed the data structures used to represent files,
-and implemented SHA1 verification of individual pieces of the file transferred.
-He also set up the test environment and gathered initial test data.
+Thomas contributed most of the Session Finder and a large part of the Session
+and File Reconstructor modules, developed the data structures used to represent
+files, and implemented SHA-1 verification of individual pieces of the file
+transferred.  He also set up the test environment and gathered initial test
+data.
 
 \section{Forensics Impact}
 This application will give analysts the ability to extract files transferred
@@ -275,13 +276,13 @@ As a possible future extension, Distributed Hash Table (DHT) is close to
 becoming standardized and is currently in use by many big BitTorrent clients.
 DHT allows for every peer to be a tracker, so centralized tracker services are
 not needed to get the peer and metadata information~\cite{dhtext}. Torrent files
-can be distributed through DHT, which has a big impact on our program.
-Specificially, it would be possible to sniff the \texttt{.torrent} along with
-the other BitTorrent traffic, which means that we could more consistently do
-verification and file separation. As of now, we're assuming that the
-\texttt{.torrent} file has to somehow magically be captured separately from the
-BitTorrent traffic.  If we can incorporate DHT technology into our program, we
-can eliminate this constraint.
+can be distributed through DHT, which has a big impact on the practical
+usefulness of our program.  Specifically, it would be possible to sniff the
+\texttt{.torrent} along with the other BitTorrent traffic, which means that we
+could more consistently do verification and file separation. As of now, the
+\texttt{.torrent} file has to be captured through some external means if a full
+extraction and verification is needed.  If we can incorporate DHT technology
+into our program, we can eliminate this constraint.
 
 Another extension to the BitTorrent protocol that has become popular is protocol
 encryption.  This encapsulates BitTorrent protocol traffic in relatively weak
