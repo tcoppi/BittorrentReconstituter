@@ -6,7 +6,7 @@
 %\usetheme{Boadilla}
 %\usetheme{Madrid}
 
-\title{Compiler Design Project}
+\title{BitTorrent Reconstitutor Project}
 %\subtitle{}
 \author{Charlie Moore \and Aaron Lovato \and Thomas Coppi}
 \date{December 8, 2009}
@@ -21,9 +21,54 @@
 \frame{
   \frametitle{Introduction}
 
-%%   \begin{itemize}
-%%   \item XXX Stuff goes here
-%%   \end{itemize}
+   \begin{itemize}
+   \item Identification and Extraction of files from network traffic
+    \begin{itemize}
+    \item Full packet capture necessary
+    \end{itemize}
+   \item Official specification~\cite{officialspec}
+    \begin{itemize}
+    \item Unofficial extensions not supported
+    \end{itemize}
+   \end{itemize}
+}
+
+\frame{
+    \frametitle{Overview of the BitTorrent Protocol}
+
+    \begin{itemize}
+    \item Designed for efficient transfer of data over the Internet
+    \item Client-server model used for managing downloads
+    \item Peer-to-peer download of data
+    \begin{itemize}
+        \item Many peers can be involved in a single download
+        \item Having too many peers (more than 25) is unlikely to improve
+        performance~\cite{btspec}
+    \end{itemize}
+    \item{Novel distribution of files}
+    \begin{itemize}
+        \item Files are broken down into \emph{pieces}
+        \item Each peer can transmit individual pieces after they are received
+    \end{itemize}
+    \end{itemize}
+}
+
+\section{Problem Addressed}
+\frame{
+    \frametitle{What did we solve?}
+
+    \begin{itemize}
+    \item Difficult manual reconstruction of files
+    \begin{itemize}
+        \item Piecewise distribution of files
+        \item Multiple peers
+        \item Out of order pieces
+    \end{itemize}
+    \item No publicly available tool to perform this task automatically
+    \begin{itemize}
+        \item Tools exist for other file transfer protocols
+    \end{itemize}
+    \end{itemize}
 }
 
 
@@ -38,11 +83,12 @@
   \end{center}
 }
 
-% If we end up using references, put them in refs.bib and uncomment
-%\frame[allowframebreaks]{
-%  \frametitle{References}
-%  \bibliographystyle{plain}
-%  \bibliography{refs}
-%}
+% Ifa we end up using references, put them in refs.bib and uncomment
+\section{References}
+\frame{
+  \frametitle{References}
+  \bibliographystyle{plain}
+  \bibliography{finalrefs}
+}
 
 \end{document}
