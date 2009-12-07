@@ -38,6 +38,7 @@
 
     \begin{itemize}
     \item Designed for efficient transfer of data over the Internet
+    \item \texttt{.torrent} file used to describe each download
     \item Client-server model used for managing downloads
     \item Peer-to-peer download of data
     \begin{itemize}
@@ -71,7 +72,106 @@
     \end{itemize}
 }
 
+\section{Threat Model}
+\frame{
+    \frametitle{Threat Model I}
 
+    \begin{itemize}
+        \item Categories of threats
+        \item Incident investigation
+        \begin{itemize}
+            \item Inbound threat
+            \item Network traffic may be the only way to recover files or data
+            transferred to a compromised host
+            \item BitTorrent could be used to make recovery of files extremely
+            difficult
+            \item The malware used is often of interest
+        \end{itemize}
+    \end{itemize}
+}
+
+\frame{
+    \frametitle{Threat Model II}
+    
+    \begin{itemize}
+        \item Exfiltration of sensitive data
+        \begin{itemize}
+            \item A host inside the network could be sending sensitive data out
+            using BitTorrent to achieve rapid transfer of data and/or data
+            obfuscation
+            \item Also falls under incident investigation in certain
+            circumstances
+        \end{itemize}
+        \item Transfer of contraband
+        \begin{itemize}
+            \item Difficult to categorize as either inbound or outbound
+            \item Data gathered could be used in prosecution
+        \end{itemize}
+    \end{itemize}
+}
+
+\section{Approach}
+\frame{
+    \frametitle{Our Approach}
+
+    \begin{itemize}
+        \item Review of protocol specification
+        \item An application that automatically reconstructs files transferred
+        using BitTorrent from network traffic
+        \item Ability to handle either saved packet captures or live
+        input
+        \item Must verify reconstructed files when possible
+        \begin{itemize}
+            \item Requires \texttt{.torrent} files for this task
+        \end{itemize}
+        \item Only supports official features of the protocol
+        \begin{itemize}
+            \item Can be extended in the future to handle other features
+        \end{itemize}
+    \end{itemize}
+}
+
+\section{Deliverable}
+\frame{
+    \frametitle{Design I}
+
+    \begin{itemize}
+        \item C++ with libpcap and Boost libraries
+        \item Modules run in separate processes and communicate using pipes
+        \item Runs multiple input files in parallel
+        \item Packet Handler
+        \begin{itemize}
+            \item Abstracts out the underlying transport layer protocol
+            \item Decodes relevant parts of raw packets and sends data for each
+            packet to the Session Finder
+        \end{itemize}
+    \end{itemize}
+
+}
+
+\frame{
+    \frametitle{Design II}
+
+    \begin{itemize}
+        \item Session Finder
+        \begin{itemize}
+            \item Decodes raw data into \emph{sessions}
+            \item Starts a session with a tracker ``started'' request
+            \item Gets peer information from tracker response(s)
+            \item Only takes data from peers after a handshake is detected
+            \item Decodes the \emph{pieces} transferred by each peer
+            \item Ends session when tracker ``completed'' request is detected
+        \end{itemize}
+    \end{itemize}
+}
+
+\frame{
+    \frametitle{Design III}
+
+    \begin{itemize}
+        \item File Reconstructor
+    \end{itemize}
+}
 \section{Conclusion}
 \frame{
 %  \frametitle{Finally\dots}
