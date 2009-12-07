@@ -14,9 +14,7 @@
 \frame{\titlepage}
 \frame{\tableofcontents}
 
-\frame{
-  \frametitle{Introduction}
-
+\frame{ \frametitle{Introduction}
   \begin{itemize}
   \item Identification and Extraction of files from network traffic
     \begin{itemize}
@@ -26,153 +24,127 @@
     \end{itemize}
   \item Official specification~\cite{officialspec}
     \begin{itemize}
-        \item Unofficial extensions not supported
-        \begin{itemize}
-            \item DHT isn't supported
-	        \item Encryption isn't supported
-        \end{itemize}
+    \item Unofficial extensions not supported
+    \item DHT isn't supported
+	\item Encryption isn't supported
     \end{itemize}
   \end{itemize}
 }
 
-\frame{
-    \frametitle{Overview of the BitTorrent Protocol}
-
+\frame{ \frametitle{Overview of the BitTorrent Protocol}
+  \begin{itemize}
+  \item Designed for efficient transfer of data over the Internet
+  \item \texttt{.torrent} file used to describe each download
+  \item Client-server model used for managing downloads
+  \item Peer-to-peer download of data --- Unicast transmission
     \begin{itemize}
-    \item Designed for efficient transfer of data over the Internet
-    \item \texttt{.torrent} file used to describe each download
-    \item Client-server model used for managing downloads
-    \item Peer-to-peer download of data --- Unicast transmission
+    \item Many peers can be involved in a single download
+    \item Having too many peers (more than 25) is unlikely to improve
+      performance~\cite{btspec}
+    \end{itemize}
+  \item{Novel distribution of files}
     \begin{itemize}
-        \item Many peers can be involved in a single download
-        \item Having too many peers (more than 25) is unlikely to improve
-        performance~\cite{btspec}
+    \item Files are broken down into \emph{pieces}
+    \item Each peer can transmit individual pieces after they are received
     \end{itemize}
-    \item{Novel distribution of files}
-    \begin{itemize}
-        \item Files are broken down into \emph{pieces}
-        \item Each peer can transmit individual pieces after they are received
-    \end{itemize}
-    \end{itemize}
+  \end{itemize}
 }
 
 \section{Problem Addressed}
-\frame{
-    \frametitle{What forensics problem did we solve?}
-
+\frame{ \frametitle{What forensics problem did we solve?}
+  \begin{itemize}
+  \item Difficult manual reconstruction of files
     \begin{itemize}
-    \item Difficult manual reconstruction of files
-    \begin{itemize}
-        \item Piecewise distribution of files
-        \item Multiple peers
-        \item Out of order pieces
+    \item Piecewise distribution of files
+    \item Multiple peers
+    \item Out of order pieces
     \end{itemize}
-    \item No publicly available tool to perform this task automatically, but
-      tools do exist for other protocols
-    \end{itemize}
+  \item No publicly available tool to perform this task automatically, but tools
+    do exist for other protocols
+  \end{itemize}
 }
 
 \section{Threat Model}
-\frame{
-    \frametitle{Threat Model I}
-
+\frame[allowframebreaks]{ \frametitle{Threat Model}
+  \begin{itemize}
+  \item Categories of threats
+  \item Incident investigation
     \begin{itemize}
-        \item Categories of threats
-        \item Incident investigation
-        \begin{itemize}
-            \item Inbound threat
-            \item Network traffic may be the only way to recover files or data
-            transferred to a compromised host
-            \item BitTorrent could be used to make recovery of files extremely
-            difficult
-            \item The malware used is often of interest
-        \end{itemize}
+    \item Inbound threat
+    \item Network traffic may be the only way to recover files or data
+      transferred to a compromised host
+    \item BitTorrent could be used to make recovery of files extremely difficult
+    \item The malware used is often of interest
     \end{itemize}
-}
 
-\frame{
-    \frametitle{Threat Model II}
-    
+  \framebreak
+  \item Exfiltration of sensitive data
     \begin{itemize}
-        \item Exfiltration of sensitive data
-        \begin{itemize}
-            \item A host inside the network could be sending sensitive data out
-            using BitTorrent to achieve rapid transfer of data and/or data
-            obfuscation
-            \item Also falls under incident investigation in certain
-            circumstances
-        \end{itemize}
-        \item Transfer of contraband
-        \begin{itemize}
-            \item Difficult to categorize as either inbound or outbound
-            \item Data gathered could be used in prosecution
-        \end{itemize}
+    \item A host inside the network could be sending sensitive data out using
+      BitTorrent to achieve rapid transfer of data and/or data obfuscation
+    \item Also falls under incident investigation in certain circumstances
     \end{itemize}
+  \item Transfer of contraband
+    \begin{itemize}
+    \item Difficult to categorize as either inbound or outbound
+    \item Data gathered could be used in prosecution
+    \end{itemize}
+  \end{itemize}
 }
 
 \section{Approach}
-\frame{
-    \frametitle{Our Approach}
-
+\frame{ \frametitle{Approach \& Requirements}
+  \begin{itemize}
+  \item Review of protocol specification
+  \item An application that automatically reconstructs files transferred using
+    BitTorrent from network traffic
+  \item Ability to handle either saved packet captures or live input
+  \item Must verify reconstructed files when possible
     \begin{itemize}
-        \item Review of protocol specification
-        \item An application that automatically reconstructs files transferred
-        using BitTorrent from network traffic
-        \item Ability to handle either saved packet captures or live
-        input
-        \item Must verify reconstructed files when possible
-        \begin{itemize}
-            \item Requires \texttt{.torrent} files for this task
-        \end{itemize}
-        \item Only supports official features of the protocol
-        \begin{itemize}
-            \item Can be extended in the future to handle other features
-        \end{itemize}
+    \item Requires \texttt{.torrent} files for this task
     \end{itemize}
+  \item Only supports official features of the protocol
+    \begin{itemize}
+    \item Can be extended in the future to handle other features
+    \end{itemize}
+  \end{itemize}
 }
 
 \section{Deliverable}
-\frame{
-    \frametitle{Design}
-
+\frame{ \frametitle{Design}
+  \begin{itemize}
+  \item C++ with libpcap and Boost libraries
+  \item Modules run in separate processes and communicate using pipes
+  \item Runs multiple input files in parallel
+  \item Packet Handler
     \begin{itemize}
-        \item C++ with libpcap and Boost libraries
-        \item Modules run in separate processes and communicate using pipes
-        \item Runs multiple input files in parallel
-        \item Packet Handler
-        \begin{itemize}
-            \item Abstracts out the underlying transport layer protocol
-            \item Decodes relevant parts of raw packets and sends data for each
-            packet to the Session Finder
-        \end{itemize}
+    \item Abstracts out the underlying transport layer protocol
+    \item Decodes relevant parts of raw packets and sends data for each packet
+      to the Session Finder
     \end{itemize}
-
+  \end{itemize}
 }
 
-\frame{
-  \frametitle{Session Finder}
-
+\frame{ \frametitle{Session Finder}
   \begin{itemize}
   \item Decodes raw data into \emph{sessions}
   \item Starts a session with a tracker ``started'' request
   \item Gets peer information from tracker response(s)
   \item Only takes data from peers after a handshake is detected
   \item Decodes the \emph{pieces} transferred by each peer
-  \item Ends session when tracker ``completed'' request is detected
+  \item Ends session when tracker ``completed'' or ``stopped'' request is detected
   \item Writes sessions to a pipe as soon as they are completed for processing
     by the File Reconstructor
   \end{itemize}
 }
 
-\frame{
-  \frametitle{File Reconstructor}
-
+\frame{ \frametitle{File Reconstructor}
   \begin{itemize}
   \item Rebuilds the pieces of the file from a session
   \item Checks if a given \texttt{.torrent} file matches the session and if so
     splits and verifies the pieces
-  \item If no \texttt{.torrent} file matches a session, a monolithic data file is
-    created
+  \item If no \texttt{.torrent} file matches a session, a monolithic data file
+    is created
     \begin{itemize}
     \item The monolithic data can be processed manually or with a file carving
       utility such as scalpel ~\cite{scalpel}
@@ -182,28 +154,23 @@
   \end{itemize}
 }
 
-\frame{
-    \frametitle{Final Product}
-
+\frame{ \frametitle{Final Product}
+  \begin{itemize}
+  \item Command-line application that can be run in either live or offline mode
     \begin{itemize}
-        \item Command-line application that can be run in either live or offline
-        mode
-        \begin{itemize}
-            \item Live mode takes an interface name and reads traffic on that
-            interface
-            \item Offline mode takes one or more packet capture files and reads
-            stored data
-            \item Either mode can be given one or more \texttt{.torrent} files for
-            use in verification and splitting of output files
-        \end{itemize}
-        \item Outputs information pertaining to each session as well as the
-        downloaded file(s)
+    \item Live mode takes an interface name and reads traffic on that interface
+    \item Offline mode takes one or more packet capture files and reads stored
+      data
+    \item Either mode can be given one or more \texttt{.torrent} files for use
+      in verification and splitting of output files
     \end{itemize}
+  \item Outputs information pertaining to each session as well as the downloaded
+    file(s)
+  \end{itemize}
 }
 
 \section{Conclusion}
-\frame{
-}
+\frame{}
 
 \frame{
   \begin{center}
@@ -211,8 +178,7 @@
   \end{center}
 }
 
-\frame[allowframebreaks]{
-  \frametitle{References}
+\frame[allowframebreaks]{ \frametitle{References}
   \bibliographystyle{plain}
   \bibliography{finalrefs}
 }
