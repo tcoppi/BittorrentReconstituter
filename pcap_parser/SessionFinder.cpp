@@ -232,13 +232,14 @@ void SessionFinder::handlePacket(Packet pkt) {
                     throw "Out of memory";
 
             //decode ip and port
-            snprintf(inet_tmp, 15, "%d.%d.%d.%d", (u_char)raw_data[0], (u_char)raw_data[1],
+            snprintf(inet_tmp, 16, "%d.%d.%d.%d", (u_char)raw_data[0], (u_char)raw_data[1],
                      (u_char) raw_data[2], (u_char)raw_data[3]);
             raw_data = pkt.payload.c_str()+offset+4;
             unsigned short port = 0;
             port = ((u_char) raw_data[0] << 8) | (u_char) raw_data[1];
 
             session->addPeer(std::string(inet_tmp), port);
+//             std::cerr << "adding peer " << std::string(inet_tmp) << ":" << port<< std::endl;
 
             offset += 6;
             free(inet_tmp);
@@ -262,7 +263,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
-        std::cerr << "activating peer " << pkt.src_ip << std::endl;
+//         std::cerr << "activating peer " << pkt.src_ip << ":" << pkt.src_port<< std::endl;
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
@@ -288,8 +289,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Make sure the peer corresponding to the source is active
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
         if (!source->active) {
-            //XXX nasty hack, but seems to get more pieces added
-            source->active = true;
+            return;
         }
 
         //Continue a piece in flight

@@ -34,7 +34,7 @@ bool Torrent::init() {
 
     //Strip the info dictionary of extra fields
     this->stripExtraFields(info_dict);
-    std::cout << "info dict: " << info_dict << std::endl;
+//     std::cout << "info dict: " << info_dict << std::endl;
 
     // etc, etc
     //Get the info hash
