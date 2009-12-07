@@ -11,12 +11,18 @@ typedef std::map<std::string, std::vector<Piece*> > ip_piece_map_t;
  * Compare the two SHA-1 hashes byte for byte and return true if they are the
  * same, false otherwise.
  */
-bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
+static bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
     for (int i = 0; i < 20; i++) {
        if (a[i] != b[i]) return false;
     }
     return true;
 }
+
+static void print_sha1(FILE *fd, const unsigned char *a) {
+    for (int i=0; i < 20; i++)
+            fprintf(fd, "%x", (unsigned char)a[i]);
+}
+
 
 Reconstructor::Reconstructor(const char *input, std::ofstream &o,
                              std::vector<Torrent*> torrents)
@@ -201,11 +207,10 @@ void File::reconstructFile(Torrent *torrent) {
         // DEBUG
         if (havetorrent) {
             std::cerr << "Checking piece number " << s->first << ".  Has hash ";
-            for (int i=0; i < 20; i++)
-                fprintf(stderr, "%x", (u_char)(torrent->piece_hashes().at(s->first).data())[i]);
+            print_sha1(stderr, (const unsigned char *)
+                            (torrent->piece_hashes().at(s->first).data()));
             std::cerr << std::endl << "Expecting hash ";
-            for (int i=0; i < 20; i++)
-                fprintf(stderr, "%x", (u_char)hash[i]);
+            print_sha1(stderr, (const unsigned char *)hash);
             std::cerr << std::endl;
         }
 
