@@ -6,6 +6,9 @@
 *.toc
 *.bbl
 *.blg
+*.nav
+*.out
+*.snm
 
 # Object files
 *.o

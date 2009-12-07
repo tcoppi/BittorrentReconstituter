@@ -2,12 +2,8 @@
 
 \usepackage{beamerthemesplit}
 \setbeamertemplate{navigation symbols}{} % Get rid of stupid nav symbols
-%\useoutertheme{infolines}
-%\usetheme{Boadilla}
-%\usetheme{Madrid}
 
 \title{BitTorrent Reconstitutor Project}
-%\subtitle{}
 \author{Charlie Moore \and Aaron Lovato \and Thomas Coppi}
 \date{December 8, 2009}
 \institute[NMT]{New Mexico Tech}
@@ -21,16 +17,19 @@
 \frame{
   \frametitle{Introduction}
 
-   \begin{itemize}
-   \item Identification and Extraction of files from network traffic
+  \begin{itemize}
+  \item Identification and Extraction of files from network traffic
     \begin{itemize}
     \item Full packet capture necessary
+    \item Torrent needs to be caught somehow to allow automatic multi-file mode
+      extraction
     \end{itemize}
-   \item Official specification~\cite{officialspec}
+  \item Official specification~\cite{officialspec}
     \begin{itemize}
     \item Unofficial extensions not supported
+    \item Encryption isn't supported
     \end{itemize}
-   \end{itemize}
+  \end{itemize}
 }
 
 \frame{
@@ -40,7 +39,7 @@
     \item Designed for efficient transfer of data over the Internet
     \item \texttt{.torrent} file used to describe each download
     \item Client-server model used for managing downloads
-    \item Peer-to-peer download of data
+    \item Peer-to-peer download of data --- Unicast transmission
     \begin{itemize}
         \item Many peers can be involved in a single download
         \item Having too many peers (more than 25) is unlikely to improve
@@ -56,7 +55,7 @@
 
 \section{Problem Addressed}
 \frame{
-    \frametitle{What did we solve?}
+    \frametitle{What forensics problem did we solve?}
 
     \begin{itemize}
     \item Difficult manual reconstruction of files
@@ -65,10 +64,8 @@
         \item Multiple peers
         \item Out of order pieces
     \end{itemize}
-    \item No publicly available tool to perform this task automatically
-    \begin{itemize}
-        \item Tools exist for other file transfer protocols
-    \end{itemize}
+    \item No publicly available tool to perform this task automatically, but
+      tools do exist for other protocols
     \end{itemize}
 }
 
@@ -133,7 +130,7 @@
 
 \section{Deliverable}
 \frame{
-    \frametitle{Design I}
+    \frametitle{Design}
 
     \begin{itemize}
         \item C++ with libpcap and Boost libraries
@@ -150,42 +147,36 @@
 }
 
 \frame{
-    \frametitle{Design II}
+  \frametitle{Session Finder}
 
-    \begin{itemize}
-        \item Session Finder
-        \begin{itemize}
-            \item Decodes raw data into \emph{sessions}
-            \item Starts a session with a tracker ``started'' request
-            \item Gets peer information from tracker response(s)
-            \item Only takes data from peers after a handshake is detected
-            \item Decodes the \emph{pieces} transferred by each peer
-            \item Ends session when tracker ``completed'' request is detected
-            \item Writes sessions to a pipe as soon as they are completed for
-            processing by the File Reconstructor
-        \end{itemize}
-    \end{itemize}
+  \begin{itemize}
+  \item Decodes raw data into \emph{sessions}
+  \item Starts a session with a tracker ``started'' request
+  \item Gets peer information from tracker response(s)
+  \item Only takes data from peers after a handshake is detected
+  \item Decodes the \emph{pieces} transferred by each peer
+  \item Ends session when tracker ``completed'' request is detected
+  \item Writes sessions to a pipe as soon as they are completed for processing
+    by the File Reconstructor
+  \end{itemize}
 }
 
 \frame{
-    \frametitle{Design III}
+  \frametitle{File Reconstructor}
 
+  \begin{itemize}
+  \item Rebuilds the pieces of the file from a session
+  \item Checks if a given \texttt{.torrent} file matches the session and if so
+    splits and verifies the pieces
+  \item If no \texttt{.torrent} file matches a session, a monolithic data file is
+    created
     \begin{itemize}
-        \item File Reconstructor
-        \begin{itemize}
-            \item Rebuilds the pieces of the file from a session
-            \item Checks if a given \emph{.torrent} file matches the session and
-            if so splits and verifies the pieces
-            \item If no \emph{.torrent} file matches a session, a monolithic 
-            data file is created
-            \begin{itemize}
-                \item The monolithic data can be processed manually or with a 
-                file carving utility such as scalpel ~\cite{scalpel}
-            \end{itemize}
-            \item Writes pieces in sequential order to output file named after
-            the file's SHA-1 checksum
-        \end{itemize}
+    \item The monolithic data can be processed manually or with a file carving
+      utility such as scalpel ~\cite{scalpel}
     \end{itemize}
+  \item Writes pieces in sequential order to output file named after the file's
+    SHA-1 checksum
+  \end{itemize}
 }
 
 \frame{
@@ -199,18 +190,16 @@
             interface
             \item Offline mode takes one or more packet capture files and reads
             stored data
-            \item Either mode can be given one or more \emph{.torrent} files for
+            \item Either mode can be given one or more \texttt{.torrent} files for
             use in verification and splitting of output files
         \end{itemize}
         \item Outputs information pertaining to each session as well as the
         downloaded file(s)
     \end{itemize}
-
 }
 
 \section{Conclusion}
 \frame{
-%  \frametitle{Finally\dots}
 }
 
 \frame{
@@ -219,8 +208,6 @@
   \end{center}
 }
 
-% Ifa we end up using references, put them in refs.bib and uncomment
-\section{References}
 \frame[allowframebreaks]{
   \frametitle{References}
   \bibliographystyle{plain}
