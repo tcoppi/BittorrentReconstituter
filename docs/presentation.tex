@@ -161,6 +161,8 @@
             \item Only takes data from peers after a handshake is detected
             \item Decodes the \emph{pieces} transferred by each peer
             \item Ends session when tracker ``completed'' request is detected
+            \item Writes sessions to a pipe as soon as they are completed for
+            processing by the File Reconstructor
         \end{itemize}
     \end{itemize}
 }
@@ -170,8 +172,42 @@
 
     \begin{itemize}
         \item File Reconstructor
+        \begin{itemize}
+            \item Rebuilds the pieces of the file from a session
+            \item Checks if a given \emph{.torrent} file matches the session and
+            if so splits and verifies the pieces
+            \item If no \emph{.torrent} file matches a session, a monolithic 
+            data file is created
+            \begin{itemize}
+                \item The monolithic data can be processed manually or with a 
+                file carving utility such as scalpel ~\cite{scalpel}
+            \end{itemize}
+            \item Writes pieces in sequential order to output file named after
+            the file's SHA-1 checksum
+        \end{itemize}
     \end{itemize}
 }
+
+\frame{
+    \frametitle{Final Product}
+
+    \begin{itemize}
+        \item Command-line application that can be run in either live or offline
+        mode
+        \begin{itemize}
+            \item Live mode takes an interface name and reads traffic on that
+            interface
+            \item Offline mode takes one or more packet capture files and reads
+            stored data
+            \item Either mode can be given one or more \emph{.torrent} files for
+            use in verification and splitting of output files
+        \end{itemize}
+        \item Outputs information pertaining to each session as well as the
+        downloaded file(s)
+    \end{itemize}
+
+}
+
 \section{Conclusion}
 \frame{
 %  \frametitle{Finally\dots}
@@ -185,7 +221,7 @@
 
 % Ifa we end up using references, put them in refs.bib and uncomment
 \section{References}
-\frame{
+\frame[allowframebreaks]{
   \frametitle{References}
   \bibliographystyle{plain}
   \bibliography{finalrefs}
