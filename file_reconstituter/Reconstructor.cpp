@@ -54,6 +54,7 @@ void Reconstructor::reconstructSession(Session *s) {
     ip_piece_map_t pieces = s->getPieces();
     std::map<std::string, Peer> peers = s->getPeers();
     std::map<std::string, Peer>::iterator it;
+    std::vector<unsigned int>::iterator uit;
     char hash_string[42];
     unsigned char temp_hash[20];
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
@@ -82,6 +83,12 @@ void Reconstructor::reconstructSession(Session *s) {
     for (it = peers.begin(); it != peers.end(); it++) {
         std::cout << "\t" << it->second.ip << ":"
                   << it->second.port << std::endl;
+    }
+
+    //output upload statistics(if any)
+    for (uit = s->getUploadedIndices().begin();
+                    uit != s->getUploadedIndices().end(); uit++) {
+            std::cout << "Uploaded part of piece index " << *uit << std::endl;
     }
 
     std::vector<Torrent*>::iterator i, ie;
