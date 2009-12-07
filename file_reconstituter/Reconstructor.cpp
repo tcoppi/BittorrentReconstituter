@@ -7,6 +7,17 @@
 typedef std::map<std::string, std::vector<std::string> > hash_map_t;
 typedef std::map<std::string, std::vector<Piece*> > ip_piece_map_t;
 
+/**
+ * Compare the two SHA-1 hashes byte for byte and return true if they are the
+ * same, false otherwise.
+ */
+bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
+    for (int i = 0; i < 20; i++) {
+       if (a[i] != b[i]) return false;
+    }
+    return true;
+}
+
 Reconstructor::Reconstructor(const char *input, std::ofstream &o,
                              std::vector<Torrent*> torrents)
     : m_input(input), m_inpipe(m_input), ohandle(&o), m_torrents(torrents) {
@@ -75,7 +86,9 @@ void Reconstructor::reconstructSession(Session *s) {
 
     std::vector<Torrent*>::iterator i, ie;
     for (i = this->m_torrents.begin(), ie = this->m_torrents.end(); i != ie; ++i) {
-        if ((*i)->info_hash() == s->getHash().data()) {
+//        if ((*i)->info_hash() == s->getHash().data()) {
+        if (compare_sha1s((const unsigned char *)(*i)->info_hash().data(),
+                          (const unsigned char *)s->getHash().data())) {
             torrent = *i;
         }
     }
@@ -161,17 +174,6 @@ void File::addPiece(Piece *piece) {
 //     std::cerr << "index: " << piece->getIndex() << " offset: " << piece->getOffset();
     this->macropieces[piece->getIndex()].replace(piece->getOffset(),
                                       piece->getBlock().size(), piece->getBlock());
-}
-
-/**
- * Compare the two SHA-1 hashes byte for byte and return true if they are the
- * same, false otherwise.
- */
-bool compare_sha1s(const unsigned char *a, const unsigned char *b) {
-    for (int i = 0; i < 20; i++) {
-       if (a[i] != b[i]) return false;
-    }
-    return true;
 }
 
 void File::reconstructFile(Torrent *torrent) {

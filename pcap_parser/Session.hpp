@@ -39,11 +39,13 @@ class Session {
         Piece *getLastPiece(std::string ip);
         ip_piece_map_t getPieces() { return this->pieces; }
         std::map<std::string, Peer> getPeers();
+        std::vector<unsigned int> getUploadedIndices() { return this->uploaded; }
 
         void addPeer(std::string, u_short);
         bool hasPeer(std::string, u_short);
         void activatePeer(std::string);
         void addPiece(std::string ip, Piece*);
+        void addUploadedIndex(unsigned int);
         void setCompleted(bool);
 
     private:
@@ -68,8 +70,11 @@ class Session {
         //The IPs of the peers in this transfer
         std::map<std::string, Peer> peers;
 
-        //The pieces transferred
+        //The pieces received
         ip_piece_map_t pieces;
+
+        //The indexes of pieces uploaded
+        std::vector<unsigned int> uploaded;
 
         bool completed;
 };

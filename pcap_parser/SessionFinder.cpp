@@ -275,20 +275,32 @@ void SessionFinder::handlePacket(Packet pkt) {
          * packet as bittorrent.
          */
 
+        bool upload = false;
+
         //Find a session with the source as a peer
         Session *session = findSession(pkt.src_ip, pkt.src_port);
         if (session == NULL) {
-            return;
+            //Find a session with the destination as a peer(for tracking
+            //uploads from the host)
+            session = findSession(pkt.dst_ip, pkt.dst_port);
+            if (session == NULL)
+                return;
         }
 
         //Make sure the destination ip matches the host
         if (pkt.dst_ip != session->getHost()) {
+            //If it doesn't, and the source ip is the host, then we have an
+            //upload
+            if (pkt.src_ip == session->getHost()) {
+                upload = true;
+            }
             return;
         }
 
-        //Make sure the peer corresponding to the source is active
+        //Make sure the peer corresponding to the source is active, or that we
+        //have an upload
         Peer* source = session->getPeer(pkt.src_ip, pkt.src_port);
-        if (!source->active) {
+        if ((!(source->active)) && (upload == false)) {
             return;
         }
 
@@ -324,9 +336,16 @@ void SessionFinder::handlePacket(Packet pkt) {
             return;
         }
 
-        //Add piece to session
-        std::cout << "Added a piece w/ index " << piece->getIndex() << " from " << pkt.src_ip << std::endl;
-        session->addPiece(pkt.src_ip,piece);
+        //Add piece to session if its not an upload
+        if (!upload) {
+            std::cout << "Added a piece w/ index " << piece->getIndex() << " from " << pkt.src_ip << std::endl;
+            session->addPiece(pkt.src_ip,piece);
+        }
+        else {
+            //All we need to record is the index of the piece.
+            session->addUploadedIndex(piece->getIndex());
+            delete piece;
+        }
 	}
 }
 

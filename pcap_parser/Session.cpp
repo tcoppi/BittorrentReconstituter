@@ -10,7 +10,7 @@
 
 Session::Session() {}
 
-Session::Session(std::string host_ip, u_short port, 
+Session::Session(std::string host_ip, u_short port,
                  std::string tracker_ip, std::string info_hash) {
     //Set completed flag
     completed = false;
@@ -37,6 +37,10 @@ std::string Session::getHash() {
 
 std::map<std::string, Peer> Session::getPeers() {
     return this->peers;
+}
+
+void Session::addUploadedIndex(unsigned int idx) {
+    this->uploaded.push_back(idx);
 }
 
 void Session::addTracker(std::string tracker_ip) {
