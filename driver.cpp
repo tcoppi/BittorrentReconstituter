@@ -152,8 +152,9 @@ int main(int argc, char **argv) {
         live = true;
         interface_name = vm["interface"].as<std::string>();
         //Get torrent files in live mode
-        std::vector<std::string> v = vm["input-file"].as<std::vector<std::string> >();
         if (vm.count("input-file")) {
+            std::vector<std::string> v = vm["input-file"].as<std::vector<std::string> >();
+
             std::vector<std::string>::iterator i, e;
             for (i = v.begin(), e = v.end(); i != e; ++i) {
                 if((*i).substr( (*i).size()-8, (*i).size()) == ".torrent") {
