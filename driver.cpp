@@ -151,6 +151,16 @@ int main(int argc, char **argv) {
     if (vm.count("interface")) {
         live = true;
         interface_name = vm["interface"].as<std::string>();
+        //Get torrent files in live mode
+        std::vector<std::string> v = vm["input-file"].as<std::vector<std::string> >();
+        if (vm.count("input-file")) {
+            std::vector<std::string>::iterator i, e;
+            for (i = v.begin(), e = v.end(); i != e; ++i) {
+                if((*i).substr( (*i).size()-8, (*i).size()) == ".torrent") {
+                    torrent_files.push_back(*i);
+                }
+            }
+        }
     }
     else if (vm.count("input-file")) {
         // Input file stuff, parse out the pcap and torrent vectors and figure
@@ -185,6 +195,7 @@ int main(int argc, char **argv) {
         Torrent *t = new Torrent(*torrent_file);
         t->init();
         torrents.push_back(t);
+        std::cout << "got a torrent " << *torrent_file << std::endl;
     }
 
     // Just use the last name specified for now, fix later
