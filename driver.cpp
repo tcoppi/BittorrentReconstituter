@@ -32,9 +32,11 @@ void graceful_close(int signal) {
 // Does the work of spawning processes and running pipes between them
 void handle_pcap_file(pcap_t *input_handle, int i,
                       std::vector<Torrent*> torrents, std::ofstream &output) {
-    std::string in_pipe_str("intoFinder" + i);
+    std::string in_pipe_str("intoFinder");
+    in_pipe_str.push_back((char)i);
     const char *in_pipe = in_pipe_str.c_str();
-    std::string out_pipe_str("outofFinder" + i);
+    std::string out_pipe_str("outofFinder");
+    out_pipe_str.push_back((char)i);
     const char *out_pipe = out_pipe_str.c_str();
 
     // Make sure the data link layer is ethernet
