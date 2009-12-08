@@ -67,6 +67,8 @@ void handle_pcap_file(pcap_t *input_handle, int i,
         //This is the child
         SessionFinder *sf = new SessionFinder(in_pipe, out_pipe);
         sf->run();
+        //Need to exit so we don't recontinue the cloned parent
+        exit(0);
     }
     else if (pid < 0) {
         std::cerr << "Someone set up us the bomb.\n";
@@ -78,6 +80,8 @@ void handle_pcap_file(pcap_t *input_handle, int i,
         if (newpid == 0) {
             Reconstructor *recon = new Reconstructor(out_pipe, output, torrents);
             recon->run();
+            //Need to exit so we don't recontinue the cloned parent
+            exit(0);
         }
         else if (pid < 0) {
             std::cerr << "You have no chance to survive, make your time.\n";
@@ -198,7 +202,7 @@ int main(int argc, char **argv) {
         Torrent *t = new Torrent(*torrent_file);
         t->init();
         torrents.push_back(t);
-        std::cout << "got a torrent " << *torrent_file << std::endl;
+        std::cout << "Using torrent file " << *torrent_file << std::endl;
     }
 
     // Just use the last name specified for now, fix later
@@ -224,6 +228,7 @@ int main(int argc, char **argv) {
                           << errbuf << std::endl;
                 return -1;
             }
+            std::cout << "Processing capture file " << input_name << std::endl;
             handle_pcap_file(input_handle, num, torrents, outfile);
         }
     }
