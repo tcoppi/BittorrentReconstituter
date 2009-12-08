@@ -50,7 +50,7 @@
     \item Each peer can transmit individual pieces after they are received
     \end{itemize}
   \end{itemize}
-} 
+}
 
 \section{Problem Addressed}
 % Aaron
@@ -79,9 +79,9 @@
       transferred to a compromised host
     \item BitTorrent could be used to make recovery of files extremely difficult
     \item The malware used is often of interest
-    \end{itemize} 
+    \end{itemize}
 
-% Thomas   
+% Thomas
   \framebreak
   \item Exfiltration of sensitive data
     \begin{itemize}
@@ -160,7 +160,7 @@
   \item Checks if a given \texttt{.torrent} file matches the session and if so
     splits and verifies the pieces
   \item If no \texttt{.torrent} file matches a session, a monolithic data file
-    is created
+    is created and no verification is performed
     \begin{itemize}
     \item The monolithic data can be processed manually or with a file carving
       utility such as scalpel~\cite{scalpel}
@@ -184,6 +184,13 @@
   \item Outputs information pertaining to each session as well as the downloaded
     file(s)
   \end{itemize}
+}
+
+% maybe in a different place?
+\frame{ \frametitle{Demo}
+ \begin{center}
+   \large{DEMO}
+ \end{center}
 }
 
 % Aaron
