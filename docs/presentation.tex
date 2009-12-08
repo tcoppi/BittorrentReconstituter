@@ -14,6 +14,7 @@
 \frame{\titlepage}
 \frame{\tableofcontents}
 
+% Charlie
 \frame{ \frametitle{Introduction}
   \begin{itemize}
   \item Identification and Extraction of files from network traffic
@@ -31,6 +32,7 @@
   \end{itemize}
 }
 
+% Charlie
 \frame{ \frametitle{Overview of the BitTorrent Protocol}
   \begin{itemize}
   \item Designed for efficient transfer of data over the Internet
@@ -48,9 +50,10 @@
     \item Each peer can transmit individual pieces after they are received
     \end{itemize}
   \end{itemize}
-}
+} 
 
 \section{Problem Addressed}
+% Aaron
 \frame{ \frametitle{What forensics problem did we solve?}
   \begin{itemize}
   \item Difficult manual reconstruction of files
@@ -65,6 +68,7 @@
 }
 
 \section{Threat Model}
+% Aaron
 \frame[allowframebreaks]{ \frametitle{Threat Model}
   \begin{itemize}
   \item Categories of threats
@@ -75,8 +79,9 @@
       transferred to a compromised host
     \item BitTorrent could be used to make recovery of files extremely difficult
     \item The malware used is often of interest
-    \end{itemize}
+    \end{itemize} 
 
+% Thomas   
   \framebreak
   \item Exfiltration of sensitive data
     \begin{itemize}
@@ -93,6 +98,7 @@
 }
 
 \section{Approach}
+% Thomas
 \frame{ \frametitle{Approach \& Requirements}
   \begin{itemize}
   \item Review of protocol specification
@@ -111,6 +117,7 @@
 }
 
 \section{Deliverable}
+% Charlie
 \frame{ \frametitle{Design}
   \begin{itemize}
   \item C++ with libpcap and Boost libraries
@@ -125,12 +132,14 @@
   \end{itemize}
 }
 
+% Charlie
 \frame{
   \begin{center}
     \includegraphics[height=2.84in]{architecture}
   \end{center}
 }
 
+% Aaron
 \frame{ \frametitle{Session Finder}
   \begin{itemize}
   \item Decodes raw data into \emph{sessions}
@@ -144,6 +153,7 @@
   \end{itemize}
 }
 
+% Thomas
 \frame{ \frametitle{File Reconstructor}
   \begin{itemize}
   \item Rebuilds the pieces of the file from a session
@@ -160,6 +170,7 @@
   \end{itemize}
 }
 
+% Charlie
 \frame{ \frametitle{Final Product}
   \begin{itemize}
   \item Command-line application that can be run in either live or offline mode
@@ -175,9 +186,17 @@
   \end{itemize}
 }
 
+% Aaron
 \section{Conclusion}
-\frame{
-  \frametitle{Forensics Impact}
+\frame{ \frametitle{Proposal Deviations}
+  \begin{itemize}
+  \item We will require a \texttt{.torrent} file in order to correctly split up
+    files in multi-file
+  \end{itemize}
+}
+
+% Aaron
+\frame{ \frametitle{Forensics Impact}
   \begin{itemize}
   \item Fills a gap in forensics capability
   \item First tool of its kind to reconstruct BitTorrent transfers
@@ -195,6 +214,7 @@
   \end{itemize}
 }
 
+% Everyone
 \frame{ \frametitle{Conclusion}
   \begin{itemize}
   \item Response to gap in capabilities
