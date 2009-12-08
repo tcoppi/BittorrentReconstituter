@@ -45,7 +45,7 @@ void Session::addUploadedIndex(unsigned int idx) {
 
 void Session::addTracker(std::string tracker_ip) {
     //Check to make sure this tracker isn't already in the list
-    if(not hasTracker(tracker_ip)) {
+    if (not hasTracker(tracker_ip)) {
         //Add tracker to list
         trackers.push_back(tracker_ip);
     }
@@ -56,7 +56,7 @@ bool Session::hasTracker(std::string tracker_ip) {
     std::vector<std::string>::iterator it;
 
     for (it=trackers.begin(); it < trackers.end(); ++it) {
-        if(*it == tracker_ip) {
+        if (*it == tracker_ip) {
             //This tracker is already in the list
             return true;
         }
@@ -66,7 +66,7 @@ bool Session::hasTracker(std::string tracker_ip) {
 
 void Session::addPeer(std::string peer_ip, u_short peer_port) {
     //Make sure this peer isn't already in the list
-    if(not hasPeer(peer_ip, peer_port)) {
+    if (not hasPeer(peer_ip, peer_port)) {
         //Add the peer
         Peer new_peer;
         new_peer.ip = peer_ip;
@@ -82,9 +82,9 @@ void Session::addPeer(std::string peer_ip, u_short peer_port) {
 bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
     //Find peer by IP
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
-    if(it != peers.end()) {
+    if (it != peers.end()) {
         //Check peer port
-        if((*it).second.port == peer_port) {
+        if ((*it).second.port == peer_port) {
             return true;
         }
     }
@@ -97,9 +97,9 @@ bool Session::hasPeer(std::string peer_ip, u_short peer_port) {
 Peer *Session::getPeer(std::string peer_ip, u_short peer_port) {
     //Find peer by IP
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
-    if(it != peers.end()) {
+    if (it != peers.end()) {
         //Check peer port
-        if((*it).second.port == peer_port) {
+        if ((*it).second.port == peer_port) {
             return &((*it).second);
         }
     }
@@ -109,14 +109,14 @@ Peer *Session::getPeer(std::string peer_ip, u_short peer_port) {
 void Session::activatePeer(std::string peer_ip) {
     //Find peer in list
     std::map<std::string, Peer>::iterator it = peers.find(peer_ip);
-    if(it != peers.end()) {
+    if (it != peers.end()) {
         //Activate the peer
         (*it).second.active = true;
     }
 }
 
 Piece *Session::getLastPiece(std::string ip) {
-    if(this->pieces.find(ip) == this->pieces.end()) {
+    if (this->pieces.find(ip) == this->pieces.end()) {
         return NULL;
     }
     if (this->pieces.find(ip)->second.size() > 0) {

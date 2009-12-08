@@ -69,7 +69,7 @@ bool Torrent::init() {
         size_t length_off = files_dict.find("6:lengthi");
         while (length_off != std::string::npos) {
             length_off += 9;
-            // We don't need the original file string anymore so it's 
+            // We don't need the original file string anymore so it's
             // okay to change it
             files_dict = files_dict.substr(length_off);
 
@@ -89,11 +89,6 @@ bool Torrent::init() {
     in_file.close();
     return true;
 }
-
-/**
- * Strip the given field of any extra fields. Use stripInfo to string fields
- * from the info dictionary.
- */
 
 void Torrent::stripExtraFields(std::string &field) {
 

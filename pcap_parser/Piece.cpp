@@ -3,9 +3,6 @@
 #include "Piece.hpp"
 #include "SessionFinder.hpp"
 
-/**
- * Piece constructor - performs packet parsing magic.
- */
 Piece::Piece(std::string payload) {
 
     //Make sure payload is long enough for decoding
@@ -21,7 +18,7 @@ Piece::Piece(std::string payload) {
 //     fprintf(stderr, "%02x", (u_char)payload.at(3));
 //     fprintf(stderr, "%02x\n", (u_char)payload.at(4));
 
-    
+
     //Get length and offset into packet for fields
     int field_offset = 0;
     len = convertUInt(payload.substr(0, 4));
@@ -31,16 +28,16 @@ Piece::Piece(std::string payload) {
         field_offset = 4;
         len = convertUInt(payload.substr(4, 4));
     }
-    
+
     //Find 0x07 in 5th byte
     if(payload[4+field_offset] != PIECE) {
         valid = false;
         return;
     }
-    
+
     //length is len - 9
     len = len - 9;
-       
+
     //Get the index
     index = convertUInt(payload.substr(5+field_offset, 4));
 
@@ -51,7 +48,7 @@ Piece::Piece(std::string payload) {
 //     fprintf(stderr, "%02x", (u_char) payload.at(11));
 //     fprintf(stderr, "%02x\n", (u_char)payload.at(12));
 
-    
+
     offset = convertUInt(payload.substr(9+field_offset, 4));
 
     if(len > 32768) {
@@ -68,7 +65,7 @@ Piece::Piece(std::string payload) {
 //     std::cerr << "len: " << len << std::endl;
 
     block = std::string(data);
-    
+
     if (data.size() == len) {
         //We have the whole block in this payload
         complete = true;
@@ -79,9 +76,6 @@ Piece::Piece(std::string payload) {
     valid = true;
 }
 
-/**
- * Adds the payload given to this piece's block.
- */
 std::string Piece::addPayload(std::string payload) {
 
     //Check length of payload to see how many bytes to take
@@ -118,10 +112,6 @@ std::string Piece::addPayload(std::string payload) {
 
 }
 
-/**
- * Takes the first 4 bytes from payload and returns the unsigned int
- * equivalent.
- */
 unsigned int Piece::convertUInt(std::string payload) {
     //Get length of data - WARNING! ugly-ass code follows
     std::string str_val;
@@ -134,16 +124,10 @@ unsigned int Piece::convertUInt(std::string payload) {
 }
 
 
-/**
- * Returns whether this piece is completed.
- */
 bool Piece::isCompleted() {
     return complete;
 }
 
-/**
- * Returns whether this piece is valid.
- */
 bool Piece::isValid() {
     return valid;
 }

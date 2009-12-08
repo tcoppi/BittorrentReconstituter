@@ -15,6 +15,12 @@ class Reconstructor {
 public:
     Reconstructor(const char *input_pipe, std::ofstream &o,
                   std::vector<Torrent*> torrents);
+
+    /**
+     * Main reconstruction function, outputs statistics, matches any torrent
+     * files to the session, and uses the File class to reconstruct the file(s)
+     * in the session.
+     */
     void reconstructSession(Session *session);
     void run();
 private:

@@ -17,25 +17,27 @@ using std::cout;
 using std::cerr;
 using std::endl;
 
-// This function taken from http://www.boost.org/doc/libs/1_41_0/tools/inspect/link_check.cpp
-// Copyright Beman Dawes 2002.
-// Distributed under the Boost Software License, Version 1.0.
-// Decode percent encoded characters, returns an empty string if there's an error.
-std::string decode_percents(std::string const& url_path) {
-    std::string::size_type pos = 0, next;
-    std::string result;
-    result.reserve(url_path.length());
+/**
+ * This function taken from
+ * http://www.boost.org/doc/libs/1_41_0/tools/inspect/link_check.cpp
+ * Copyright Beman Dawes 2002.  Distributed under the Boost Software License,
+ * Version 1.0.
+ * Decode percent encoded characters, returns an empty string if there's an error.
+ */
+static std::string decode_percents(std::string const& url_path) {
+        std::string::size_type pos = 0, next; std::string result;
+        result.reserve(url_path.length());
 
-    while((next = url_path.find('%', pos)) != std::string::npos) {
+    while ((next = url_path.find('%', pos)) != std::string::npos) {
         result.append(url_path, pos, next - pos);
         pos = next;
         switch(url_path[pos]) {
         case '%': {
-            if(url_path.length() - next < 3) return "";
+            ifi (url_path.length() - next < 3) return "";
             char hex[3] = { url_path[next + 1], url_path[next + 2], '\0' };
             char* end_ptr;
             result += (char) std::strtol(hex, &end_ptr, 16);
-            if(*end_ptr) return "";
+            if (*end_ptr) return "";
             pos = next + 3;
             break;
         }
@@ -46,18 +48,11 @@ std::string decode_percents(std::string const& url_path) {
     return result;
 }
 
-/**
- * The constructor takes the name of the file and a flag representing the input
- * mode (live or offline).
- */
 SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
     : output_pipe(out_pipe), input_pipe(in_pipe), input_archive(input_pipe),
       output_archive(output_pipe){
     }
 
-/**
- * Runs the input handler.
- */
 void SessionFinder::run() {
 
     // Write a blank session to pipe to open it up
@@ -84,11 +79,6 @@ void SessionFinder::run() {
     output_pipe.close();
 }
 
-/**
- * Handles a single Packet structure. Attempts to decode tracker requests,
- * responses, and piece messages. Any packet that is not one of the above
- * is discarded.
- */
 void SessionFinder::handlePacket(Packet pkt) {
 
     unsigned int offset, endoff; // Temps
@@ -100,7 +90,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
     // XXX We can make this short circuit by changing it to a not and flipping
     // the !=s to ==s and the &&s to ||s, which will be faster.
-    if((pkt.payload.find("GET") != std::string::npos) &&
+    if ((pkt.payload.find("GET") != std::string::npos) &&
        (pkt.payload.find("info_hash") != std::string::npos)  &&
        (pkt.payload.find("peer_id") != std::string::npos) &&
        (pkt.payload.find("port") != std::string::npos) &&
@@ -120,7 +110,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         // The string is URL encoded, so we need to take out all the percents
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
-        if(pkt.payload.find("started") != std::string::npos) {
+        if (pkt.payload.find("started") != std::string::npos) {
             std::cout << "session started" << std::endl;
             Session *session = new Session(pkt.src_ip, pkt.src_port, pkt.dst_ip, info_hash);
 
@@ -134,7 +124,7 @@ void SessionFinder::handlePacket(Packet pkt) {
             // Add the session
             sessions[info_hash] = session;
         }
-        else if((pkt.payload.find("completed") != std::string::npos) or
+        else if ((pkt.payload.find("completed") != std::string::npos) or
                 (pkt.payload.find("stopped") != std::string::npos)) {
             //Get session
             //Extract out the content of each field
@@ -152,7 +142,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
             std::map<std::string, Session*>::iterator it =
                     sessions.find(info_hash);
-            if(it == sessions.end()) {
+            if (it == sessions.end()) {
                 //Didn't find a session with this info hash, discard packet
                 return;
             }
@@ -187,7 +177,7 @@ void SessionFinder::handlePacket(Packet pkt) {
 
             std::map<std::string, Session*>::iterator it =
                     sessions.find(info_hash);
-            if(it == sessions.end()) {
+            if (it == sessions.end()) {
                 //Didn't find a session with this info hash, discard packet
                 return;
             }
@@ -195,7 +185,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
     }
     //Decode a tracker response, need to have at least a tracker request first.
-    else if((pkt.payload.find("HTTP") != std::string::npos) &&
+    else if ((pkt.payload.find("HTTP") != std::string::npos) &&
             (pkt.payload.find("5:peers") != std::string::npos)) {
         //Find the corresponding session
         Session *session;
@@ -225,7 +215,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         offset = endoff+1; //skip over the ':'
 
         //peer looks like [4 byte ip][2 byte port] in network byte order
-        for(u_int i=0;i<peers_to_add;i++) {
+        for (u_int i=0;i<peers_to_add;i++) {
             char *inet_tmp = (char *)malloc(16);
             const char *raw_data = pkt.payload.substr(offset, offset + 4).data();
             if (not inet_tmp)
@@ -247,7 +237,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
     }
     //Decode a peer handshake by finding the "BitTorrent protocol" string
-    else if((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
+    else if ((pkt.payload.find("BitTorrent protocol") != std::string::npos)) {
         //Found a handshake packet
         offset = pkt.payload.find("BitTorrent protocol");
         offset += strlen("BitTorrent protocol") + 8; //skip over the 8 reserved bytes
@@ -258,7 +248,7 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Get session from hash
         std::map<std::string, Session*>::iterator found;
         found = sessions.find(hash);
-        if(found == sessions.end()) {
+        if (found == sessions.end()) {
             return;
         }
         Session *session = found->second;
@@ -310,7 +300,7 @@ void SessionFinder::handlePacket(Packet pkt) {
                 //Update last piece and get any leftover data
                 std::string leftover_payload;
                 leftover_payload = session->getLastPiece(pkt.src_ip)->addPayload(pkt.payload);
-                if(leftover_payload.size() == 0) {
+                if (leftover_payload.size() == 0) {
                    return;
                 }
 //                 std::cerr << "handling stale pizza" << std::endl;

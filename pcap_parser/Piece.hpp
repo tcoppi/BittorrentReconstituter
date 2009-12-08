@@ -13,10 +13,21 @@
 class Piece {
 
 public:
+    /*
+     * Piece constructor - performs packet parsing magic.
+     */
     Piece() {}
     Piece(std::string);
+
+    /**
+     * Returns true if all the data this piece is supposed to have has been
+     * retrieved.
+     */
     bool isCompleted();
     bool isValid();
+    /**
+     * Adds the payload given the piece's block.
+     */
     std::string addPayload(std::string);
     std::string getBlock() {return this->block;}
     unsigned int getIndex() { return this->index; }
@@ -47,6 +58,7 @@ private:
     //length of the block
     unsigned int len;
 
+    //the actual data in the piece
     std::string block;
 };
 

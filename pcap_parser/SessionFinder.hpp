@@ -34,8 +34,22 @@
  */
 class SessionFinder {
 public:
+   /**
+    * The constructor takes the name of the file and a flag representing the input
+    * mode (live or offline).
+    */
     SessionFinder(const char*, const char*);
+
+  /**
+   * Runs the input handler.
+   */
     void run();
+
+   /**
+    * Handles a single Packet structure. Attempts to decode tracker requests,
+    * responses, and piece messages. Any packet that is not one of the above
+    * is discarded.
+    */
     void handlePacket(Packet pkt);
 private:
 
@@ -46,14 +60,12 @@ private:
 
     //Output file stream
     std::ofstream output_pipe;
-    
-        //Input file stream
+
+    //Input file stream
     std::ifstream input_pipe;
-    
+
     //Input archive
     boost::archive::text_iarchive input_archive;
-
-
 
     //Output archive
     boost::archive::text_oarchive output_archive;
