@@ -19,7 +19,7 @@ libraries. We have tested on Linux and Mac OS X.
 Compilation
 -----------
 To build the project for most configurations, run make with no targets, which
-will create an executable named "btfinder".  The following targets are
+will create an executable named "btfinder".  The following targets are also
 available:
   tags: build vi style tags
   goodtags: build emacs style tags
