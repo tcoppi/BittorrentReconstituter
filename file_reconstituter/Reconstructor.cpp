@@ -33,10 +33,7 @@ void Reconstructor::run() {
     Session s;
     while (true) {
         try {
-            std::cout << "waiting for a session to reconstruct" << std::endl;
             this->m_inpipe >> s;
-            std::cout << "got a session to reconstruct" << std::endl;
-
             this->reconstructSession(&s);
         }
         catch (boost::archive::archive_exception &e) {
@@ -87,8 +84,11 @@ void Reconstructor::reconstructSession(Session *s) {
     std::cout << "Peers: " << std::endl;
     //output ip:port for each peer
     for (it = peers.begin(); it != peers.end(); it++) {
-        std::cout << "\t" << it->second.ip << ":"
-                  << it->second.port << std::endl;
+        //Only print out active peers
+        if (it->second.active) {
+            std::cout << "\t" << it->second.ip << ":"
+                    << it->second.port << std::endl;
+        }
     }
 
     //output upload statistics(if any)
@@ -132,6 +132,9 @@ void Reconstructor::reconstructSession(Session *s) {
         std::cout << "Reconstructed file size: "
                   << file.writeFile(0, std::string::npos)
                   << " bytes." << std::endl;
+
+        // Make it easier to differentiate between different sessions in output
+        std::cout << "****************************************" << std::endl;
         return;
     }
 
@@ -139,9 +142,6 @@ void Reconstructor::reconstructSession(Session *s) {
     unsigned int file_offset = 0;
     std::vector<unsigned int> v = torrent->file_lengths();
     for (unsigned int i=0; i < v.size(); ++i) {
-        std::cerr << "i: " << i << " file_offset: " << file_offset << "\n";
-        std::cerr << "v.at(i): " << v.at(i) << std::endl;
-
         std::string curr_file = file.contents().substr(file_offset, v.at(i));
         // Name the file after its checksum
         const unsigned char *data = (const unsigned char*) curr_file.data();
@@ -166,6 +166,9 @@ void Reconstructor::reconstructSession(Session *s) {
         std::cout << "Reconstructed file size: "
                   << file.writeFile(file_offset, v.at(i))
                   << " bytes." << std::endl;
+        
+        // Make it easier to differentiate between different sessions in output
+        std::cout << "****************************************" << std::endl;
 
         file_offset += v.at(i);
     }
@@ -205,14 +208,14 @@ void File::reconstructFile(Torrent *torrent) {
         SHA1((const unsigned char*)s->second.data(), s->second.length(), hash);
 
         // DEBUG
-        if (havetorrent) {
-            std::cerr << "Checking piece number " << s->first << ".  Has hash ";
-            print_sha1(stderr, (const unsigned char *)
-                            (torrent->piece_hashes().at(s->first).data()));
-            std::cerr << std::endl << "Expecting hash ";
-            print_sha1(stderr, (const unsigned char *)hash);
-            std::cerr << std::endl;
-        }
+//         if (havetorrent) {
+//             std::cerr << "Checking piece number " << s->first << ".  Has hash ";
+//             print_sha1(stderr, (const unsigned char *)
+//                             (torrent->piece_hashes().at(s->first).data()));
+//             std::cerr << std::endl << "Expecting hash ";
+//             print_sha1(stderr, (const unsigned char *)hash);
+//             std::cerr << std::endl;
+//         }
 
         // Verify the hash. if it doesn't match, throw an error and die
         if (havetorrent and
@@ -222,8 +225,6 @@ void File::reconstructFile(Torrent *torrent) {
 
         if (havetorrent)
             std::cout << "SHA-1 verified successfully for piece " << s->first << std::endl;
-
-        std::cout << "Added piece " << s->first << std::endl;
 
         //insert the data into its correct place in the buffer
         this->m_contents.insert(index, s->second);
