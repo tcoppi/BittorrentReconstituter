@@ -33,7 +33,7 @@ static std::string decode_percents(std::string const& url_path) {
         pos = next;
         switch(url_path[pos]) {
         case '%': {
-            ifi (url_path.length() - next < 3) return "";
+            if (url_path.length() - next < 3) return "";
             char hex[3] = { url_path[next + 1], url_path[next + 2], '\0' };
             char* end_ptr;
             result += (char) std::strtol(hex, &end_ptr, 16);
