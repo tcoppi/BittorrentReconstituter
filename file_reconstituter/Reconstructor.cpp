@@ -133,8 +133,6 @@ void Reconstructor::reconstructSession(Session *s) {
                   << file.writeFile(0, std::string::npos)
                   << " bytes." << std::endl;
 
-        // Make it easier to differentiate between different sessions in output
-        std::cout << "****************************************" << std::endl;
         return;
     }
 
@@ -166,9 +164,6 @@ void Reconstructor::reconstructSession(Session *s) {
         std::cout << "Reconstructed file size: "
                   << file.writeFile(file_offset, v.at(i))
                   << " bytes." << std::endl;
-        
-        // Make it easier to differentiate between different sessions in output
-        std::cout << "****************************************" << std::endl;
 
         file_offset += v.at(i);
     }

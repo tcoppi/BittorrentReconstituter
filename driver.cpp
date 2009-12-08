@@ -119,8 +119,8 @@ int main(int argc, char **argv) {
     po::options_description desc("BitTorrent Reconstitutor Options");
     desc.add_options()
         ("help,h", "Write out this help message.")
-        ("output-file,o", po::value<std::string>(),
-         "Write stats and non-error messages to this file.  Defaults to stdout.")
+//         ("output-file,o", po::value<std::string>(),
+//          "Write stats and non-error messages to this file.  Defaults to stdout.")
         ("input-file,r", po::value<std::vector<std::string> >(), "Pcap / Torrent files")
         ("interface,i", po::value<std::string>(), "Specify interface for live processing")
         ;
@@ -140,18 +140,20 @@ int main(int argc, char **argv) {
 
     // Change our output to a file if specified.  This code is not exception
     // safe as it stands.
-    if (vm.count("output-file")) {
-        // Sorry for the extra ugly here.  C++ can't figure out its own
-        // references, nor can it construct/open a file from it's own string
-        // type, you must use a c string.  Thanks, C++ language designers.
-        outfile.open(vm["output-file"].as<std::string>().c_str());
-        buffer = outfile.rdbuf();
-    }
-    else {
-        buffer = std::cout.rdbuf();
-    }
-    // Finally construct the correct output stream
-    std::ostream output(buffer);
+    
+    // File output of statistics not implemented
+//     if (vm.count("output-file")) {
+//         // Sorry for the extra ugly here.  C++ can't figure out its own
+//         // references, nor can it construct/open a file from it's own string
+//         // type, you must use a c string.  Thanks, C++ language designers.
+//         outfile.open(vm["output-file"].as<std::string>().c_str());
+//         buffer = outfile.rdbuf();
+//     }
+//     else {
+//         buffer = std::cout.rdbuf();
+//     }
+//     // Finally construct the correct output stream
+//     std::ostream output(buffer);
 
     // interface and input-file are mutually exclusive options
     if (vm.count("interface")) {
@@ -228,8 +230,11 @@ int main(int argc, char **argv) {
                           << errbuf << std::endl;
                 return -1;
             }
+            // Make it easier to differentiate between different sessions in output
+            std::cout << "****************************************" << std::endl;
             std::cout << "Processing capture file " << input_name << std::endl;
             handle_pcap_file(input_handle, num, torrents, outfile);
+            std::cout << "****************************************" << std::endl;
         }
     }
     } // end intentional malformed indentation
