@@ -63,6 +63,9 @@ void Reconstructor::reconstructSession(Session *s) {
 //    std::cout.rdbuf((*(this->ohandle)).rdbuf());
 
     // Output statistics
+    // Make it easier to differentiate between different sessions in output
+    std::cout << "****************************************" << std::endl;
+    std::cout << "Processing a new BitTorrent session" << std::endl;
     std::cout << "SHA-1 Info Hash: " << std::endl << "\t";
     const char *h = s->getHash().data();
     for (int i = 0; i < 20; i++)
@@ -234,7 +237,7 @@ unsigned int File::writeFile(unsigned int begin, unsigned int length) {
     outfile << this->m_contents.substr(begin, length);
     outfile.close();
 
-    return this->m_contents.length();
+    return this->m_contents.substr(begin, length).length();
 }
 
 // vim: tabstop=4:expandtab

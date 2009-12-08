@@ -234,7 +234,6 @@ int main(int argc, char **argv) {
             std::cout << "****************************************" << std::endl;
             std::cout << "Processing capture file " << input_name << std::endl;
             handle_pcap_file(input_handle, num, torrents, outfile);
-            std::cout << "****************************************" << std::endl;
         }
     }
     } // end intentional malformed indentation
