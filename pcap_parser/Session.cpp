@@ -24,17 +24,30 @@ Session::Session(std::string host_ip, u_short port,
     trackers.push_back(tracker_ip);
 }
 
+/**
+ * Marks this session as completed.
+ */
 void Session::setCompleted(bool comp) {
     completed = comp;
 }
+
+/**
+ * Gets the IP address of the host associated with this session.
+ */
 std::string Session::getHost() {
     return std::string(host);
 }
 
+/**
+ * Gets the info hash that identifies this session.
+ */
 std::string Session::getHash() {
     return std::string(info_hash);
 }
 
+/**
+ * Gets the peers associated with this session.
+ */
 std::map<std::string, Peer> Session::getPeers() {
     return this->peers;
 }
@@ -43,6 +56,9 @@ void Session::addUploadedIndex(unsigned int idx) {
     this->uploaded.push_back(idx);
 }
 
+/**
+ * Adds a tracker to this session.
+ */
 void Session::addTracker(std::string tracker_ip) {
     //Check to make sure this tracker isn't already in the list
     if (not hasTracker(tracker_ip)) {
@@ -64,6 +80,9 @@ bool Session::hasTracker(std::string tracker_ip) {
     return false;
 }
 
+/**
+ * Adds a peer to this session.
+ */
 void Session::addPeer(std::string peer_ip, u_short peer_port) {
     //Make sure this peer isn't already in the list
     if (not hasPeer(peer_ip, peer_port)) {
