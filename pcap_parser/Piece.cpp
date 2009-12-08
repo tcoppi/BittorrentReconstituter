@@ -3,6 +3,9 @@
 #include "Piece.hpp"
 #include "SessionFinder.hpp"
 
+/**
+ * Construct a new piece object with the given payload.
+ */
 Piece::Piece(std::string payload) {
 
     //Make sure payload is long enough for decoding
@@ -11,18 +14,10 @@ Piece::Piece(std::string payload) {
         return;
     }
 
-//     std::cerr << "printing payload: " << std::endl;
-//     fprintf(stderr, "%02x", (u_char) payload.at(0));
-//     fprintf(stderr, "%02x", (u_char) payload.at(1));
-//     fprintf(stderr, "%02x", (u_char) payload.at(2));
-//     fprintf(stderr, "%02x", (u_char)payload.at(3));
-//     fprintf(stderr, "%02x\n", (u_char)payload.at(4));
-
 
     //Get length and offset into packet for fields
     int field_offset = 0;
     len = convertUInt(payload.substr(0, 4));
-//     std::cerr << "len : " << len << std::endl;
     if(len == 0) {
         //This is very probably a keep-alive message
         field_offset = 4;
@@ -42,13 +37,6 @@ Piece::Piece(std::string payload) {
     index = convertUInt(payload.substr(5+field_offset, 4));
 
     //Get the offset
-//     std::cerr << "printing offset: " << std::endl;
-//     fprintf(stderr, "%02x", (u_char) payload.at(9));
-//     fprintf(stderr, "%02x", (u_char) payload.at(10));
-//     fprintf(stderr, "%02x", (u_char) payload.at(11));
-//     fprintf(stderr, "%02x\n", (u_char)payload.at(12));
-
-
     offset = convertUInt(payload.substr(9+field_offset, 4));
 
     if(len > 32768) {
@@ -59,10 +47,6 @@ Piece::Piece(std::string payload) {
 
     //Data is everything after the first 13 bytes
     std::string data = payload.substr(13+field_offset);
-//     std::cerr << "got a valid packet" << std::endl;
-//     std::cerr << "index: " << index << std::endl;
-//     std::cerr << "offset: " << offset << std::endl;
-//     std::cerr << "len: " << len << std::endl;
 
     block = std::string(data);
 
@@ -76,6 +60,9 @@ Piece::Piece(std::string payload) {
     valid = true;
 }
 
+/**
+ * Adds the payload from a packet to this piece's data.
+ */
 std::string Piece::addPayload(std::string payload) {
 
     //Check length of payload to see how many bytes to take
@@ -95,7 +82,6 @@ std::string Piece::addPayload(std::string payload) {
 
     if (block.size() == len) {
         //We have finished this piece
-//         std::cerr << "completed piece" << std::endl;
         complete = true;
     }
     else if (block.size() > len) {
@@ -123,11 +109,17 @@ unsigned int Piece::convertUInt(std::string payload) {
     return val;
 }
 
-
+/**
+ * Returns whether this piece is complete - i.e., it has a data that matches
+ * the given length.
+ */
 bool Piece::isCompleted() {
     return complete;
 }
 
+/**
+ * Returns whether this piece is valid.
+ */
 bool Piece::isValid() {
     return valid;
 }
