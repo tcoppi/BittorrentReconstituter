@@ -1,0 +1,6 @@
+#!/bin/zsh
+# Transform dotfiles into pngs
+for dotfile in $*; do
+    dot -Tpng -o $(basename $dotfile .dot).png $dotfile
+done
+
