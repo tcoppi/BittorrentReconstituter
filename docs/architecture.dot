@@ -1,0 +1,22 @@
+digraph backend {
+  rankdir=TB;
+  node [style=rounded];
+
+  pcapfiles [shape=box, label="1 or more pcap files or an interface"];
+  torrentfiles [shape=box, label="0 or more torrent files"];
+  driver [shape=box, label="Driver"];
+  packet [shape=box, label="Packet Handler"];
+  session [shape=box, label="Session Finder"];
+  reconst [shape=box, label="File Reconstructor"];
+  files [shape=box, label="Output files"];
+
+  pcapfiles -> driver;
+  torrentfiles -> driver;
+  driver -> packet;
+
+  subgraph cluster1 {
+    packet -> session;
+    session -> reconst;
+  }
+  reconst -> files;
+}
