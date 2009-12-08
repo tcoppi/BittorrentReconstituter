@@ -1,8 +1,11 @@
 /**
- * XXX Describe what SessionFinder does
+ * The SessionFinder reads Packet objects from a pipe and processes them to
+ * identify BitTorrent Sessions. Session objects are created and written to a
+ * pipe for processing.
  *
- * Original Author: Aaron A. Lovato
+ * Original Authors: Thomas Coppi, Aaron A. Lovato, and Charlie Moore
  */
+
 #include <iostream>
 #include <sstream>
 #include <string.h>
@@ -13,9 +16,6 @@
 #include "Peer.hpp"
 #include "Session.hpp"
 #include "Packet.hpp"
-using std::cout;
-using std::cerr;
-using std::endl;
 
 /**
  * This function taken from
@@ -55,11 +55,8 @@ SessionFinder::SessionFinder(const char* in_pipe, const char * out_pipe)
 
 void SessionFinder::run() {
 
-    // Write a blank session to pipe to open it up
-    // Why we need to do this is unclear
-//     Session * s = new Session();
+    //Write and endl to pipe to wake up other side
     output_pipe << std::endl;
-//     output_pipe.flush();
 
     // Read each packet from the input pipe
     Packet current;
@@ -111,15 +108,10 @@ void SessionFinder::handlePacket(Packet pkt) {
         // and possibly ampersands.  info_hash is 20 bytes long.
         std::string info_hash = decode_percents(std::string(pkt.payload.c_str()+offset, hash_size));
         if (pkt.payload.find("started") != std::string::npos) {
-            std::cout << "session started" << std::endl;
             Session *session = new Session(pkt.src_ip, pkt.src_port, pkt.dst_ip, info_hash);
 
             offset = pkt.payload.find("port=");
             offset += strlen("port=");
-            //trace statements
-            // std::cout << "SF: Got a request from " << pkt.src_ip << std::endl;
-            // std::cout << "SF: Info hash: " << info_hash << std::endl;
-            // std::cout << "SF: Payload: " << pkt.payload << std::endl;
 
             // Add the session
             sessions[info_hash] = session;
@@ -190,7 +182,6 @@ void SessionFinder::handlePacket(Packet pkt) {
         //Find the corresponding session
         Session *session;
         if (need_response != NULL) {
-            std::cout << "continuing" << std::endl;
             session = need_response;
         }
         else {
@@ -229,7 +220,6 @@ void SessionFinder::handlePacket(Packet pkt) {
             port = ((u_char) raw_data[0] << 8) | (u_char) raw_data[1];
 
             session->addPeer(std::string(inet_tmp), port);
-//             std::cerr << "adding peer " << std::string(inet_tmp) << ":" << port<< std::endl;
 
             offset += 6;
             free(inet_tmp);
@@ -253,7 +243,6 @@ void SessionFinder::handlePacket(Packet pkt) {
         }
         Session *session = found->second;
 
-//         std::cerr << "activating peer " << pkt.src_ip << ":" << pkt.src_port<< std::endl;
         // Activate peer because this handshake means it should be alive
         session->activatePeer(pkt.src_ip);
     }
@@ -303,7 +292,6 @@ void SessionFinder::handlePacket(Packet pkt) {
                 if (leftover_payload.size() == 0) {
                    return;
                 }
-//                 std::cerr << "handling stale pizza" << std::endl;
                 //Create a Packet to hold leftover data
                 Packet leftover_pkt;
                 leftover_pkt.src_ip = pkt.src_ip;
@@ -319,8 +307,6 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         //This packet should correspond to session
         //Attempt to decode it as a Piece message
-//         std::cerr << "sending packet from " << pkt.src_ip << " -> " << pkt.dst_ip;
-//         std::cerr << " to piece decoding\n";
         Piece *piece = new Piece(pkt.payload);
         if (not piece->isValid()) {
             return;
@@ -328,7 +314,6 @@ void SessionFinder::handlePacket(Packet pkt) {
 
         //Add piece to session if its not an upload
         if (!upload) {
-            std::cout << "Added a piece w/ index " << piece->getIndex() << " from " << pkt.src_ip << std::endl;
             session->addPiece(pkt.src_ip,piece);
         }
         else {
